@@ -35,7 +35,7 @@ export const ProfileImage = () => {
           {/* Profile Image */}
           <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-gray-900/50 shadow-2xl">
             <img
-              src="./public/vicky.jpeg"
+              src="/vicky.jpeg"
               alt="Vicky Mosafan"
               className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-110"
             />
