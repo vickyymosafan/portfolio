@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { useInView } from "react-intersection-observer";
+import { FixedSizeGrid as Grid } from 'react-window';
 import { SKILLS } from "../constants";
 import AnimatedSection from "./AnimatedSection";
 
@@ -9,6 +10,43 @@ const Skills3D = () => {
     threshold: 0.1,
     triggerOnce: false,
   });
+
+  // Calculate dimensions based on screen size
+  const getGridDimensions = () => {
+    if (window.innerWidth >= 1024) {
+      return { columns: 3, width: window.innerWidth * 0.8 }; // Desktop
+    } else if (window.innerWidth >= 768) {
+      return { columns: 2, width: window.innerWidth * 0.9 }; // Tablet
+    }
+    return { columns: 1, width: window.innerWidth * 0.95 }; // Mobile
+  };
+
+  const [dimensions, setDimensions] = React.useState(getGridDimensions());
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setDimensions(getGridDimensions());
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const Cell = useCallback(({ columnIndex, rowIndex, style }) => {
+    const index = rowIndex * dimensions.columns + columnIndex;
+    if (index >= SKILLS.length) return null;
+
+    const category = SKILLS[index];
+    return (
+      <div style={style}>
+        <SkillCard category={category} index={index} inView={inView} />
+      </div>
+    );
+  }, [dimensions.columns, inView]);
+
+  const rowCount = Math.ceil(SKILLS.length / dimensions.columns);
+  const columnWidth = dimensions.width / dimensions.columns;
+  const rowHeight = 300; // Adjust based on your card height
 
   return (
     <AnimatedSection className="py-20 w-full">
@@ -23,15 +61,18 @@ const Skills3D = () => {
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center mb-8 sm:mb-12 lg:mb-16 text-white">
             Skills & Expertise
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 perspective-1000">
-            {SKILLS.map((category, index) => (
-              <SkillCard
-                key={category.category}
-                category={category}
-                index={index}
-                inView={inView}
-              />
-            ))}
+          <div className="perspective-1000">
+            <Grid
+              columnCount={dimensions.columns}
+              columnWidth={columnWidth - 32} // Account for gap
+              height={Math.min(window.innerHeight * 0.8, rowCount * rowHeight)}
+              rowCount={rowCount}
+              rowHeight={rowHeight}
+              width={dimensions.width}
+              className="scrollbar-hide"
+            >
+              {Cell}
+            </Grid>
           </div>
         </motion.div>
       </div>
@@ -61,7 +102,7 @@ const SkillCard = ({ category, index, inView }) => {
         rotateY: 5,
         z: 50,
       }}
-      className="relative group skill-card"
+      className="relative group skill-card mx-4"
     >
       {/* Neon Glow Background */}
       <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-emerald-500/20 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-300" />
@@ -103,7 +144,7 @@ const SkillCard = ({ category, index, inView }) => {
           ))}
         </div>
 
-        {/* 3D Floating Elements - Optimized for different screen sizes */}
+        {/* 3D Floating Elements */}
         <div className="absolute -z-10 inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
           <motion.div
             className="absolute top-0 right-0 w-16 sm:w-20 h-16 sm:h-20 bg-gradient-to-br from-cyan-500/20 to-transparent rounded-full blur-xl"

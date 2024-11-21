@@ -13,6 +13,16 @@
   }
 }
 
+/* Custom Scrollbar */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 .glow-border-dark {
   box-shadow:
     0 0 10px rgba(229, 231, 235, 0.1),
@@ -98,5 +108,24 @@
 
   .text-softest {
     @apply text-gray-500/70;
+  }
+
+  /* Responsive Grid Layout */
+  @media (min-width: 1024px) {
+    .skills-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .skills-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 767px) {
+    .skills-grid {
+      grid-template-columns: 1fr;
+    }
   }
 }
