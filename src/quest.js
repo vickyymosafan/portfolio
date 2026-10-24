@@ -1,0 +1,292 @@
+import * as THREE from 'three';
+import { palette } from './materials.js';
+
+export class QuestSystem {
+  constructor(scene, characterRig) {
+    this.scene = scene;
+    this.characterRig = characterRig;
+    this.collectibles = [];
+    this.collectedCount = 0;
+    this.totalCount = 5;
+    this.audioCtx = null;
+    this.hudPill = null;
+    this.toastTimeout = null;
+
+    this.itemsConfig = [
+      {
+        id: 'paradigm',
+        name: 'The Neural Gem',
+        room: 'Living Room',
+        quote: '“Engineering is not replaced by AI. It is amplified by it.”',
+        pos: [-11.0, 0.9, 1.2],
+        color: 0xffa07a, // Light coral
+      },
+      {
+        id: 'stack',
+        name: 'The Full-Stack Core',
+        room: 'Home Office',
+        quote: 'TypeScript, React 19, Next.js 15, Node.js & Laravel.',
+        pos: [11.0, 0.9, 1.2],
+        color: 0x70a5fd, // Sky blue
+      },
+      {
+        id: 'journey',
+        name: 'The Milestone Scroll',
+        room: 'Library Nook',
+        quote: 'Bank Mandiri x Rakamin & PT Antosa verified journey.',
+        pos: [-11.0, 0.9, -6.8],
+        color: 0xf6c177, // Warm yellow
+      },
+      {
+        id: 'artifacts',
+        name: 'The Flagship Golden Gear',
+        room: 'Project Gallery',
+        quote: '7 Production systems with verified GitHub telemetry.',
+        pos: [11.0, 0.9, -6.8],
+        color: 0xeb6f92, // Pink rose
+      },
+      {
+        id: 'blueprint',
+        name: 'The Master Blueprint',
+        room: 'Creative Studio',
+        quote: 'SOLID, DRY, KISS & the 6-Stage AI pipeline.',
+        pos: [-11.0, 0.9, -14.6],
+        color: 0x9ece6a, // Mint sage
+      },
+    ];
+
+    this.initHUD();
+    this.spawnCollectibles();
+  }
+
+  initHUD() {
+    // Add persistent quest pill to topbar
+    const topActions = document.querySelector('.top-actions');
+    if (topActions) {
+      const pill = document.createElement('div');
+      pill.id = 'quest-pill';
+      pill.className = 'quest-pill';
+      pill.setAttribute('title', 'Collect all 5 Engineering Artifacts hidden in the rooms!');
+      pill.innerHTML = `<span class="quest-icon">🏆</span><span id="quest-count">0 / 5</span>`;
+      topActions.insertBefore(pill, topActions.firstChild);
+      this.hudPill = pill;
+    }
+
+    // Quest toast notification element
+    let toast = document.getElementById('quest-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'quest-toast';
+      toast.className = 'quest-toast';
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'polite');
+      document.getElementById('experience')?.appendChild(toast);
+    }
+  }
+
+  playChime(type = 'collect') {
+    try {
+      if (!this.audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) this.audioCtx = new AudioContext();
+      }
+      if (this.audioCtx && this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume();
+      }
+      if (!this.audioCtx) return;
+
+      const now = this.audioCtx.currentTime;
+      if (type === 'collect') {
+        // Cheerful cartoon ascending two-tone chime
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.12); // G5
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if (type === 'complete') {
+        // Triumphant 4-tone celebration arpeggio (C5 -> E5 -> G5 -> C6)
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((freq, idx) => {
+          const osc = this.audioCtx.createOscillator();
+          const gain = this.audioCtx.createGain();
+          const noteStart = now + idx * 0.11;
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, noteStart);
+          gain.gain.setValueAtTime(0.2, noteStart);
+          gain.gain.exponentialRampToValueAtTime(0.001, noteStart + 0.4);
+          osc.connect(gain);
+          gain.connect(this.audioCtx.destination);
+          osc.start(noteStart);
+          osc.stop(noteStart + 0.45);
+        });
+      }
+    } catch {
+      // Audio playback fails gracefully if browser restricts autoplay
+    }
+  }
+
+  spawnCollectibles() {
+    const gemGeo = new THREE.OctahedronGeometry(0.24, 0);
+    const ringGeo = new THREE.RingGeometry(0.32, 0.45, 24);
+
+    for (const cfg of this.itemsConfig) {
+      const group = new THREE.Group();
+      group.position.set(...cfg.pos);
+
+      // Main floating gem
+      const gemMat = new THREE.MeshStandardMaterial({
+        color: cfg.color,
+        roughness: 0.15,
+        metalness: 0.25,
+        emissive: cfg.color,
+        emissiveIntensity: 0.35,
+      });
+      const gem = new THREE.Mesh(gemGeo, gemMat);
+      gem.castShadow = true;
+      group.add(gem);
+
+      // Floor aura ring
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: cfg.color,
+        transparent: true,
+        opacity: 0.4,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = -Math.PI * 0.5;
+      ring.position.y = -cfg.pos[1] + 0.03;
+      group.add(ring);
+
+      this.scene.add(group);
+      this.collectibles.push({
+        ...cfg,
+        group,
+        gem,
+        ring,
+        baseY: cfg.pos[1],
+        collected: false,
+      });
+    }
+  }
+
+  showToast(title, subtitle) {
+    const toast = document.getElementById('quest-toast');
+    if (!toast) return;
+
+    toast.innerHTML = `
+      <div class="toast-badge">ARTIFACT DISCOVERED</div>
+      <div class="toast-title">${title}</div>
+      <div class="toast-sub">${subtitle}</div>
+    `;
+    toast.classList.add('is-visible');
+
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastTimeout = setTimeout(() => {
+      toast.classList.remove('is-visible');
+    }, 4200);
+  }
+
+  showCompletionModal() {
+    this.playChime('complete');
+
+    // Create or reuse celebration modal
+    let modal = document.getElementById('quest-complete-modal');
+    if (!modal) {
+      modal = document.createElement('section');
+      modal.id = 'quest-complete-modal';
+      modal.className = 'quest-complete-modal';
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      document.getElementById('experience')?.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+      <div class="modal-card">
+        <div class="modal-confetti" aria-hidden="true">🎉 🌟 🚀 🏆 💡</div>
+        <div class="modal-badge">EASTER EGG UNLOCKED</div>
+        <h2 class="modal-title">Master Architect!</h2>
+        <p class="modal-copy">
+          You discovered all <strong>5 Engineering Artifacts</strong> across Vicky Mosafan’s 3D cartoon world!
+        </p>
+        <blockquote class="modal-quote">
+          “Engineering is not replaced by AI. It is amplified by it. Building thoughtful, scalable systems requires solid foundations, clear PRDs, and human craft.”
+        </blockquote>
+        <p class="modal-author">— M. Vicky Mosafan · Surabaya, ID</p>
+        <div class="modal-actions">
+          <button type="button" class="primary-button" id="modal-close-btn">Continue Wandering 🌿</button>
+        </div>
+      </div>
+    `;
+
+    modal.classList.add('is-visible');
+    document.getElementById('modal-close-btn')?.addEventListener('click', () => {
+      modal.classList.remove('is-visible');
+    }, { once: true });
+  }
+
+  update(dt, elapsed, playerPos) {
+    for (const item of this.collectibles) {
+      if (item.collected) {
+        if (item.group.scale.x > 0.001) {
+          item.group.scale.multiplyScalar(Math.max(0, 1 - dt * 8.0));
+        }
+        continue;
+      }
+
+      // Gentle floating bob & rotation
+      item.gem.rotation.y += dt * 1.8;
+      item.gem.rotation.z += dt * 0.9;
+      item.group.position.y = item.baseY + Math.sin(elapsed * 2.8 + item.baseY) * 0.08;
+
+      // Pulse floor ring
+      item.ring.rotation.z += dt * 0.6;
+      item.ring.scale.setScalar(1 + Math.sin(elapsed * 3.5) * 0.12);
+
+      // Check distance to player
+      if (playerPos) {
+        const dx = playerPos.x - item.group.position.x;
+        const dy = playerPos.y - item.group.position.y;
+        const dz = playerPos.z - item.group.position.z;
+        const distSq = dx * dx + dy * dy + dz * dz;
+
+        if (distSq < 1.7 * 1.7) {
+          item.collected = true;
+          this.collectedCount += 1;
+          this.playChime('collect');
+
+          // Update HUD
+          const countEl = document.getElementById('quest-count');
+          if (countEl) countEl.textContent = `${this.collectedCount} / ${this.totalCount}`;
+
+          this.showToast(item.name, `${item.room} · ${item.quote}`);
+
+          if (this.collectedCount >= this.totalCount) {
+            setTimeout(() => this.showCompletionModal(), 600);
+          }
+        }
+      }
+    }
+  }
+
+  collectItem(id) {
+    const item = this.collectibles.find((c) => c.id === id);
+    if (!item || item.collected) return false;
+    item.collected = true;
+    this.collectedCount += 1;
+    this.playChime('collect');
+    const countEl = document.getElementById('quest-count');
+    if (countEl) countEl.textContent = `${this.collectedCount} / ${this.totalCount}`;
+    this.showToast(item.name, `${item.room} · ${item.quote}`);
+    if (this.collectedCount >= this.totalCount) {
+      this.showCompletionModal();
+    }
+    return true;
+  }
+}
