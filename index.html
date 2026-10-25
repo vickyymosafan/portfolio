@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#d9f0e2" />
   <meta name="description" content="Explore Vicky Mosafan's playful 3D portfolio house." />
   <title>Vicky Mosafan — Cartoonverse</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -17,6 +18,7 @@
 <body>
   <main id="experience" aria-label="Interactive 3D portfolio experience">
     <div id="scene" aria-hidden="true"></div>
+    <div id="world-markers" class="world-markers" aria-hidden="true"></div>
     <div class="scene-fallback" aria-hidden="true"><span class="fallback-sun"></span>
       <div class="fallback-house"><span class="fallback-roof"></span><span class="fallback-door"></span><span
           class="fallback-window fallback-window-left"></span><span
@@ -35,6 +37,12 @@
             <path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z" />
             <path
               d="m19.4 13.5 1.1.8-1.5 2.6-1.3-.6a7.6 7.6 0 0 1-1.4.8l-.2 1.5h-3l-.2-1.5a7.6 7.6 0 0 1-1.5-.8l-1.3.6-1.5-2.6 1.2-.8a6.5 6.5 0 0 1 0-1.7l-1.2-.8 1.5-2.6 1.3.6a7.6 7.6 0 0 1 1.5-.8l.2-1.5h3l.2 1.5a7.6 7.6 0 0 1 1.4.8l1.3-.6 1.5 2.6-1.1.8a6.5 6.5 0 0 1 0 1.7Z" />
+          </svg></button>
+        <button id="map-button" class="icon-button" type="button" aria-label="Toggle World Map Overview"
+          title="World Map Overview [M]"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+            <line x1="8" y1="2" x2="8" y2="18"></line>
+            <line x1="16" y1="6" x2="16" y2="22"></line>
           </svg></button>
         <button id="tour-button" class="tour-button" type="button">Take the tour <span
             aria-hidden="true">↗</span></button>
@@ -89,7 +97,7 @@
       </div>
     </section>
     <div class="world-label" id="world-label"><span class="label-pin"></span><span id="room-name">Front yard</span><span
-        class="label-rule"></span><span id="room-count">01 / 07</span></div>
+        class="label-rule"></span><span id="room-count">01 / 10</span></div>
     <nav class="room-nav" aria-label="Explore portfolio rooms">
       <button class="room-link is-active" data-room="yard" type="button" aria-label="Go to front yard"
         title="Front yard"><span class="room-glyph glyph-yard"></span><span>Yard</span></button>

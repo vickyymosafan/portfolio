@@ -7,51 +7,131 @@ export class QuestSystem {
     this.characterRig = characterRig;
     this.collectibles = [];
     this.collectedCount = 0;
-    this.totalCount = 5;
+    this.totalCount = 15;
     this.audioCtx = null;
     this.hudPill = null;
     this.toastTimeout = null;
 
     this.itemsConfig = [
       {
+        id: 'fountain',
+        name: 'The Fountain Heart',
+        room: 'Front Yard',
+        quote: '“Every great journey begins with a single curious step.”',
+        pos: [0.0, 0.9, 13.0],
+        color: 0x48cae4,
+      },
+      {
         id: 'paradigm',
         name: 'The Neural Gem',
         room: 'Living Room',
         quote: '“Engineering is not replaced by AI. It is amplified by it.”',
-        pos: [-11.0, 0.9, 1.2],
-        color: 0xffa07a, // Light coral
+        pos: [-2.0, 0.9, 0.5],
+        color: 0xffa07a,
+      },
+      {
+        id: 'artifacts',
+        name: 'The Flagship Golden Gear',
+        room: 'Project Gallery',
+        quote: '7 Production systems with verified telemetry and architecture.',
+        pos: [-11.0, 0.9, -1.5],
+        color: 0xeb6f92,
       },
       {
         id: 'stack',
         name: 'The Full-Stack Core',
         room: 'Home Office',
         quote: 'TypeScript, React 19, Next.js 15, Node.js & Laravel.',
-        pos: [11.0, 0.9, 1.2],
-        color: 0x70a5fd, // Sky blue
+        pos: [10.5, 0.9, -1.5],
+        color: 0x70a5fd,
+      },
+      {
+        id: 'bmw',
+        name: 'The Twin-Turbo Crest',
+        room: 'Private Garage',
+        quote: 'BMW M-Series precision tuning, 60 FPS performance & speed.',
+        pos: [21.0, 0.9, 1.4],
+        color: 0xf4d35e,
+      },
+      {
+        id: 'serenity',
+        name: 'The Lotus Crystal',
+        room: 'Master Bedroom',
+        quote: 'Rest, recharge, and deep architectural focus.',
+        pos: [-11.0, 6.1, 0.6],
+        color: 0xc8b6ff,
+      },
+      {
+        id: 'bath',
+        name: 'The Pure Essence',
+        room: 'Master Bathroom',
+        quote: 'Clean code hygiene, zero debt, and pristine refactoring.',
+        pos: [0.0, 6.1, -11.8],
+        color: 0x70e000,
       },
       {
         id: 'journey',
         name: 'The Milestone Scroll',
         room: 'Library Nook',
         quote: 'Bank Mandiri x Rakamin & PT Antosa verified journey.',
-        pos: [-11.0, 0.9, -6.8],
-        color: 0xf6c177, // Warm yellow
-      },
-      {
-        id: 'artifacts',
-        name: 'The Flagship Golden Gear',
-        room: 'Project Gallery',
-        quote: '7 Production systems with verified GitHub telemetry.',
-        pos: [11.0, 0.9, -6.8],
-        color: 0xeb6f92, // Pink rose
+        pos: [10.5, 6.1, -1.5],
+        color: 0xf6c177,
       },
       {
         id: 'blueprint',
         name: 'The Master Blueprint',
         room: 'Creative Studio',
-        quote: 'SOLID, DRY, KISS & the 6-Stage AI pipeline.',
-        pos: [-11.0, 0.9, -14.6],
-        color: 0x9ece6a, // Mint sage
+        quote: 'SOLID, DRY, KISS & the deterministic agentic workflow.',
+        pos: [21.0, 6.1, -1.5],
+        color: 0x9ece6a,
+      },
+      {
+        id: 'terrace',
+        name: 'The Sunset Monolith',
+        room: 'Garden Terrace',
+        quote: 'Open for high-impact engineering collaboration.',
+        pos: [0.0, 0.9, -22.5],
+        color: 0xee6c4d,
+      },
+      {
+        id: 'pool',
+        name: 'The Aquamarine Prism',
+        room: 'Swimming Pool',
+        quote: 'Fluid dynamics, calm relaxation, and stylized water caustics.',
+        pos: [-24.5, 0.9, -6.0],
+        color: 0x00b4d8,
+      },
+      {
+        id: 'zen',
+        name: 'The Dragon Koi Pearl',
+        room: 'Zen Garden',
+        quote: 'Harmony of natural stone waterfalls, koi ponds, and bonsai.',
+        pos: [34.5, 0.9, -9.0],
+        color: 0xff758f,
+      },
+      {
+        id: 'barn',
+        name: 'The Harvest Bell',
+        room: 'Peternakan',
+        quote: 'Sustainable livestock pastures, Holstein cows, and poultry.',
+        pos: [-34.0, 0.9, -32.0],
+        color: 0xd90429,
+      },
+      {
+        id: 'sawah',
+        name: 'The Golden Paddy Ear',
+        room: 'Sawah Modern',
+        quote: 'Stepped irrigation terraces and modern agricultural machinery.',
+        pos: [18.0, 0.9, -35.0],
+        color: 0xffb703,
+      },
+      {
+        id: 'security',
+        name: 'The Sentinel Insignia',
+        room: 'Security Checkpoint',
+        quote: '24/7 Perimeter security, gatehouses, and public thoroughfare.',
+        pos: [0.0, 0.9, 27.0],
+        color: 0x3a86ff,
       },
     ];
 
@@ -66,8 +146,8 @@ export class QuestSystem {
       const pill = document.createElement('div');
       pill.id = 'quest-pill';
       pill.className = 'quest-pill';
-      pill.setAttribute('title', 'Collect all 5 Engineering Artifacts hidden in the rooms!');
-      pill.innerHTML = `<span class="quest-icon">🏆</span><span id="quest-count">0 / 5</span>`;
+      pill.setAttribute('title', 'Discover all 15 World Landmarks across the Estate!');
+      pill.innerHTML = `<span class="quest-icon">🏆</span><span id="quest-count">0 / 15</span>`;
       topActions.insertBefore(pill, topActions.firstChild);
       this.hudPill = pill;
     }

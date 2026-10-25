@@ -50,6 +50,8 @@ const ui = {
   tourProgress: $('tour-progress-fill'),
   tourExploreBtn: $('tour-explore-btn'),
   tourNextBtn: $('tour-next-btn'),
+  mapBtn: $('map-button'),
+  markersContainer: $('world-markers'),
 };
 
 let renderer;
@@ -73,6 +75,29 @@ const doorColliders = [];
 const interactionPoints = [];
 const cameraBlockers = [];
 const staticBodies = [];
+
+const WORLD_MARKERS = [
+  { id: 'farm', label: 'Peternakan', sub: 'Sapi, Ayam, Ikan', icon: '🐮', pos: [-30.0, 7.5, -34.0], targetRoom: 'farm' },
+  { id: 'rice', label: 'Sawah', sub: 'Pertanian Modern', icon: '🌾', pos: [18.0, 6.0, -34.0], targetRoom: 'rice' },
+  { id: 'road', label: 'Jalan Utama', sub: 'Akses Menuju Rumah', icon: '🚗', pos: [28.0, 4.5, 34.0], targetRoom: 'road' },
+  { id: 'pool', label: 'Kolam Renang', sub: 'Swim & Relax', icon: '🏊', pos: [-24.5, 5.0, -6.0], targetRoom: 'pool' },
+  { id: 'security', label: 'Security', sub: '24/7 Guard', icon: '🛡️', pos: [-16.0, 5.0, 26.0], targetRoom: 'security' },
+  { id: 'garage', label: 'Garasi', sub: 'BMW M Series', icon: '🏎️', pos: [21.0, 4.8, 1.4], targetRoom: 'garage' },
+  { id: 'zen', label: 'Taman', sub: 'Relax & Explore', icon: '🌲', pos: [35.0, 5.2, -9.0], targetRoom: 'zen' },
+  { id: 'gallery', label: 'Project Gallery', sub: 'My Work & Showcase', icon: '🖼️', pos: [-11.0, 3.8, -1.5], targetRoom: 'projects' },
+  { id: 'living', label: 'Living Room', sub: 'Chill & Connect', icon: '🛋️', pos: [0.0, 3.8, 0.5], targetRoom: 'about' },
+  { id: 'office', label: 'Home Office', sub: 'Work & Build', icon: '💻', pos: [10.75, 3.8, -1.5], targetRoom: 'skills' },
+  { id: 'bedroom', label: 'Master Bedroom', sub: 'Rest & Recharge', icon: '🛏️', pos: [-11.0, 8.8, 0.6], targetRoom: 'bedroom' },
+  { id: 'bathroom', label: 'Bathroom', sub: 'Relax & Refresh', icon: '🛁', pos: [0.0, 8.8, -11.8], targetRoom: 'bathroom' },
+  { id: 'library', label: 'Library Nook', sub: 'Read & Grow', icon: '📖', pos: [10.5, 8.8, -1.5], targetRoom: 'experience' },
+  { id: 'studio', label: 'Creative Studio', sub: 'Create & Explore', icon: '🎨', pos: [21.0, 8.8, -1.5], targetRoom: 'process' },
+];
+
+let overviewMode = false;
+const overviewCamPos = new THREE.Vector3(0, 38.0, 46.0);
+const overviewTarget = new THREE.Vector3(0, 5.0, 0.0);
+const markerProjectVec = new THREE.Vector3();
+let markerElements = [];
 
 let started = false;
 let paused = false;
@@ -143,7 +168,7 @@ function createRenderer() {
   renderer = new THREE.WebGLRenderer({ antialias: !mobile, powerPreference: 'high-performance' });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.12;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.4));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = !mobile;
@@ -153,21 +178,21 @@ function createRenderer() {
   sceneHost.appendChild(renderer.domElement);
 
   const initialAspect = window.innerWidth / window.innerHeight;
-  camera = new THREE.PerspectiveCamera(initialAspect < 1.0 ? 64 : 48, initialAspect, 0.1, 140);
+  camera = new THREE.PerspectiveCamera(initialAspect < 1.0 ? 64 : 48, initialAspect, 0.1, 350);
   return renderer;
 }
 
 function createScene() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xbfe0d5);
-  scene.fog = new THREE.Fog(0xbfe0d5, 42, 100);
+  scene.fog = new THREE.Fog(0xbfe0d5, 80, 240);
 
   // Soft warm ambient hemisphere light for vibrant natural cartoon fill
-  const hemi = new THREE.HemisphereLight(0xfff8ea, 0x769e74, 2.0);
+  const hemi = new THREE.HemisphereLight(0xfffaee, 0x72a56e, 2.1);
   scene.add(hemi);
 
   // Warm golden directional sunlight with soft contact penumbra
-  const sun = new THREE.DirectionalLight(0xfffae8, 2.5);
+  const sun = new THREE.DirectionalLight(0xfff9e6, 2.6);
   sun.position.set(-18, 26, 20);
   sun.castShadow = !mobile;
   sun.shadow.mapSize.set(mobile ? 512 : 1536, mobile ? 512 : 1536);
@@ -393,7 +418,7 @@ function applyQuality(sceneRef, nextQuality, autoUpdate = true) {
   const preset = qualityPresets[selected] || qualityPresets.medium;
   const dprLimit = Math.min(window.devicePixelRatio || 1, preset.pixelRatio, renderScale);
   renderer.setPixelRatio(dprLimit);
-  renderer.setSize(window.innerWidth, window.innerHeight, false);
+  renderer.setSize(window.innerWidth, window.innerHeight);
 
   const shadowsOn = preset.shadows && !mobile;
   renderer.shadowMap.enabled = shadowsOn;
@@ -699,6 +724,117 @@ if (typeof window !== 'undefined') {
     lookPoint.y += 0.22;
     camera.lookAt(lookPoint);
   };
+}
+
+function initWorldMarkers() {
+  if (!ui.markersContainer) return;
+  ui.markersContainer.innerHTML = '';
+  markerElements = WORLD_MARKERS.map((m) => {
+    const el = document.createElement('div');
+    el.className = 'world-marker';
+    el.setAttribute('data-target', m.id);
+    el.innerHTML = `
+      <div class="marker-icon-box">${m.icon}</div>
+      <div class="marker-text">
+        <strong class="marker-title">${m.label}</strong>
+        <span class="marker-sub">${m.sub}</span>
+      </div>
+    `;
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      onMarkerClick(m);
+    });
+    ui.markersContainer.appendChild(el);
+    return { ...m, el, vPos: new THREE.Vector3(...m.pos) };
+  });
+}
+
+function onMarkerClick(marker) {
+  if (overviewMode) {
+    toggleOverviewMode(false);
+  }
+  if (marker.targetRoom) {
+    if (portfolio.rooms.some((r) => r.id === marker.targetRoom)) {
+      setRoom(marker.targetRoom, { teleport: true });
+    } else if (marker.targetRoom === 'pool') {
+      teleportToZone(-24.5, 1.12, -4.0, 0);
+    } else if (marker.targetRoom === 'farm') {
+      teleportToZone(-30.0, 1.12, -28.0, Math.PI);
+    } else if (marker.targetRoom === 'rice') {
+      teleportToZone(18.0, 1.12, -28.0, Math.PI);
+    } else if (marker.targetRoom === 'zen') {
+      teleportToZone(34.0, 1.12, -6.0, -Math.PI * 0.5);
+    } else if (marker.targetRoom === 'security') {
+      teleportToZone(0.0, 1.12, 26.0, 0);
+    } else if (marker.targetRoom === 'road') {
+      teleportToZone(0.0, 1.12, 33.0, 0);
+    }
+  }
+}
+
+function teleportToZone(x, y, z, facing = 0) {
+  physX = x;
+  physY = y;
+  physZ = z;
+  if (playerBody) {
+    playerBody.setTranslation({ x, y, z }, true);
+    playerBody.setNextKinematicTranslation({ x, y, z });
+  }
+  if (characterRig?.character) {
+    characterRig.character.position.set(x, y, z);
+    characterRig.character.rotation.y = facing;
+  }
+  yaw = facing;
+  pitch = 0.22;
+  if (roofGroup) roofGroup.visible = physZ > 4.0;
+}
+
+function updateWorldMarkers() {
+  if (!markerElements.length || !camera || !ui.markersContainer) return;
+  const showMarkers = overviewMode || cameraDistance > 18;
+  if (!showMarkers) {
+    if (ui.markersContainer.style.display !== 'none') {
+      ui.markersContainer.style.display = 'none';
+    }
+    return;
+  }
+  if (ui.markersContainer.style.display !== 'block') {
+    ui.markersContainer.style.display = 'block';
+  }
+
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  for (let i = 0; i < markerElements.length; i += 1) {
+    const item = markerElements[i];
+    markerProjectVec.copy(item.vPos);
+    markerProjectVec.project(camera);
+
+    if (markerProjectVec.z > 1.0 || markerProjectVec.z < -1.0) {
+      item.el.style.display = 'none';
+      continue;
+    }
+
+    const screenX = (markerProjectVec.x * 0.5 + 0.5) * w;
+    const screenY = (-markerProjectVec.y * 0.5 + 0.5) * h;
+
+    if (screenX < -60 || screenX > w + 60 || screenY < -40 || screenY > h + 40) {
+      item.el.style.display = 'none';
+      continue;
+    }
+
+    item.el.style.display = 'flex';
+    item.el.style.transform = `translate(-50%, -50%) translate3d(${Math.round(screenX)}px, ${Math.round(screenY)}px, 0)`;
+  }
+}
+
+function toggleOverviewMode(force) {
+  overviewMode = typeof force === 'boolean' ? force : !overviewMode;
+  if (ui.mapBtn) {
+    ui.mapBtn.classList.toggle('is-active', overviewMode);
+  }
+  if (roofGroup) {
+    roofGroup.visible = !overviewMode && physZ > 4.0;
+  }
 }
 
 function findInteraction() {
@@ -1297,6 +1433,8 @@ function updatePhysics(dt) {
   const targetMoveX = (rightX * x + forwardX * z) * targetSpeed;
   const targetMoveZ = (rightZ * x + forwardZ * z) * targetSpeed;
 
+  if (hasInput && overviewMode) toggleOverviewMode(false);
+
   // Smooth physical acceleration & deceleration
   const accel = hasInput ? 13.0 : 18.0;
   currentVelX = THREE.MathUtils.damp(currentVelX, targetMoveX, accel, dt);
@@ -1368,6 +1506,18 @@ function updateCamera(dt, timestamp) {
       teleportCameraOverride.target[1],
       teleportCameraOverride.target[2]
     );
+    return;
+  }
+
+  if (overviewMode) {
+    if (roofGroup) roofGroup.visible = false;
+    camera.position.x = THREE.MathUtils.damp(camera.position.x, overviewCamPos.x, 5.0, dt);
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, overviewCamPos.y, 5.0, dt);
+    camera.position.z = THREE.MathUtils.damp(camera.position.z, overviewCamPos.z, 5.0, dt);
+    lookPoint.x = THREE.MathUtils.damp(lookPoint.x, overviewTarget.x, 6.0, dt);
+    lookPoint.y = THREE.MathUtils.damp(lookPoint.y, overviewTarget.y, 6.0, dt);
+    lookPoint.z = THREE.MathUtils.damp(lookPoint.z, overviewTarget.z, 6.0, dt);
+    camera.lookAt(lookPoint);
     return;
   }
 
@@ -1496,6 +1646,7 @@ function bindEvents() {
   $('welcome-close')?.addEventListener('click', startExperience);
   $('welcome-tour-button')?.addEventListener('click', beginTour);
   $('tour-button').addEventListener('click', beginTour);
+  ui.mapBtn?.addEventListener('click', () => toggleOverviewMode());
   $('tour-stop')?.addEventListener('click', () => endTour());
   ui.tourExploreBtn?.addEventListener('click', () => {
     if (tourActive) {
@@ -1582,6 +1733,10 @@ function bindEvents() {
       else if (tourActive) endTour();
       else if (!started) return;
       else setPaused(!paused);
+      return;
+    }
+    if (event.code === 'KeyM' && !event.repeat && !panelOpen && !settingsOpen) {
+      toggleOverviewMode();
       return;
     }
     if (event.code === 'KeyC' && !event.repeat) {
@@ -1793,6 +1948,7 @@ function animate(timestamp) {
   }
 
   updateCamera(dt, timestamp);
+  updateWorldMarkers();
   updatePerformance(dt, timestamp, scene);
   renderer.render(scene, camera);
 }
@@ -1892,6 +2048,17 @@ async function init() {
     camera.position.set(0, 4.8, 22.5);
     camera.lookAt(0, 2.0, 13.0);
     setRoom('yard');
+    initWorldMarkers();
+
+    window.__THREE__ = THREE;
+    window.__SCENE__ = scene;
+    window.__RENDERER__ = renderer;
+    window.__CAMERA__ = camera;
+    window.scene = scene;
+    window.renderer = renderer;
+    window.camera = camera;
+    window.__toggleOverviewMode = toggleOverviewMode;
+    window.__SCENE_READY__ = true;
 
     document.documentElement.classList.add('webgl-ready');
     $('loading-screen').classList.add('is-hidden');
