@@ -12,6 +12,12 @@ import {
 } from './landscape.js';
 import { createArchitecture, createInteractiveDoors } from './architecture.js';
 import { createRoomInteriors } from './furniture.js';
+import { createPoolArea } from './poolArea.js';
+import { createDriveway } from './driveway.js';
+import { createZenGarden } from './zenGarden.js';
+import { createSecurityArea } from './securityArea.js';
+import { createFarmArea } from './farmArea.js';
+import { createRiceFields } from './riceFields.js';
 import { createCharacter, updateCharacterRig } from './character.js';
 import { CinematicDirector, CinematicState } from './cinematic.js';
 import { QuestSystem } from './quest.js';
@@ -60,6 +66,9 @@ let doorControls;
 let cinematicDirector;
 let questSystem;
 let worldInteractions;
+let securityZone;
+let farmZone;
+let riceZone;
 const doorColliders = [];
 const interactionPoints = [];
 const cameraBlockers = [];
@@ -203,24 +212,33 @@ function createScene() {
   }
 
   // 1. Landscape Foundation & Lawns
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), materials.grass);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(220, 220), materials.grass);
   ground.rotation.x = -Math.PI * 0.5;
-  ground.position.set(0, -0.08, -6.0);
+  ground.position.set(1.0, -0.08, -2.5);
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // Raised garden lawn spanning whole 28m house and gardens
-  const lawn = addBox(scene, [0, -0.16, -6.0], [46, 0.24, 52], materials.lawnRaised, { receive: true, shadow: true });
+  // Raised garden lawn spanning whole estate grounds (Pool, Mansion, Gardens, Farm & Rice Fields)
+  const lawn = addBox(scene, [1.0, -0.16, -2.5], [104, 0.24, 92], materials.lawnRaised, { receive: true, shadow: true });
   lawn.receiveShadow = true;
 
-  // Rapier ground collider
-  const groundBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -0.2, -6.0));
-  world.createCollider(RAPIER.ColliderDesc.cuboid(23, 0.15, 26), groundBody);
+  // Rapier ground collider spanning whole estate
+  const groundBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(1.0, -0.2, -2.5));
+  world.createCollider(RAPIER.ColliderDesc.cuboid(54, 0.15, 48), groundBody);
   staticBodies.push(groundBody);
 
   // Garden paths, stepping stones, fences
   createGardenPath(scene);
   createGardenFence(scene);
+
+  // Phase 3 & 4: Exterior Estate Zones (Pool Deck, Driveway & Roundabout, Zen Garden, Security Area, Farm & Rice Fields)
+  createPoolArea(scene, world, RAPIER, staticBodies);
+  createDriveway(scene, world, RAPIER, staticBodies);
+  createZenGarden(scene, world, RAPIER, staticBodies);
+  securityZone = createSecurityArea(scene, world, RAPIER, staticBodies);
+  farmZone = createFarmArea(scene, world, RAPIER, staticBodies);
+  riceZone = createRiceFields(scene, world, RAPIER, staticBodies);
+
   for (const [bx, bz, brot] of [[-9.2, 9.8, 0.35], [9.2, 9.8, -0.35]]) {
     createGardenBench(scene, bx, 0, bz, brot);
     const benchBody = world.createRigidBody(
@@ -232,28 +250,21 @@ function createScene() {
     staticBodies.push(benchBody);
   }
 
-  // Boundary picket fences (x = ±16.8)
-  for (const side of [-1, 1]) {
-    const fenceBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(side * 16.8, 0.75, -6.0));
-    world.createCollider(RAPIER.ColliderDesc.cuboid(0.22, 0.75, 16.5), fenceBody);
+  // Outer boundary picket fence colliders along east and west edges (x = [-45.5, 48.5])
+  for (const fx of [-45.5, 48.5]) {
+    const fenceBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(fx, 0.75, -10.0));
+    world.createCollider(RAPIER.ColliderDesc.cuboid(0.22, 0.75, 34.0), fenceBody);
     staticBodies.push(fenceBody);
   }
 
-  // Front Entrance Gate Posts with Carriage Lanterns (x = ±3.4 at z = 16.5)
-  for (const side of [-1, 1]) {
-    const gateBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(side * 3.4, 1.1, 16.5));
-    world.createCollider(RAPIER.ColliderDesc.cuboid(0.42, 1.1, 0.42), gateBody);
-    staticBodies.push(gateBody);
-  }
-
-  // Rich flower beds framing the 28m wide house
+  // Rich flower beds framing the expanded estate grounds
   const flowerBedSpecs = [
     [-9.5, 5.2, 7.5, 1.4, 21],
     [9.5, 5.2, 7.5, 1.4, 47],
-    [-15.5, -3.5, 1.4, 7.5, 63],
-    [15.5, -3.5, 1.4, 7.5, 85],
-    [-15.5, -12.5, 1.4, 7.5, 101],
-    [15.5, -12.5, 1.4, 7.5, 127],
+    [-17.5, -3.5, 1.4, 7.5, 63],
+    [27.0, -3.5, 1.4, 7.5, 85],
+    [-17.5, -12.5, 1.4, 7.5, 101],
+    [27.0, -12.5, 1.4, 7.5, 127],
   ];
   for (const [fbx, fbz, fbw, fbd, seed] of flowerBedSpecs) {
     createFlowerBed(scene, fbx, fbz, fbw, fbd, seed);
@@ -262,20 +273,20 @@ function createScene() {
     staticBodies.push(bedBody);
   }
 
-  // Tiered Cartoon Trees outside house perimeter (multi-tier fluffy canopies, batched)
+  // Tiered Cartoon Trees outside expanded estate perimeter (x: -38.5 to 44.5)
   const treeCoords = [
-    [-19.5, 9.5, 1.2, 12],
-    [19.5, 9.2, 1.2, 24],
-    [-19.8, -1.0, 1.1, 36],
-    [19.8, -1.0, 1.1, 48],
-    [-19.5, -9.5, 1.15, 60],
-    [19.5, -9.5, 1.15, 72],
-    [-19.2, -17.5, 1.05, 84],
-    [19.2, -17.5, 1.05, 96],
-    [-12.2, 14.5, 0.98, 108],
-    [12.2, 14.5, 0.98, 120],
-    [-18.5, 15.0, 0.9, 132],
-    [18.5, 15.0, 0.9, 144],
+    [-38.5, 9.5, 1.2, 12],
+    [44.5, 9.2, 1.2, 24],
+    [-38.5, -1.0, 1.1, 36],
+    [44.5, -1.0, 1.1, 48],
+    [-38.5, -9.5, 1.15, 60],
+    [44.5, -9.5, 1.15, 72],
+    [-38.5, -17.5, 1.05, 84],
+    [44.5, -17.5, 1.05, 96],
+    [-14.2, 17.5, 0.98, 108],
+    [14.2, 17.5, 0.98, 120],
+    [-38.5, 16.0, 0.9, 132],
+    [44.5, 16.0, 0.9, 144],
   ];
   for (const [tx, tz, ts, seed] of treeCoords) {
     const tree = createCartoonTree(tx, tz, ts, seed);
@@ -285,22 +296,22 @@ function createScene() {
     staticBodies.push(trunkBody);
   }
 
-  // Sculpted Cartoon Bushes framing pathways and perimeter
+  // Sculpted Cartoon Bushes framing pathways and expanded estate boundary
   const bushCoords = [
     [-5.2, 5.2, 1.15, 11],
     [5.2, 5.2, 1.15, 22],
     [-13.5, 5.0, 1.05, 33],
     [13.5, 5.0, 1.05, 44],
-    [-16.2, 4.8, 0.95, 55],
-    [16.2, 4.8, 0.95, 66],
-    [-7.5, 13.0, 0.88, 77],
-    [7.5, 13.0, 0.88, 88],
-    [-14.5, 11.2, 0.9, 99],
-    [14.5, 11.2, 0.9, 110],
-    [-16.5, -6.5, 0.95, 121],
-    [16.5, -6.5, 0.95, 132],
-    [-16.5, -15.5, 0.9, 143],
-    [16.5, -15.5, 0.9, 154],
+    [-34.5, 4.8, 0.95, 55],
+    [40.5, 4.8, 0.95, 66],
+    [-7.5, 17.0, 0.88, 77],
+    [7.5, 17.0, 0.88, 88],
+    [-14.5, 14.2, 0.9, 99],
+    [14.5, 14.2, 0.9, 110],
+    [-35.0, -6.5, 0.95, 121],
+    [41.0, -6.5, 0.95, 132],
+    [-35.0, -15.5, 0.9, 143],
+    [41.0, -15.5, 0.9, 154],
     [-6.5, -22.5, 1.05, 165],
     [6.5, -22.5, 1.05, 176],
   ];
@@ -339,16 +350,18 @@ function createScene() {
 }
 
 function addDecorativeBackdrop(scene) {
+  // Distant Horizon Rolling Hills (outside expanded 84m estate perimeter)
   const hills = [
-    [-24, -14, 12, materials.foliageBright],
-    [25, -22, 14, materials.foliageDeep],
-    [-32, 2, 13, materials.foliageMid],
-    [32, 9, 11, materials.foliageBright],
+    [-58, -25, 20, materials.foliageBright],
+    [-62, 12, 18, materials.foliageMid],
+    [62, -22, 22, materials.foliageDeep],
+    [64, 15, 18, materials.foliageBright],
+    [0, -48, 24, materials.foliageDeep],
   ];
   for (const [hx, hz, hs, hMat] of hills) {
     const hill = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), hMat);
-    hill.position.set(hx, -2.5, hz);
-    hill.scale.set(hs, hs * 0.58, hs * 0.88);
+    hill.position.set(hx, -4.5, hz);
+    hill.scale.set(hs, hs * 0.45, hs * 0.75);
     scene.add(hill);
   }
 
@@ -633,6 +646,61 @@ function setRoom(id, options = {}) {
   }
 }
 
+let teleportCameraOverride = null;
+
+if (typeof window !== 'undefined') {
+  window.__teleport = (x, y, z, facing = 0, camYaw = 0, camPitch = 0.22, options = {}) => {
+    physX = x;
+    physY = y;
+    physZ = z;
+    if (playerBody) {
+      playerBody.setTranslation({ x, y, z }, true);
+      playerBody.setNextKinematicTranslation({ x, y, z });
+    }
+    if (characterRig?.character) {
+      if (options.charOffset) {
+        characterRig.character.position.set(x + options.charOffset[0], y + options.charOffset[1], z + options.charOffset[2]);
+      } else {
+        characterRig.character.position.set(x, y, z);
+      }
+      characterRig.character.rotation.y = facing;
+      if (options.charVisible !== undefined) {
+        characterRig.character.visible = Boolean(options.charVisible);
+      } else {
+        characterRig.character.visible = true;
+      }
+    }
+    yaw = camYaw;
+    pitch = camPitch;
+
+    if (options.camPos && options.targetPos) {
+      teleportCameraOverride = {
+        cam: options.camPos,
+        target: options.targetPos,
+      };
+      camera.position.set(options.camPos[0], options.camPos[1], options.camPos[2]);
+      camera.lookAt(options.targetPos[0], options.targetPos[1], options.targetPos[2]);
+      return;
+    } else {
+      teleportCameraOverride = null;
+    }
+
+    const isHouse = Math.abs(x) < 22 && z > -21 && z < 5;
+    cameraDistance = options.camDistance !== undefined ? options.camDistance : (isHouse ? 3.4 : 4.5);
+    const offsetY = options.camOffsetY !== undefined ? options.camOffsetY : 0.95;
+    cameraTarget.set(x, y + offsetY, z);
+    const horizontal = cameraDistance * Math.cos(pitch);
+    camera.position.set(
+      x + Math.sin(yaw) * horizontal,
+      y + offsetY + 0.5 + Math.sin(pitch) * cameraDistance,
+      z + Math.cos(yaw) * horizontal
+    );
+    lookPoint.copy(cameraTarget);
+    lookPoint.y += 0.22;
+    camera.lookAt(lookPoint);
+  };
+}
+
 function findInteraction() {
   if (cinematicDirector && cinematicDirector.isActive()) {
     ui.prompt.classList.remove('is-visible');
@@ -677,7 +745,7 @@ function findInteraction() {
   }
 
   // 2. We are in normal locomotion: evaluate available targets
-  const nearbySeat = worldInteractions ? worldInteractions.getNearbySeat(physX, physZ) : null;
+  const nearbySeat = worldInteractions ? worldInteractions.getNearbySeat(physX, physZ, physY) : null;
   const nearbyInspectable = worldInteractions ? worldInteractions.getNearbyInspectable(physX, physZ) : null;
 
   // Door interaction candidate (E)
@@ -696,6 +764,7 @@ function findInteraction() {
   for (let i = 0; i < interactionPoints.length; i += 1) {
     const item = interactionPoints[i];
     if (item.id === 'door') continue;
+    if (item.position?.y !== undefined && Math.abs(physY - item.position.y) > 2.8) continue;
     const dist = Math.hypot(physX - item.position.x, physZ - item.position.z);
     if (dist < item.radius && dist < bestRoomDist) {
       bestRoom = item;
@@ -795,10 +864,10 @@ function dispatchInteraction(code) {
     } else if (w.mode !== InteractionMode.NONE) {
       return reject('other_interaction_active');
     } else {
-      const seat = w.getNearbySeat(physX, physZ);
+      const seat = w.getNearbySeat(physX, physZ, physY);
       if (!seat) return reject('no_seat_in_range');
       if (import.meta.env.DEV) console.log('[Interaction] KeyC -> sit on seat:', seat.id);
-      result = w.toggleSit(physX, physZ, { cameraDistance, yaw, pitch });
+      result = w.toggleSit(physX, physZ, { cameraDistance, yaw, pitch }, physY);
     }
   } else if (code === 'KeyE') {
     // KeyE: ONLY doors and room exhibits. NEVER triggers sitting!
@@ -821,6 +890,7 @@ function dispatchInteraction(code) {
       let bestDist = Infinity;
       for (const item of interactionPoints) {
         if (item.id === 'door') continue;
+        if (item.position?.y !== undefined && Math.abs(physY - item.position.y) > 2.8) continue;
         const dist = Math.hypot(physX - item.position.x, physZ - item.position.z);
         if (dist < item.radius && dist < bestDist) {
           bestRoom = item;
@@ -878,9 +948,9 @@ const tourStops = [
     name: 'Living Room · About Me',
     subtitle: 'THE PERSON BEHIND THE PIXELS',
     intro: 'Creative developer blending software engineering, 3D graphics, and practical AI to make tech feel warm and human.',
-    position: [-6.8, 1.12, -0.6],
-    archX: -3.4,
-    facing: 0.15,
+    position: [0.0, 1.12, 0.5],
+    archX: 0,
+    facing: 0.0,
     cameraYaw: 0.1,
     cameraPitch: 0.22,
   },
@@ -890,9 +960,9 @@ const tourStops = [
     name: 'Home Office · Skills & Tools',
     subtitle: 'TOOLS I REACH FOR EVERY DAY',
     intro: 'TypeScript, JavaScript, Three.js, Python, and applied agentic workflows built for reliable modern production.',
-    position: [6.8, 1.12, -0.6],
-    archX: 3.4,
-    facing: -0.15,
+    position: [10.0, 1.12, -1.5],
+    archX: 5.5,
+    facing: -0.25,
     cameraYaw: -0.1,
     cameraPitch: 0.22,
   },
@@ -902,10 +972,10 @@ const tourStops = [
     name: 'Library Nook · My Story',
     subtitle: 'ALWAYS CURIOUS, ALWAYS LEARNING',
     intro: 'Learning by shipping real products, studying system design, and constantly refining interactive craft.',
-    position: [-6.8, 1.12, -8.7],
-    archX: -3.4,
-    facing: 0.15,
-    cameraYaw: 0.1,
+    position: [10.0, 6.32, -1.5],
+    archX: 5.5,
+    facing: -0.25,
+    cameraYaw: -0.1,
     cameraPitch: 0.22,
   },
   {
@@ -914,10 +984,10 @@ const tourStops = [
     name: 'Project Gallery · Works',
     subtitle: 'SELECTED HIGHLIGHTS',
     intro: 'IntelliChat AI workspace, Smart Kost SaaS, 3D interactive graphics, and agentic automation pipelines.',
-    position: [6.8, 1.12, -8.7],
-    archX: 3.4,
-    facing: -0.15,
-    cameraYaw: -0.1,
+    position: [-10.0, 1.12, -1.5],
+    archX: -5.5,
+    facing: 0.25,
+    cameraYaw: 0.1,
     cameraPitch: 0.22,
   },
   {
@@ -926,10 +996,10 @@ const tourStops = [
     name: 'Creative Studio · Process',
     subtitle: 'FROM FIRST SKETCH TO LAST DETAIL',
     intro: 'Three deliberate passes: listen closely to find the real need, build to learn, then polish what counts.',
-    position: [-6.8, 1.12, -16.5],
-    archX: -3.4,
-    facing: 0.15,
-    cameraYaw: 0.1,
+    position: [20.5, 6.32, -1.5],
+    archX: 16.0,
+    facing: -0.25,
+    cameraYaw: -0.1,
     cameraPitch: 0.22,
   },
   {
@@ -938,10 +1008,10 @@ const tourStops = [
     name: 'Garden Terrace · Let’s Connect',
     subtitle: 'THERE’S ROOM FOR ONE MORE IDEA',
     intro: 'Open for thoughtful projects, applied AI products, and ambitious collaborations. Let’s make something great!',
-    position: [6.8, 1.12, -16.5],
-    archX: 3.4,
-    facing: -0.15,
-    cameraYaw: -0.1,
+    position: [0.0, 1.12, -22.5],
+    archX: 0,
+    facing: Math.PI,
+    cameraYaw: 0.0,
     cameraPitch: 0.22,
   },
 ];
@@ -949,45 +1019,90 @@ const tourStops = [
 function planTourWaypoints(startX, startZ, targetStop) {
   const points = [];
   const targetX = targetStop.position[0];
+  const targetY = targetStop.position[1] !== undefined ? targetStop.position[1] : 1.12;
   const targetZ = targetStop.position[2];
   const targetArchX = targetStop.archX;
 
-  const isOutdoor = startZ > 4.0;
-  const targetIsOutdoor = targetZ > 4.0;
+  const startIsUpper = physY > 3.0;
+  const targetIsUpper = targetY > 3.0;
 
+  const isOutdoor = startZ > 4.2 || startZ < -18.0;
+  const targetIsOutdoor = targetZ > 4.2 || targetZ < -18.0;
+
+  // Handle cross-floor traversal between Ground Floor and Second Floor
+  if (!startIsUpper && targetIsUpper) {
+    // Ground to Upper: Navigate to foot of Grand Staircase, then ascend
+    if (isOutdoor) {
+      points.push([0, 1.12, 3.8]);
+    }
+    points.push([0, 1.12, -1.8]); // Foot of grand staircase
+    points.push([0, 6.32, -7.8]); // Top mezzanine landing
+    if (Math.abs(targetArchX) > 0.5) points.push([targetArchX, 6.32, targetZ]);
+    points.push([targetX, targetY, targetZ]);
+    return points;
+  }
+
+  if (startIsUpper && !targetIsUpper) {
+    // Upper to Ground: Walk to staircase top landing, descend to ground
+    points.push([0, 6.32, -7.8]); // Top of staircase
+    points.push([0, 1.12, -1.8]); // Foot of staircase on ground floor
+    if (targetIsOutdoor) {
+      if (targetZ > 4.2) {
+        points.push([0, 1.12, 3.8]);
+        points.push([0, 1.12, 6.2]);
+      } else {
+        points.push([0, 1.12, -18.5]);
+      }
+    } else {
+      points.push([0, 1.12, targetZ]);
+      if (Math.abs(targetArchX) > 0.5) points.push([targetArchX, 1.12, targetZ]);
+    }
+    points.push([targetX, targetY, targetZ]);
+    return points;
+  }
+
+  if (startIsUpper && targetIsUpper) {
+    // Upper floor room to room
+    points.push([0, 6.32, -7.8]);
+    if (Math.abs(targetArchX) > 0.5) points.push([targetArchX, 6.32, targetZ]);
+    points.push([targetX, targetY, targetZ]);
+    return points;
+  }
+
+  // Ground floor movement
   if (isOutdoor && targetIsOutdoor) {
-    points.push([targetX, 1.12, targetZ]);
+    points.push([targetX, targetY, targetZ]);
   } else if (isOutdoor && !targetIsOutdoor) {
     if (startZ > 7.0) points.push([0, 1.12, 6.2]);
     points.push([0, 1.12, 3.8]);
     points.push([0, 1.12, targetZ]);
     if (Math.abs(targetArchX) > 0.5) points.push([targetArchX, 1.12, targetZ]);
-    points.push([targetX, 1.12, targetZ]);
+    points.push([targetX, targetY, targetZ]);
   } else if (!isOutdoor && targetIsOutdoor) {
     if (Math.abs(startX) > 2.0) {
-      const exitArchX = startX < 0 ? -3.4 : 3.4;
+      const exitArchX = startX < 0 ? -5.5 : 5.5;
       points.push([exitArchX, 1.12, startZ]);
     }
     points.push([0, 1.12, startZ]);
-    points.push([0, 1.12, 3.8]);
-    points.push([0, 1.12, 6.2]);
-    points.push([targetX, 1.12, targetZ]);
+    if (targetZ > 4.2) {
+      points.push([0, 1.12, 3.8]);
+      points.push([0, 1.12, 6.2]);
+    } else {
+      points.push([0, 1.12, -18.5]);
+    }
+    points.push([targetX, targetY, targetZ]);
   } else {
-    // Indoor room to room:
-    // Exit current room bay to center promenade
+    // Indoor ground room to room
     if (Math.abs(startX) > 2.0) {
-      const exitArchX = startX < 0 ? -3.4 : 3.4;
+      const exitArchX = startX < 0 ? -5.5 : 5.5;
       points.push([exitArchX, 1.12, startZ]);
     }
     points.push([0, 1.12, startZ]);
-    // Walk down the 6.8m promenade centerline
     points.push([0, 1.12, targetZ]);
-    // Enter target room archway
     if (Math.abs(targetArchX) > 0.5) {
       points.push([targetArchX, 1.12, targetZ]);
     }
-    // Arrive at beacon
-    points.push([targetX, 1.12, targetZ]);
+    points.push([targetX, targetY, targetZ]);
   }
   return points;
 }
@@ -1227,7 +1342,7 @@ function updatePhysics(dt) {
 }
 
 function updateCamera(dt, timestamp) {
-  const inHouse = physZ <= 4.0;
+  const inHouse = physZ <= 4.2 && physZ >= -18.0 && physX >= -16.5 && physX <= 26.0;
   if (roofGroup) {
     roofGroup.visible = !inHouse;
   }
@@ -1242,6 +1357,20 @@ function updateCamera(dt, timestamp) {
     return;
   }
 
+  if (teleportCameraOverride) {
+    camera.position.set(
+      teleportCameraOverride.cam[0],
+      teleportCameraOverride.cam[1],
+      teleportCameraOverride.cam[2]
+    );
+    camera.lookAt(
+      teleportCameraOverride.target[0],
+      teleportCameraOverride.target[1],
+      teleportCameraOverride.target[2]
+    );
+    return;
+  }
+
   // Camera goal distance & height with responsive mobile compensation
   const isPortrait = camera.aspect < 1.0;
   const baseDistance = inHouse ? (isPortrait ? 4.2 : 4.4) : (isPortrait ? 7.6 : 6.8);
@@ -1250,10 +1379,19 @@ function updateCamera(dt, timestamp) {
   const targetY = physY + (isPortrait ? 1.35 : 1.25);
   cameraTarget.set(physX, targetY, physZ);
 
-  // Clamp pitch safely: indoors we clamp higher pitch to prevent hitting ceiling (ceiling at 5.2m)
-  const maxPitch = inHouse ? 0.48 : 0.72;
-  const minPitch = inHouse ? 0.04 : -0.06;
+  // Flexible pitch range: allows looking up at chandeliers/ceilings and down at props/floors
+  const maxPitch = inHouse ? 0.82 : 0.92;
+  const minPitch = inHouse ? -0.38 : -0.52;
   pitch = THREE.MathUtils.clamp(pitch, minPitch, maxPitch);
+
+  // Keyboard camera orbit shortcuts (Q, [ and ] to rotate, PageUp / PageDown for vertical tilt)
+  if (!panelOpen && !settingsOpen && !tourActive && (!cinematicDirector || !cinematicDirector.isActive()) && (!worldInteractions || !worldInteractions.isActive())) {
+    if (keys.has('KeyQ')) yaw += 2.4 * dt;
+    if (keys.has('BracketLeft')) yaw += 2.4 * dt;
+    if (keys.has('BracketRight')) yaw -= 2.4 * dt;
+    if (keys.has('PageUp')) pitch = THREE.MathUtils.clamp(pitch + 1.6 * dt, minPitch, maxPitch);
+    if (keys.has('PageDown')) pitch = THREE.MathUtils.clamp(pitch - 1.6 * dt, minPitch, maxPitch);
+  }
 
   // Over-the-shoulder offset for depth and framing
   const horizontal = cameraDistance * Math.cos(pitch);
@@ -1267,9 +1405,12 @@ function updateCamera(dt, timestamp) {
     physZ + Math.cos(yaw) * horizontal + shoulderZ
   );
 
-  // Ceiling height clamp: indoor camera height never exceeds 4.75m
+  // Ceiling height clamp: indoor camera height adapts between Ground Floor (max 5.0m) and Second Floor (max 10.2m)
   if (inHouse) {
-    cameraDesired.y = THREE.MathUtils.clamp(cameraDesired.y, 1.3, 4.75);
+    const isUpperFloor = physY > 3.0;
+    const minCamY = isUpperFloor ? 5.5 : 0.8;
+    const maxCamY = isUpperFloor ? 10.2 : 5.0;
+    cameraDesired.y = THREE.MathUtils.clamp(cameraDesired.y, minCamY, maxCamY);
   }
 
   const dx = cameraDesired.x - cameraTarget.x;
@@ -1308,14 +1449,15 @@ function updateRoomFromPosition() {
   let nearestDistance = Infinity;
   for (const room of portfolio.rooms) {
     const dx = room.position[0] - physX;
+    const dy = (room.position[1] !== undefined ? room.position[1] : 1.12) - physY;
     const dz = room.position[2] - physZ;
-    const distance = dx * dx + dz * dz;
+    const distance = dx * dx + dy * dy * 1.8 + dz * dz;
     if (distance < nearestDistance) {
       nearestDistance = distance;
       nearest = room;
     }
   }
-  if (nearest.id !== lastRoomVisited && nearestDistance < 20) {
+  if (nearest.id !== lastRoomVisited && nearestDistance < 25) {
     lastRoomVisited = nearest.id;
     currentRoom = nearest;
     updateRoomLabel(nearest);
@@ -1504,13 +1646,15 @@ function bindEvents() {
   window.addEventListener('resize', onResize, { passive: true });
 
   if (renderer) {
+    renderer.domElement.style.cursor = 'grab';
     renderer.domElement.addEventListener('pointerdown', (event) => {
-      if (event.target !== renderer.domElement || panelOpen || settingsOpen || (cinematicDirector && cinematicDirector.isActive()) || (worldInteractions && worldInteractions.isActive())) return;
+      if (panelOpen || settingsOpen || (cinematicDirector && cinematicDirector.isActive()) || (worldInteractions && worldInteractions.isActive())) return;
       if (mobile && event.pointerType === 'touch' && event.clientX < window.innerWidth * 0.38 && event.clientY > window.innerHeight * 0.55) return;
       pointerHeld = true;
       lastPointerX = event.clientX;
       lastPointerY = event.clientY;
-      renderer.domElement.setPointerCapture(event.pointerId);
+      renderer.domElement.style.cursor = 'grabbing';
+      try { renderer.domElement.setPointerCapture(event.pointerId); } catch (_) {}
     });
     renderer.domElement.addEventListener('pointermove', (event) => {
       if (!pointerHeld || paused || panelOpen || settingsOpen || (cinematicDirector && cinematicDirector.isActive()) || (worldInteractions && worldInteractions.isActive())) return;
@@ -1518,18 +1662,21 @@ function bindEvents() {
       const dy = event.clientY - lastPointerY;
       lastPointerX = event.clientX;
       lastPointerY = event.clientY;
-      const sensitivity = mobile ? 0.006 : 0.004;
+      const sensitivity = mobile ? 0.006 : 0.0045;
       yaw -= dx * sensitivity;
-      pitch = THREE.MathUtils.clamp(pitch + dy * sensitivity, -0.05, 0.72);
+      pitch = THREE.MathUtils.clamp(pitch + dy * sensitivity, -0.42, 0.88);
     });
-    const releasePointer = () => { pointerHeld = false; };
+    const releasePointer = () => {
+      pointerHeld = false;
+      if (renderer) renderer.domElement.style.cursor = 'grab';
+    };
     renderer.domElement.addEventListener('pointerup', releasePointer);
     renderer.domElement.addEventListener('pointercancel', releasePointer);
     renderer.domElement.addEventListener('lostpointercapture', releasePointer);
     renderer.domElement.addEventListener('wheel', (event) => {
       if ((cinematicDirector && cinematicDirector.isActive()) || (worldInteractions && worldInteractions.isActive())) return;
       event.preventDefault();
-      userZoom = THREE.MathUtils.clamp(userZoom + Math.sign(event.deltaY) * 0.08, 0.65, 1.45);
+      userZoom = THREE.MathUtils.clamp(userZoom + Math.sign(event.deltaY) * 0.07, 0.45, 2.2);
     }, { passive: false });
   }
 
@@ -1632,6 +1779,9 @@ function animate(timestamp) {
   updateRoomFromPosition();
   findInteraction();
   if (questSystem) questSystem.update(dt, elapsed, characterRig ? characterRig.character.position : null);
+  if (securityZone?.update) securityZone.update(dt);
+  if (farmZone?.update) farmZone.update(dt);
+  if (riceZone?.update) riceZone.update(dt);
 
   if (tourActive && tourWaitingAtStop) {
     tourWaitTimer -= dt;

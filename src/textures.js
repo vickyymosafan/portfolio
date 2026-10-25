@@ -95,6 +95,19 @@ export function createSurfaceTexture(kind, width = 256, height = 256) {
     for (let y = 0; y <= height; y += sz) {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
     }
+  } else if (kind === 'bathroomTiles') {
+    // Elegant bright white/cyan ceramic grid tiles
+    ctx.fillStyle = '#f0f7f8';
+    ctx.fillRect(0, 0, width, height);
+    ctx.strokeStyle = '#c4dadc';
+    ctx.lineWidth = 2;
+    const sz = width / 8;
+    for (let x = 0; x <= width; x += sz) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+    }
+    for (let y = 0; y <= height; y += sz) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+    }
   } else if (kind === 'shingles') {
     // Stylized scalloped roof shingles
     ctx.fillStyle = '#426b54';
@@ -267,3 +280,670 @@ export function createPaintingTexture(theme, width = 256, height = 256) {
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }
+
+export function createCarpetTexture(theme = 'persian', width = 512, height = 512) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  if (theme === 'persian') {
+    // Rich ruby/crimson Persian rug with ivory and navy medallion
+    ctx.fillStyle = '#8c2626';
+    ctx.fillRect(0, 0, width, height);
+
+    // Outer and inner decorative borders
+    ctx.strokeStyle = '#e6cb8b';
+    ctx.lineWidth = 14;
+    ctx.strokeRect(16, 16, width - 32, height - 32);
+
+    ctx.strokeStyle = '#1d3557';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(32, 32, width - 64, height - 64);
+
+    ctx.strokeStyle = '#e6cb8b';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(44, 44, width - 88, height - 88);
+
+    // Four corner floral motifs
+    const corners = [
+      [56, 56],
+      [width - 56, 56],
+      [56, height - 56],
+      [width - 56, height - 56],
+    ];
+    for (const [cx, cy] of corners) {
+      ctx.fillStyle = '#1d3557';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 32, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#e6cb8b';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Central Ornate Medallion
+    const centerX = width * 0.5;
+    const centerY = height * 0.5;
+
+    ctx.fillStyle = '#1d3557';
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, 110, 80, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#e6cb8b';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+
+    ctx.fillStyle = '#f7eed2';
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, 75, 52, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#8c2626';
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, 42, 28, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Fringe on top & bottom edges
+    ctx.strokeStyle = '#fbf8f0';
+    ctx.lineWidth = 2;
+    for (let x = 12; x < width - 12; x += 6) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, 10);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, height - 10);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
+  } else {
+    // Modern geometric Bauhaus rug (sand, terracotta, sage)
+    ctx.fillStyle = '#eee4cf';
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = '#d96a4a';
+    ctx.beginPath();
+    ctx.arc(width * 0.35, height * 0.4, 120, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#517a6a';
+    ctx.fillRect(width * 0.45, height * 0.2, 140, 220);
+
+    ctx.fillStyle = '#e5ab51';
+    ctx.beginPath();
+    ctx.arc(width * 0.65, height * 0.7, 95, 0, Math.PI);
+    ctx.fill();
+
+    ctx.strokeStyle = '#2b443a';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(width * 0.1, height * 0.85);
+    ctx.lineTo(width * 0.9, height * 0.85);
+    ctx.stroke();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+export function createScreenCodeTexture(width = 512, height = 320) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  // Dark IDE editor background
+  ctx.fillStyle = '#181e24';
+  ctx.fillRect(0, 0, width, height);
+
+  // Top tab bar
+  ctx.fillStyle = '#12161a';
+  ctx.fillRect(0, 0, width, 30);
+  ctx.fillStyle = '#222931';
+  ctx.fillRect(10, 4, 150, 26);
+  ctx.fillStyle = '#4cd3a8';
+  ctx.font = '700 12px monospace';
+  ctx.fillText('• main.ts', 24, 21);
+
+  // Left sidebar & line numbers gutter
+  ctx.fillStyle = '#151a1e';
+  ctx.fillRect(0, 30, 42, height - 30);
+  ctx.fillStyle = '#4f6272';
+  ctx.font = '11px monospace';
+  for (let i = 1; i <= 14; i += 1) {
+    ctx.fillText(String(i).padStart(2, ' '), 12, 38 + i * 18);
+  }
+
+  // Code syntax tokens
+  const lines = [
+    { text: 'import { World, Physics } from "@mansion/engine";', color: '#c586c0' },
+    { text: 'export class VickyEstate extends World {', color: '#4ec9b0' },
+    { text: '  private architect = new ArchitectEngineer();', color: '#9cdcfe' },
+    { text: '  public async initAutonomousWorld() {', color: '#dcdcaa' },
+    { text: '    const agents = await this.spawnNPCs();', color: '#ce9178' },
+    { text: '    this.physics.enableRapierWASM();', color: '#4ec9b0' },
+    { text: '    this.bmwMSeries.igniteEngine();', color: '#9cdcfe' },
+    { text: '    return { status: "200 OK", fps: 60 };', color: '#dcdcaa' },
+    { text: '  }', color: '#d4d4d4' },
+    { text: '}', color: '#d4d4d4' },
+  ];
+
+  let y = 56;
+  for (const line of lines) {
+    ctx.fillStyle = line.color;
+    ctx.font = '13px "Fira Code", monospace';
+    ctx.fillText(line.text, 54, y);
+    y += 18;
+  }
+
+  // Bottom terminal mini-status bar
+  ctx.fillStyle = '#0f1316';
+  ctx.fillRect(42, height - 34, width - 42, 34);
+  ctx.fillStyle = '#38d39f';
+  ctx.font = '600 11px monospace';
+  ctx.fillText('✓ 213/213 tests passed [vite v8.3.4 building clean]', 54, height - 14);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+export function createTerminalTexture(width = 512, height = 320) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#0f141c';
+  ctx.fillRect(0, 0, width, height);
+
+  // Terminal header
+  ctx.fillStyle = '#1c2430';
+  ctx.fillRect(0, 0, width, 26);
+  ctx.fillStyle = '#ff5f56';
+  ctx.beginPath(); ctx.arc(16, 13, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#ffbd2e';
+  ctx.beginPath(); ctx.arc(32, 13, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#27c93f';
+  ctx.beginPath(); ctx.arc(48, 13, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#8ea1b4';
+  ctx.font = '600 11px monospace';
+  ctx.fillText('vicky@mansion-core: ~/projects/portfolio', 70, 17);
+
+  // Terminal logs
+  const logs = [
+    { text: '$ git status -s', color: '#8ea1b4' },
+    { text: 'M src/worldInteractions.js [Elevation guard active]', color: '#56d364' },
+    { text: 'M src/zenGarden.js [Hexagonal bench aligned]', color: '#56d364' },
+    { text: 'M src/poolArea.js [Recessed basin verified]', color: '#56d364' },
+    { text: '$ node test/verifyGeometry.js', color: '#8ea1b4' },
+    { text: '✓ 111 of 111 geometry tests passed', color: '#58a6ff' },
+    { text: '$ node test/verifyInteractions.js', color: '#8ea1b4' },
+    { text: '✓ 213 of 213 interaction tests passed', color: '#58a6ff' },
+    { text: '$ pnpm run dev --host', color: '#8ea1b4' },
+    { text: '  VITE v8.3.4 ready in 457 ms (60 FPS)', color: '#38d39f' },
+    { text: '  ➜ Local: http://localhost:4173/', color: '#79c0ff' },
+    { text: 'vicky@mansion-core:~$ █', color: '#56d364' },
+  ];
+
+  let y = 50;
+  for (const log of logs) {
+    ctx.fillStyle = log.color;
+    ctx.font = '12px "Fira Code", monospace';
+    ctx.fillText(log.text, 20, y);
+    y += 21;
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+export function createCadScreenTexture(width = 512, height = 320) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#14181f';
+  ctx.fillRect(0, 0, width, height);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(78, 201, 176, 0.12)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < width; x += 24) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+  }
+  for (let y = 0; y < height; y += 24) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+  }
+
+  // 3D Mansion Wireframe CAD Isometric Render
+  ctx.strokeStyle = '#4ec9b0';
+  ctx.lineWidth = 2;
+  const cx = width * 0.5;
+  const cy = height * 0.5;
+  ctx.strokeRect(cx - 140, cy - 60, 280, 120);
+  ctx.strokeRect(cx - 100, cy - 100, 200, 40);
+  ctx.beginPath();
+  ctx.moveTo(cx - 100, cy - 100);
+  ctx.lineTo(cx, cy - 130);
+  ctx.lineTo(cx + 100, cy - 100);
+  ctx.stroke();
+
+  // Coordinates & telemetry HUD
+  ctx.fillStyle = '#61afef';
+  ctx.font = '600 11px monospace';
+  ctx.fillText('ESTATE 3D ARCHITECTURAL METRICS', 24, 28);
+  ctx.fillStyle = '#98c379';
+  ctx.fillText('FOOTPRINT: 42.5m x 22.2m | ELEV: 10.4m', 24, 46);
+  ctx.fillStyle = '#e5c07b';
+  ctx.fillText('RAPID DYNAMICS: 60 FPS | 82 COLLIDERS', 24, height - 16);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+export function createWhiteboardTexture(width = 512, height = 280) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  // Whiteboard glossy melamine surface
+  ctx.fillStyle = '#fafbfa';
+  ctx.fillRect(0, 0, width, height);
+
+  // Architecture Diagram Nodes
+  const drawNode = (x, y, w, h, label, strokeColor, fillColor) => {
+    ctx.fillStyle = fillColor;
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = strokeColor;
+    ctx.font = '800 12px "DM Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x + w * 0.5, y + h * 0.55);
+  };
+
+  drawNode(30, 40, 110, 48, 'Client UI / App', '#2b5876', '#eaf2f8');
+  drawNode(190, 40, 130, 48, 'Agentic Orchestrator', '#8e24aa', '#f3e5f5');
+  drawNode(370, 40, 110, 48, 'Rapier 3D Physics', '#d84315', '#fbe9e7');
+  drawNode(190, 140, 130, 52, 'Three.js / WebGL', '#2e7d32', '#e8f5e9');
+
+  // Connecting arrows
+  ctx.strokeStyle = '#455a64';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(140, 64);
+  ctx.lineTo(190, 64);
+  ctx.moveTo(320, 64);
+  ctx.lineTo(370, 64);
+  ctx.moveTo(255, 88);
+  ctx.lineTo(255, 140);
+  ctx.stroke();
+
+  // Sticky notes in corner
+  const drawSticky = (x, y, text, color) => {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, 62, 58);
+    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+    ctx.strokeRect(x, y, 62, 58);
+    ctx.fillStyle = '#263238';
+    ctx.font = '600 10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(text, x + 6, y + 20);
+  };
+
+  drawSticky(30, 170, 'Phase 1 ✓', '#fff59d');
+  drawSticky(100, 170, 'Mansion ✓', '#ffcc80');
+  drawSticky(380, 170, 'Deploy !', '#a7ffeb');
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+export function createMusicTrackTexture(width = 512, height = 256) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#1c1f24';
+  ctx.fillRect(0, 0, width, height);
+
+  const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'];
+  const names = ['Lead Synth', 'Bassline', 'Kick & Snare', 'Atmosphere'];
+
+  for (let i = 0; i < 4; i += 1) {
+    const y = 20 + i * 56;
+    ctx.fillStyle = '#252a30';
+    ctx.fillRect(10, y, width - 20, 48);
+
+    ctx.fillStyle = colors[i];
+    ctx.font = '700 11px sans-serif';
+    ctx.fillText(names[i], 20, y + 18);
+
+    // Audio waveform simulation
+    ctx.strokeStyle = colors[i];
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(110, y + 24);
+    for (let x = 110; x < width - 30; x += 4) {
+      const h = Math.sin((x + i * 20) * 0.15) * (8 + (i % 2) * 8);
+      ctx.lineTo(x, y + 24 + h);
+    }
+    ctx.stroke();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+export function createWallArtTexture(theme = 'modern', width = 512, height = 360) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  if (theme === 'modern') {
+    // Warm abstract composition with soft arches and terracotta circles
+    ctx.fillStyle = '#f8f4ec';
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = '#c75941';
+    ctx.beginPath();
+    ctx.arc(width * 0.35, height * 0.45, 110, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#476f5d';
+    ctx.beginPath();
+    ctx.roundRect(width * 0.45, height * 0.2, 130, 200, [65, 65, 0, 0]);
+    ctx.fill();
+
+    ctx.fillStyle = '#e8b857';
+    ctx.beginPath();
+    ctx.ellipse(width * 0.65, height * 0.72, 75, 45, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // Minimalist architectural landscape with sun and sea
+    ctx.fillStyle = '#e6edf0';
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = '#ea8468';
+    ctx.beginPath();
+    ctx.arc(width * 0.5, height * 0.4, 75, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#315560';
+    ctx.beginPath();
+    ctx.moveTo(0, height);
+    ctx.lineTo(width, height);
+    ctx.lineTo(width, height * 0.58);
+    ctx.bezierCurveTo(width * 0.6, height * 0.55, width * 0.3, height * 0.65, 0, height * 0.6);
+    ctx.fill();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+/**
+ * Creates luxury swimming pool mosaic glass tile texture
+ */
+export function createPoolMosaicTexture(width = 512, height = 512) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  // Grout background
+  ctx.fillStyle = '#b2ebf2';
+  ctx.fillRect(0, 0, width, height);
+
+  const gridSize = 16;
+  const tileSize = width / gridSize;
+  const gap = 3;
+
+  const blues = ['#00b4d8', '#0096c7', '#0077b6', '#48cae4', '#90e0ef'];
+  for (let r = 0; r < gridSize; r += 1) {
+    for (let c = 0; c < gridSize; c += 1) {
+      const idx = (r * 13 + c * 7 + (r ^ c)) % blues.length;
+      ctx.fillStyle = blues[idx];
+      ctx.fillRect(c * tileSize + gap, r * tileSize + gap, tileSize - gap * 2, tileSize - gap * 2);
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(4, 4);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+/**
+ * Creates shimmering caustic ripple texture for luxury pool water
+ */
+export function createWaterRipplesTexture(width = 512, height = 512) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  // Deep crystal turquoise base
+  ctx.fillStyle = '#00acc1';
+  ctx.fillRect(0, 0, width, height);
+
+  // Soft light caustic webs
+  ctx.strokeStyle = 'rgba(224, 247, 250, 0.45)';
+  ctx.lineWidth = 3.5;
+  for (let i = 0; i < 45; i += 1) {
+    const cx = (i * 73) % width;
+    const cy = (i * 91) % height;
+    const r = 25 + (i % 30);
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r, r * 0.65, (i * 0.4), 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(3, 3);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+/**
+ * Creates dark asphalt driveway and parking court surface texture
+ */
+export function createAsphaltTexture(width = 512, height = 512) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#26292e';
+  ctx.fillRect(0, 0, width, height);
+
+  // Fine aggregate speckles
+  for (let i = 0; i < 2500; i += 1) {
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+    const bright = 40 + Math.random() * 35;
+    ctx.fillStyle = `rgb(${bright}, ${bright + 2}, ${bright + 4})`;
+    ctx.fillRect(x, y, 1.5, 1.5);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(6, 6);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+/**
+ * Creates radial cobblestone paver pattern for central fountain roundabout
+ */
+export function createCobbleCircleTexture(width = 512, height = 512) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#d7ceb9';
+  ctx.fillRect(0, 0, width, height);
+
+  const cx = width * 0.5;
+  const cy = height * 0.5;
+
+  ctx.strokeStyle = '#9e9484';
+  ctx.lineWidth = 2.5;
+
+  // Concentric stone rings
+  const ringStep = 28;
+  for (let r = ringStep; r < width * 0.5; r += ringStep) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const stonesInRing = Math.floor((Math.PI * 2 * r) / 22);
+    for (let s = 0; s < stonesInRing; s += 1) {
+      const angle = (s / stonesInRing) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(angle) * (r - ringStep), cy + Math.sin(angle) * (r - ringStep));
+      ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+      ctx.stroke();
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+/**
+ * Creates luxury resort striped awning texture for pool umbrellas & cabana accents
+ */
+export function createStripedAwningTexture(stripeColor = '#2b5876', creamColor = '#fcf8f0', width = 256, height = 256) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = creamColor;
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = stripeColor;
+  const stripeW = 32;
+  for (let x = 0; x < width; x += stripeW * 2) {
+    ctx.fillRect(x, 0, stripeW, height);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(4, 1);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+/**
+ * Creates luxury entrance monument plaque texture matching Vicky's World Map
+ */
+export function createMonumentSignTexture(variant = 'main', width = 512, height = 256) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  if (variant === 'main') {
+    // Dark matte bronze/slate background
+    ctx.fillStyle = '#1c242b';
+    ctx.fillRect(0, 0, width, height);
+
+    // Gold brass border
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(10, 10, width - 20, height - 20);
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(18, 18, width - 36, height - 36);
+
+    // Decorative corner rivets
+    ctx.fillStyle = '#f3ce5c';
+    for (const [rx, ry] of [[24, 24], [width - 24, 24], [24, height - 24], [width - 24, height - 24]]) {
+      ctx.beginPath();
+      ctx.arc(rx, ry, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Main title: VICKY'S WORLD
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#f7d770';
+    ctx.font = 'bold 36px "Nunito", sans-serif';
+    ctx.fillText("VICKY'S WORLD", width * 0.5, height * 0.44);
+
+    // Decorative divider line with center diamond
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(width * 0.2, height * 0.56);
+    ctx.lineTo(width * 0.8, height * 0.56);
+    ctx.stroke();
+
+    ctx.fillStyle = '#f7d770';
+    ctx.beginPath();
+    ctx.arc(width * 0.5, height * 0.56, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Subtitle: DEVELOPER · CREATOR · EXPLORER
+    ctx.fillStyle = '#c5d0d8';
+    ctx.font = '600 16px "DM Sans", sans-serif';
+    ctx.letterSpacing = '2px';
+    ctx.fillText('DEVELOPER  •  CREATOR  •  EXPLORER', width * 0.5, height * 0.74);
+  } else {
+    // Welcome plaque
+    ctx.fillStyle = '#1e262c';
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(8, 8, width - 16, height - 16);
+
+    // Coral V badge on the left
+    ctx.fillStyle = '#e8654d';
+    ctx.beginPath();
+    ctx.roundRect(32, 54, 72, 72, 18);
+    ctx.fill();
+    ctx.fillStyle = '#fffdfa';
+    ctx.font = '900 44px "Nunito", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('V', 68, 108);
+
+    // Text on the right
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#a8b6be';
+    ctx.font = '500 15px "DM Sans", sans-serif';
+    ctx.fillText('Welcome to', 124, 76);
+
+    ctx.fillStyle = '#fffdfa';
+    ctx.font = '800 24px "Nunito", sans-serif';
+    ctx.fillText('VICKY MOSAFAN', 124, 106);
+
+    ctx.fillStyle = '#d4af37';
+    ctx.font = '700 13px "DM Sans", sans-serif';
+    ctx.fillText('CREATIVE DEVELOPER', 124, 126);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+

@@ -254,11 +254,14 @@ export class WorldInteractionManager {
   /**
    * Find nearest interactable seat within range
    */
-  getNearbySeat(px, pz) {
+  getNearbySeat(px, pz, py = undefined) {
     if (!isFiniteNumber(px) || !isFiniteNumber(pz)) return null;
     let nearest = null;
     let nearestDist = Infinity;
     for (const seat of this.seats) {
+      if (py !== undefined && isFiniteNumber(py) && Math.abs(py - seat.pos[1]) > 2.4) {
+        continue;
+      }
       const dx = px - seat.pos[0];
       const dz = pz - seat.pos[2];
       const dist = Math.hypot(dx, dz);
@@ -293,7 +296,7 @@ export class WorldInteractionManager {
    * State Machine Lifecycle: Sitting Interaction
    * IDLE -> VALIDATING -> APPROACHING -> PLAYING_CINEMATIC (Seated Idle) -> RESTORING -> IDLE
    */
-  toggleSit(px, pz, playerState = {}) {
+  toggleSit(px, pz, playerState = {}, py = undefined) {
     // 1. If currently seated, stand up
     if (this.mode === InteractionMode.SITTING) {
       if (this.lifecycleState === InteractionState.PLAYING_CINEMATIC) {
@@ -310,7 +313,7 @@ export class WorldInteractionManager {
 
     // 3. VALIDATING
     this.lifecycleState = InteractionState.VALIDATING;
-    const seat = this.getNearbySeat(px, pz);
+    const seat = this.getNearbySeat(px, pz, py);
     if (!seat) {
       this.lifecycleState = InteractionState.IDLE;
       return false;

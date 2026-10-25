@@ -152,93 +152,95 @@ export class CinematicDirector {
    */
   computeSectionShot(room, content, playerState) {
     const rx = room.position[0];
+    const ry = room.position[1] !== undefined ? room.position[1] : 0;
     const rz = room.position[2];
-    const isLeftBay = rx < 0;
+    const isUpper = ry > 2.0;
 
-    // Indoor bounds: Ceiling at 5.2m, floor at 0m. Keep camera y <= 3.8m for spacious low/medium angle
     let camX, camY, camZ, lookX, lookY, lookZ, charFacing;
 
     switch (room.id) {
       case 'about':
-        // Living room: Medium shot framing character & easel board
-        camX = isLeftBay ? -5.4 : 5.4;
-        camY = 1.95;
-        camZ = rz + 2.4;
-        lookX = rx - 0.4;
-        lookY = 2.15;
-        lookZ = rz - 3.2;
-        charFacing = 0.28;
+        // Living room: Ground floor center (rx = 0, rz = 0.5)
+        camX = rx + 1.8;
+        camY = ry + 1.95;
+        camZ = rz + 2.6;
+        lookX = rx - 1.2;
+        lookY = ry + 1.9;
+        lookZ = rz - 3.0;
+        charFacing = -0.3;
         break;
 
       case 'skills':
-        // Engineering workshop: Closer over-the-desk framing towards monitors & wall board
-        camX = 5.6;
-        camY = 1.88;
+        // Home office: Ground floor right (rx = 10.75, rz = -1.5)
+        camX = rx - 2.4;
+        camY = ry + 1.88;
         camZ = rz + 2.5;
-        lookX = rx + 0.3;
-        lookY = 2.2;
+        lookX = rx + 1.4;
+        lookY = ry + 1.9;
         lookZ = rz - 3.4;
-        charFacing = -0.32;
-        break;
-
-      case 'experience':
-        // Library nook: Cozy bookish framing with soft low angle
-        camX = -5.5;
-        camY = 1.9;
-        camZ = rz + 2.4;
-        lookX = rx - 0.2;
-        lookY = 2.1;
-        lookZ = rz - 3.2;
-        charFacing = 0.25;
+        charFacing = 0.35;
         break;
 
       case 'projects':
-        // Project gallery: Showcase angle highlighting the center easel gallery
-        camX = 5.5;
-        camY = 1.85;
+        // Project gallery: Ground floor left (rx = -11.0, rz = -1.5)
+        camX = rx + 2.4;
+        camY = ry + 1.85;
         camZ = rz + 2.5;
-        lookX = rx + 0.2;
-        lookY = 2.15;
+        lookX = rx - 1.4;
+        lookY = ry + 1.9;
         lookZ = rz - 3.2;
-        charFacing = -0.28;
+        charFacing = -0.35;
+        break;
+
+      case 'experience':
+        // Library nook: Upper floor right (rx = 10.5, ry = 5.2, rz = -1.5)
+        camX = rx - 2.2;
+        camY = ry + 1.88;
+        camZ = rz + 2.5;
+        lookX = rx + 1.4;
+        lookY = ry + 1.9;
+        lookZ = rz - 3.2;
+        charFacing = 0.35;
         break;
 
       case 'process':
-        // Creative studio: Studio workbench framing
-        camX = -5.4;
-        camY = 1.92;
-        camZ = rz + 2.4;
-        lookX = rx - 0.3;
-        lookY = 2.1;
+        // Creative studio: Upper floor far right (rx = 21.0, ry = 5.2, rz = -1.5)
+        camX = rx - 2.2;
+        camY = ry + 1.88;
+        camZ = rz + 2.5;
+        lookX = rx + 1.4;
+        lookY = ry + 1.9;
         lookZ = rz - 3.2;
-        charFacing = 0.3;
+        charFacing = 0.35;
         break;
 
       case 'contact':
-        // Garden terrace: Warm wide terrace composition
-        camX = 5.4;
-        camY = 1.95;
-        camZ = rz + 2.5;
-        lookX = rx + 0.2;
-        lookY = 2.05;
-        lookZ = rz - 3.2;
-        charFacing = -0.25;
+        // Garden terrace (rx = 0.0, rz = -22.5)
+        camX = rx - 2.4;
+        camY = ry + 1.95;
+        camZ = rz + 2.6;
+        lookX = rx + 1.4;
+        lookY = ry + 1.9;
+        lookZ = rz - 2.5;
+        charFacing = 0.35;
         break;
 
       default:
         camX = rx;
-        camY = 2.1;
+        camY = ry + 2.1;
         camZ = rz + 3.0;
         lookX = rx;
-        lookY = 1.8;
+        lookY = ry + 1.8;
         lookZ = rz - 1.0;
         charFacing = 0;
         break;
     }
 
-    // Collision safety clamps: ensure camera stays inside room bays & below ceiling line
-    camY = THREE.MathUtils.clamp(camY, 1.4, 3.8);
-    if (camZ < -20.0) camZ = -20.0;
+    // Floor-aware height clamps
+    const minY = isUpper ? 6.2 : 1.4;
+    const maxY = isUpper ? 9.2 : 4.2;
+    camY = THREE.MathUtils.clamp(camY, minY, maxY);
+    if (camZ < -26.0) camZ = -26.0;
     if (camZ > 4.5 && room.id !== 'yard') camZ = 4.2;
 
     return {

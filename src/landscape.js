@@ -226,19 +226,20 @@ export function createGardenFence(parent) {
   parent.add(fenceGroup);
   const batch = new BatchCollector();
 
-  // Left and Right Boundary Picket Fences (x = ±16.8 to frame 28m house)
-  for (const side of [-1, 1]) {
-    const x = side * 16.8;
+  // Left and Right Boundary Picket Fences (framing expanded estate perimeter)
+  const fenceSides = [-45.5, 48.5];
+  for (const x of fenceSides) {
+    const side = x < 0 ? -1 : 1;
     // Stone foundation curb
-    batch.addBox([x, 0.15, -6.0], [0.4, 0.3, 34], materials.stone);
+    batch.addBox([x, 0.15, -10.0], [0.4, 0.3, 68], materials.stone);
 
     // Fence Posts & Rails
-    for (let z = -22.5; z <= 10.5; z += 2.4) {
+    for (let z = -44.0; z <= 24.0; z += 2.8) {
       batch.addBox([x, 0.75, z], [0.22, 1.1, 0.22], materials.trim);
       batch.addCylinder([x, 1.34, z], 0.02, 0.16, 0.16, materials.trim, { segments: 4, rotation: [0, Math.PI * 0.25, 0] });
 
       // Warm lantern on alternating posts
-      if (Math.abs(z % 4.8) < 0.5) {
+      if (Math.abs(z % 5.6) < 0.6) {
         batch.addCylinder([x - side * 0.22, 1.05, z], 0.03, 0.03, 0.3, materials.brass);
         batch.addBox([x - side * 0.28, 1.2, z], [0.18, 0.24, 0.18], materials.brass);
         addSphere(fenceGroup, [x - side * 0.28, 1.2, z], [0.12, 0.14, 0.12], materials.glow, { shadow: false });
@@ -246,46 +247,14 @@ export function createGardenFence(parent) {
     }
 
     // Horizontal rails
-    batch.addBox([x, 0.52, -6.0], [0.12, 0.1, 33], materials.trim);
-    batch.addBox([x, 0.95, -6.0], [0.12, 0.1, 33], materials.trim);
+    batch.addBox([x, 0.52, -10.0], [0.12, 0.1, 68], materials.trim);
+    batch.addBox([x, 0.95, -10.0], [0.12, 0.1, 68], materials.trim);
 
     // Vertical pickets
-    for (let z = -22; z <= 10; z += 0.48) {
+    for (let z = -43.8; z <= 23.8; z += 0.52) {
       batch.addBox([x + side * 0.08, 0.76, z], [0.06, 0.78, 0.18], materials.trim);
       batch.addCylinder([x + side * 0.08, 1.18, z], 0.01, 0.09, 0.12, materials.trim, { segments: 4 });
     }
-  }
-
-  // Front Entrance Gate Posts with Handcrafted Carriage Lanterns (x = ±3.4 at z = 16.5)
-  for (const side of [-1, 1]) {
-    const gx = side * 3.4;
-    // Layered stone pillar with decorative capital
-    batch.addBox([gx, 0.95, 16.5], [0.72, 1.9, 0.72], materials.stone);
-    batch.addBox([gx, 1.94, 16.5], [0.86, 0.12, 0.86], materials.trim);
-    batch.addBox([gx, 2.03, 16.5], [0.56, 0.08, 0.56], materials.trim);
-
-    // Cast iron lantern pedestal
-    batch.addCylinder([gx, 2.11, 16.5], 0.16, 0.22, 0.08, materials.metalDark, { segments: 12 });
-
-    // Lantern glass enclosure & dark corner posts
-    batch.addBox([gx, 2.42, 16.5], [0.36, 0.52, 0.36], materials.glass);
-    for (const cx of [-1, 1]) {
-      for (const cz of [-1, 1]) {
-        batch.addBox([gx + cx * 0.17, 2.42, 16.5 + cz * 0.17], [0.035, 0.52, 0.035], materials.metalDark);
-      }
-    }
-
-    // Warm glowing candle inside
-    addSphere(fenceGroup, [gx, 2.4, 16.5], [0.09, 0.14, 0.09], materials.glow, { shadow: false });
-
-    // Pyramid lantern roof & brass finial
-    batch.addCylinder([gx, 2.72, 16.5], 0.04, 0.44, 0.14, materials.metalDark, { segments: 4, rotation: [0, Math.PI * 0.25, 0] });
-    batch.addSphere([gx, 2.82, 16.5], [0.055, 0.055, 0.055], materials.brass, { shadow: false });
-
-    // Soft warm point light illuminating stone entrance
-    const gateLight = new THREE.PointLight(0xffdf99, 1.2, 7.0, 1.8);
-    gateLight.position.set(gx, 2.42, 16.5);
-    fenceGroup.add(gateLight);
   }
 
   batch.build(fenceGroup, true);

@@ -1,5 +1,20 @@
 import * as THREE from 'three';
-import { createSurfaceTexture } from './textures.js';
+import {
+  createSurfaceTexture,
+  createCarpetTexture,
+  createScreenCodeTexture,
+  createTerminalTexture,
+  createCadScreenTexture,
+  createWhiteboardTexture,
+  createMusicTrackTexture,
+  createWallArtTexture,
+  createPoolMosaicTexture,
+  createWaterRipplesTexture,
+  createAsphaltTexture,
+  createCobbleCircleTexture,
+  createStripedAwningTexture,
+  createMonumentSignTexture,
+} from './textures.js';
 
 export const palette = {
   // Architectural surfaces
@@ -61,6 +76,7 @@ export const textures = {
   fabric: createSurfaceTexture('fabric', 256, 256),
   tiles: createSurfaceTexture('tiles', 256, 256),
   shingles: createSurfaceTexture('shingles', 256, 256),
+  bathroomTiles: createSurfaceTexture('bathroomTiles', 256, 256),
 };
 
 // Texture repeat settings for appropriate scale
@@ -70,6 +86,7 @@ textures.stone.repeat.set(2.5, 2.5);
 textures.fabric.repeat.set(3, 3);
 textures.tiles.repeat.set(2, 2);
 textures.shingles.repeat.set(4, 2);
+textures.bathroomTiles.repeat.set(4, 4);
 
 const std = (color, roughness = 0.76, options = {}) =>
   new THREE.MeshStandardMaterial({
@@ -190,9 +207,147 @@ export const materials = {
   cushionYellow: std(palette.yellowSun, 0.68, { map: textures.fabric }),
   cushionBlue: std(palette.bluePastel, 0.68, { map: textures.fabric }),
 
+  // Luxury Mansion Interiors
+  epoxyFloor: std(0x282c30, 0.28, { metalness: 0.15 }),
+  bathroomTile: std(0xf2f8f9, 0.22, { map: textures.bathroomTiles, roughness: 0.25 }),
+  bedLinen: std(0xfbf8f2, 0.75, { map: textures.fabric }),
+  bedLinenDark: std(0x2d3a44, 0.72, { map: textures.fabric }),
+  acousticFoam: std(0x222629, 0.92, { roughness: 0.95 }),
+
+  // Automotive & Luxury Garage Materials (BMW M-Series)
+  carPaintWhite: new THREE.MeshPhysicalMaterial({
+    color: 0xfdfdfd,
+    roughness: 0.12,
+    metalness: 0.05,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.06,
+  }),
+  carGlass: new THREE.MeshPhysicalMaterial({
+    color: 0x182632,
+    transparent: true,
+    opacity: 0.62,
+    roughness: 0.05,
+    metalness: 0.12,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.04,
+  }),
+  carChrome: std(0xeef2f6, 0.15, { metalness: 0.92 }),
+  carRubber: std(0x181a1c, 0.88, { metalness: 0.02 }),
+
+  // Leisure & Water
+  poolWater: new THREE.MeshPhysicalMaterial({
+    color: 0x48b8c8,
+    transparent: true,
+    opacity: 0.65,
+    roughness: 0.12,
+    metalness: 0.04,
+    transmission: 0.6,
+  }),
+
   // Lighting & Screens
   screen: new THREE.MeshBasicMaterial({ color: palette.screenDark }),
   screenGlow: new THREE.MeshBasicMaterial({ color: 0x60c5ba }),
+  screenCode: new THREE.MeshBasicMaterial({ map: createScreenCodeTexture() }),
+  screenTerminal: new THREE.MeshBasicMaterial({ map: createTerminalTexture() }),
+  screenCad: new THREE.MeshBasicMaterial({ map: createCadScreenTexture() }),
+  whiteboardDiagram: new THREE.MeshStandardMaterial({ map: createWhiteboardTexture(), roughness: 0.32, metalness: 0.02 }),
+  screenDAW: new THREE.MeshBasicMaterial({ map: createMusicTrackTexture() }),
   glow: new THREE.MeshBasicMaterial({ color: palette.glowWarm }),
   fire: new THREE.MeshBasicMaterial({ color: 0xffaa33 }),
+  fireEmber: new THREE.MeshBasicMaterial({ color: 0xff3b10 }),
+
+  // Decorative Carpets & Fine Arts
+  carpetPersian: std(0xffffff, 0.82, { map: createCarpetTexture('persian') }),
+  carpetBauhaus: std(0xffffff, 0.82, { map: createCarpetTexture('bauhaus') }),
+  artModern: new THREE.MeshStandardMaterial({ map: createWallArtTexture('modern'), roughness: 0.58 }),
+  artLandscape: new THREE.MeshStandardMaterial({ map: createWallArtTexture('landscape'), roughness: 0.58 }),
+  mirror: new THREE.MeshStandardMaterial({ color: 0xd8edf0, roughness: 0.04, metalness: 0.95 }),
+  woodSlats: std(0x281c15, 0.62),
+  velvetBlue: std(0x192e47, 0.72, { map: textures.fabric }),
+  velvetGold: std(0xba8c2e, 0.55),
+  carPaintBlue: new THREE.MeshPhysicalMaterial({ color: 0x1b4b8a, roughness: 0.12, metalness: 0.25, clearcoat: 1.0, clearcoatRoughness: 0.05 }),
+
+  // Woods & Stones
+  woodWarm: std(palette.woodWarm, 0.68, { map: textures.wood }),
+  woodEspresso: std(palette.woodEspresso, 0.65, { map: textures.wood }),
+  stoneWarm: std(palette.stoneWarm, 0.84, { map: textures.stone }),
+  stoneDark: std(palette.stoneDark, 0.86, { map: textures.stone }),
+  coralDark: std(palette.coralDark, 0.72, { map: textures.fabric }),
+  pinkRose: std(palette.pinkRose, 0.75, { map: textures.fabric }),
+  blueSky: std(palette.blueSky, 0.72, { map: textures.fabric }),
+  yellowSun: std(palette.yellowSun, 0.74, { map: textures.fabric }),
+
+  // Phase 3: Exterior Estate, Pool, Driveway & Zen Garden
+  poolTile: std(0xffffff, 0.22, { map: createPoolMosaicTexture(), roughness: 0.18 }),
+  poolWaterShimmer: new THREE.MeshPhysicalMaterial({
+    map: createWaterRipplesTexture(),
+    color: 0x48b8c8,
+    transparent: true,
+    opacity: 0.72,
+    roughness: 0.1,
+    metalness: 0.05,
+    transmission: 0.5,
+  }),
+  asphaltRoad: std(0xffffff, 0.88, { map: createAsphaltTexture(), roughness: 0.9 }),
+  cobbleCircle: std(0xffffff, 0.75, { map: createCobbleCircleTexture(), roughness: 0.8 }),
+  sakuraBlossom: std(0xffb7c5, 0.78),
+  waterfallPond: new THREE.MeshPhysicalMaterial({
+    color: 0x2299aa,
+    transparent: true,
+    opacity: 0.75,
+    roughness: 0.14,
+    transmission: 0.4,
+  }),
+  graniteRock: std(0x6e7278, 0.85, { roughness: 0.92 }),
+  umbrellaStriped: std(0xffffff, 0.68, { map: createStripedAwningTexture('#2b5876', '#fefaf0') }),
+  umbrellaYellowStriped: std(0xffffff, 0.68, { map: createStripedAwningTexture('#e69530', '#fffbf2') }),
+  gazeboRoof: std(0x2d221c, 0.75, { map: textures.shingles }),
+
+  // Phase 4: Agricultural Environment (Barn, Silo, Hay, Cattle, Chickens, Fish, Rice Paddies & Machinery)
+  barnRed: std(0xa82e28, 0.72, { map: textures.wood }),
+  barnWhite: std(0xfaf7f2, 0.65),
+  barnRoof: std(0x323a42, 0.7),
+  siloMetal: std(0xb4bcc4, 0.32, { metalness: 0.55 }),
+  siloDome: std(0x8e98a2, 0.28, { metalness: 0.65 }),
+  hayGolden: std(0xdfaf32, 0.88),
+  cowWhite: std(0xfdfdfd, 0.68),
+  cowBlack: std(0x18181a, 0.75),
+  cowPink: std(0xf7a8a8, 0.52),
+  chickenFeather: std(0xfdf8ec, 0.72),
+  chickenBrown: std(0xa66038, 0.75),
+  chickenComb: std(0xd42626, 0.45),
+  chickenBeak: std(0xf59e0b, 0.35),
+  ricePaddyWater: new THREE.MeshPhysicalMaterial({
+    color: 0x48968a,
+    transparent: true,
+    opacity: 0.68,
+    roughness: 0.12,
+    transmission: 0.5,
+  }),
+  ricePlantGreen: std(0x5cb828, 0.78),
+  ricePlantGold: std(0xd8a424, 0.82),
+  paddySoil: std(0x543b2a, 0.92),
+  tractorYellow: std(0xf5b324, 0.32, { metalness: 0.28 }),
+  tractorTire: std(0x1a1a1c, 0.85),
+  strawHat: std(0xdcb662, 0.82),
+  farmerOveralls: std(0x2b4c7e, 0.78),
+  farmerShirt: std(0xe06042, 0.75),
+
+  // Phase 3/4: Zone I Security Checkpoint, Monument Wall & Public Highway
+  monumentWall: std(0xded8cb, 0.82, { map: textures.stone }),
+  monumentPlaque: std(0x1a2624, 0.35, { metalness: 0.4 }),
+  monumentGold: std(0xdfab38, 0.25, { metalness: 0.75 }),
+  monumentSignMain: new THREE.MeshStandardMaterial({ map: createMonumentSignTexture('main'), roughness: 0.35, metalness: 0.25 }),
+  monumentSignWelcome: new THREE.MeshStandardMaterial({ map: createMonumentSignTexture('welcome'), roughness: 0.35, metalness: 0.25 }),
+  guardUniform: std(0x1e2e3d, 0.72, { map: textures.fabric }),
+  guardCap: std(0x15202b, 0.45, { metalness: 0.2 }),
+  guardBadge: std(0xf0be42, 0.2, { metalness: 0.85 }),
+  curbConcrete: std(0xd2cec2, 0.88),
+  asphaltMarkingWhite: std(0xfcfcfa, 0.75),
+  asphaltMarkingYellow: std(0xf2b528, 0.72),
+  securityBoothWall: std(0xf6f1e6, 0.76, { map: textures.plaster }),
+  securityBoothRoof: std(0x283238, 0.65),
+  carSuvBlack: new THREE.MeshPhysicalMaterial({ color: 0x16181b, roughness: 0.14, metalness: 0.35, clearcoat: 0.95, clearcoatRoughness: 0.05 }),
+  carSuvWhite: new THREE.MeshPhysicalMaterial({ color: 0xf6f6f8, roughness: 0.12, metalness: 0.05, clearcoat: 1.0, clearcoatRoughness: 0.04 }),
 };
+
