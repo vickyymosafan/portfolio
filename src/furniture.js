@@ -104,32 +104,38 @@ function createFloorBeacon(parent, x, y, z, colorHex) {
 function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
   const { x, y, id, title, subtitle, accent } = room;
 
-  // Mount seamlessly on the wall
-  // For 'about' (Living Room), mount on the solid West partition wall at x = -3.8, z = -8.0
-  // so the central glass doors to the rear terrace (x: [-2.0, 2.0], z = -8.2) are 100% clear!
-  const bx = id === 'about' ? -3.8 : x;
+  // Mount seamlessly on a solid structural wall
+  // For 'about' (Living Room), mount on the solid West gallery wall at x = -5.35, z = 2.2
+  // facing East into the entrance foyer and living lounge.
+  // This keeps the rear terrace glass sliding doors (x: [-2.4, 2.4], z = -8.2) 100% open and unobstructed!
+  const isAbout = id === 'about';
+  const bx = isAbout ? -5.35 : x;
   const by = y;
-  const bz = id === 'contact' ? -15.2 : (id === 'about' ? -8.0 : -7.8);
+  const bz = id === 'contact' ? -15.2 : (isAbout ? 2.2 : -7.8);
+  const rotY = isAbout ? Math.PI * 0.5 : 0;
 
   const display = new THREE.Group();
   display.position.set(bx, by, bz);
+  display.rotation.y = rotY;
   parent.add(display);
 
-  // Wall mounted plaque frame
-  addBox(display, [0, 2.8, 0.08], [3.6, 2.0, 0.1], materials.woodDark);
+  // Wall mounted plaque frame (width 2.8m, height 1.7m for 'about' to fit cleanly on the 3.2m solid wall)
+  const boardW = isAbout ? 2.8 : 3.6;
+  const boardH = isAbout ? 1.7 : 2.0;
+  addBox(display, [0, 2.7, 0.08], [boardW, boardH, 0.1], materials.woodDark);
 
   // Canvas sign texture
   const signTex = createSignTexture(title, subtitle, accent, 512, 340);
   const signMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.4, 1.8),
+    new THREE.PlaneGeometry(boardW - 0.2, boardH - 0.2),
     new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.45, metalness: 0.05 })
   );
-  signMesh.position.set(0, 2.8, 0.14);
+  signMesh.position.set(0, 2.7, 0.14);
   display.add(signMesh);
 
   // Brass picture lamp over board
-  addBox(display, [0, 3.9, 0.25], [1.8, 0.08, 0.16], materials.brass);
-  addSphere(display, [0, 3.82, 0.25], [0.16, 0.06, 0.16], materials.glow, { shadow: false });
+  addBox(display, [0, 2.7 + boardH * 0.5 + 0.1, 0.25], [boardW * 0.55, 0.08, 0.16], materials.brass);
+  addSphere(display, [0, 2.7 + boardH * 0.5 + 0.02, 0.25], [0.16, 0.06, 0.16], materials.glow, { shadow: false });
 }
 
 function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
@@ -188,13 +194,19 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
     addCylinder(parent, [x + 1.5, y + 0.4, z - 0.8], 0.30, 0.30, 0.06, materials.woodDark, { segments: 14 });
     addCylinder(parent, [x + 1.5, y + 0.2, z - 0.8], 0.04, 0.04, 0.38, materials.brass);
 
-    // Wall-Mounted OLED Art Screen on West Wall
+    // Wall-Mounted OLED Art Screen on Solid West Wall Section (z = -6.8, partWestG2)
+    // Completely clearing the 4-meter wide gallery archway (z: [-1.4, -5.4]) so walkway is 100% open
     const mediaWall = new THREE.Group();
-    mediaWall.position.set(x - 5.35, y + 2.4, z - 0.4);
+    mediaWall.position.set(x - 5.35, y + 2.2, -6.8);
     mediaWall.rotation.y = Math.PI * 0.5;
     parent.add(mediaWall);
-    addBox(mediaWall, [0, 0, 0], [2.6, 1.5, 0.06], materials.metalDark);
-    addBox(mediaWall, [0, 0, 0.04], [2.48, 1.38, 0.02], materials.artLandscape, { shadow: false });
+    addBox(mediaWall, [0, 0, 0], [2.4, 1.4, 0.06], materials.metalDark);
+    addBox(mediaWall, [0, 0, 0.04], [2.28, 1.28, 0.02], materials.artLandscape, { shadow: false });
+
+    // Matching floating walnut media credenza against solid wall below TV
+    addBox(parent, [x - 5.15, y + 0.42, -6.8], [0.42, 0.42, 2.2], materials.woodDark);
+    addBox(parent, [x - 5.14, y + 0.64, -6.8], [0.40, 0.02, 2.1], materials.stone);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 5.15, y + 0.45, -6.8], [0.22, 0.45, 1.1]);
 
     // Flanking Potted Fiddle-leaf Fig Palms in foyer & corner
     for (const px of [-4.6, 1.8]) {
@@ -625,57 +637,328 @@ function buildSportsCar(parent, cx, cy, cz) {
   car.position.set(cx, cy, cz);
   parent.add(car);
 
-  // Main aerodynamic body lower chassis (Alpine White)
-  addBox(car, [0, 0.42, 0], [2.1, 0.42, 4.4], materials.carPaintWhite, { shadow: true });
-  // Aggressive front bumper splitter & lower air intake
-  addBox(car, [0, 0.22, 2.15], [2.05, 0.24, 0.32], materials.metalDark);
-  addBox(car, [0, 0.16, 2.28], [2.12, 0.08, 0.18], materials.carChrome);
-  // Iconic BMW M Kidney Grille (twin black/chrome grilles)
-  addBox(car, [-0.34, 0.46, 2.22], [0.38, 0.26, 0.04], materials.metalDark);
-  addBox(car, [0.34, 0.46, 2.22], [0.38, 0.26, 0.04], materials.metalDark);
-  addBox(car, [-0.34, 0.46, 2.23], [0.42, 0.28, 0.02], materials.carChrome);
-  addBox(car, [0.34, 0.46, 2.23], [0.42, 0.28, 0.02], materials.carChrome);
+  // =========================================================================
+  // 1. LOWER CHASSIS & WIDEBODY AERODYNAMIC BODYWORK (BMW M4 G82 CSL)
+  // =========================================================================
+  // Main aerodynamic body tub (Mineral White / Brooklyn Grey Metallic)
+  addBox(car, [0, 0.38, -0.05], [1.82, 0.38, 4.35], materials.m4Paint, { shadow: true });
 
-  // Angular LED Headlights with iconic angel-eye rings
-  for (const hx of [-0.82, 0.82]) {
-    addBox(car, [hx, 0.52, 2.18], [0.45, 0.16, 0.08], materials.glass);
-    addSphere(car, [hx, 0.52, 2.19], [0.12, 0.05, 0.02], materials.glow, { shadow: false });
+  // Flared Widebody Front Wheel Arches (Muscular M Fenders)
+  for (const fx of [-0.98, 0.98]) {
+    addBox(car, [fx, 0.44, 1.38], [0.26, 0.36, 1.25], materials.m4Paint);
+    addBox(car, [fx * 0.96, 0.60, 1.38], [0.22, 0.10, 1.05], materials.m4Paint);
+    // Front fender flare bevels
+    addBox(car, [fx * 1.02, 0.36, 1.38], [0.12, 0.26, 0.95], materials.m4Paint);
   }
 
-  // Sloped Hood with M power bulge
-  addBox(car, [0, 0.65, 1.1], [1.9, 0.18, 2.0], materials.carPaintWhite);
-  addBox(car, [0, 0.74, 1.0], [0.65, 0.08, 1.6], materials.carPaintWhite);
-
-  // Sleek Aerodynamic Greenhouse Cabin with Tinted Glass & Panoramic Roof
-  addBox(car, [0, 1.08, -0.3], [1.72, 0.65, 2.4], materials.carGlass);
-  addBox(car, [0, 1.38, -0.3], [1.65, 0.08, 1.9], materials.carPaintWhite);
-
-  // Rear Trunk Deck & M Sport Carbon Spoiler
-  addBox(car, [0, 0.72, -1.85], [1.85, 0.22, 0.95], materials.carPaintWhite);
-  addBox(car, [0, 0.88, -2.22], [1.92, 0.06, 0.22], materials.metalDark);
-  // Rear diffuser & Quad M Chrome Exhaust Pipes
-  addBox(car, [0, 0.24, -2.22], [1.98, 0.24, 0.16], materials.metalDark);
-  for (const ex of [-0.65, -0.45, 0.45, 0.65]) {
-    addCylinder(car, [ex, 0.22, -2.32], 0.06, 0.06, 0.18, materials.carChrome, { rotation: [Math.PI * 0.5, 0, 0], segments: 14 });
+  // Pinched Door Waist & Muscular Rear Widebody Haunches
+  for (const rx of [-1.02, 1.02]) {
+    // Sculpted door waist panel
+    addBox(car, [rx * 0.88, 0.46, 0.05], [0.12, 0.32, 1.45], materials.m4Paint);
+    // Muscular rear haunches over rear axle
+    addBox(car, [rx, 0.46, -1.32], [0.28, 0.38, 1.35], materials.m4Paint);
+    addBox(car, [rx * 0.96, 0.62, -1.32], [0.24, 0.12, 1.15], materials.m4Paint);
+    addBox(car, [rx * 1.03, 0.36, -1.32], [0.12, 0.28, 1.05], materials.m4Paint);
   }
 
-  // 4 M-Performance Chrome Alloy Wheels with Wide Rubber Tires
-  const wheelZ = [-1.35, 1.35];
-  const wheelX = [-1.08, 1.08];
-  for (const wz of wheelZ) {
-    for (const wx of wheelX) {
-      // Rubber tire
-      addCylinder(car, [wx, 0.38, wz], 0.38, 0.38, 0.28, materials.carRubber, { rotation: [0, 0, Math.PI * 0.5], segments: 20 });
-      // Chrome alloy spoke wheel
-      addCylinder(car, [wx + (wx > 0 ? 0.03 : -0.03), 0.38, wz], 0.25, 0.25, 0.28, materials.carChrome, { rotation: [0, 0, Math.PI * 0.5], segments: 16 });
-      // Blue M-Sport brake caliper inside wheel
-      addBox(car, [wx, 0.46, wz], [0.12, 0.12, 0.18], materials.carPaintBlue);
+  // Carbon Fiber Lower Side Rocker Skirts with Aero Winglets ahead of rear wheels
+  for (const sx of [-0.99, 0.99]) {
+    // Full-length carbon rocker skirt
+    addBox(car, [sx, 0.14, -0.05], [0.16, 0.05, 3.4], materials.m4Carbon);
+    // Upward aerodynamic winglet flick ahead of rear arch
+    addBox(car, [sx * 1.08, 0.22, -0.62], [0.05, 0.15, 0.24], materials.m4Carbon);
+  }
+
+  // =========================================================================
+  // 2. FRONT FASCIA: MASSIVE VERTICAL TWIN KIDNEY GRILLES & M FRONT BUMPER
+  // =========================================================================
+  // Vertical Twin Kidney Grilles (Frameless G82 signature spanning from hood to splitter)
+  const kidneyWidth = 0.34;
+  const kidneyHeight = 0.54;
+  const kidneyZ = 2.22;
+
+  // Left & Right Kidney Octagonal Surround Frames
+  addBox(car, [-0.22, 0.50, kidneyZ], [kidneyWidth, kidneyHeight, 0.05], materials.m4GlossBlack);
+  addBox(car, [0.22, 0.50, kidneyZ], [kidneyWidth, kidneyHeight, 0.05], materials.m4GlossBlack);
+
+  // Recessed radiator air mesh behind kidneys
+  addBox(car, [-0.22, 0.50, kidneyZ - 0.02], [kidneyWidth - 0.04, kidneyHeight - 0.04, 0.04], materials.metalDark);
+  addBox(car, [0.22, 0.50, kidneyZ - 0.02], [kidneyWidth - 0.04, kidneyHeight - 0.04, 0.04], materials.metalDark);
+
+  // Body-colored center nose bridge between twin kidneys
+  addBox(car, [0, 0.50, kidneyZ + 0.005], [0.07, kidneyHeight + 0.02, 0.05], materials.m4Paint);
+
+  // Horizontal Twin Double Slats inside each kidney grille (gloss black aero bars)
+  const slatYLevels = [0.30, 0.41, 0.53, 0.65];
+  for (const kx of [-0.22, 0.22]) {
+    for (const sy of slatYLevels) {
+      addBox(car, [kx, sy, kidneyZ + 0.025], [kidneyWidth - 0.04, 0.022, 0.03], materials.m4GlossBlack);
     }
   }
 
-  // Aerodynamic side mirrors
-  for (const mx of [-1.02, 1.02]) {
-    addBox(car, [mx, 0.92, 0.6], [0.22, 0.12, 0.18], materials.carPaintWhite);
-    addBox(car, [mx, 0.92, 0.58], [0.18, 0.09, 0.02], materials.mirror);
+  // M4 Competition Grille Emblem on upper right kidney with M tricolor stripe
+  addBox(car, [0.24, 0.65, kidneyZ + 0.042], [0.08, 0.028, 0.012], materials.m4GlossBlack);
+  addBox(car, [0.21, 0.65, kidneyZ + 0.045], [0.016, 0.024, 0.01], materials.m4LaserBlue); // M Light Blue
+  addBox(car, [0.226, 0.65, kidneyZ + 0.045], [0.016, 0.024, 0.01], materials.blueNavy); // M Dark Blue
+  addBox(car, [0.242, 0.65, kidneyZ + 0.045], [0.016, 0.024, 0.01], materials.coralDark); // M Red
+
+  // German DIN License Plate `M DI 4015` mounted across middle of grilles
+  addBox(car, [0, 0.44, kidneyZ + 0.035], [0.84, 0.185, 0.015], materials.m4GlossBlack); // Plate bracket
+  addBox(car, [0, 0.44, kidneyZ + 0.044], [0.80, 0.165, 0.006], materials.m4PlateFront); // Front plate
+
+  // BMW Roundel Emblem on the nose beak directly above the kidneys
+  addCylinder(car, [0, 0.765, 2.18], 0.055, 0.055, 0.012, materials.m4BmwEmblem, {
+    rotation: [0.32, 0, 0],
+    segments: 18,
+  });
+
+  // Carbon Fiber Front Splitter & Corner Aero Winglets
+  addBox(car, [0, 0.12, 2.28], [1.98, 0.04, 0.34], materials.m4Carbon);
+  for (const wx of [-1.00, 1.00]) {
+    // Upward aerodynamic endplate winglet on splitter edges
+    addBox(car, [wx, 0.18, 2.26], [0.05, 0.14, 0.26], materials.m4Carbon);
+  }
+
+  // Corner Air Curtain Intakes (triangular brake cooling vents with gloss black aero fangs)
+  for (const cx of [-0.85, 0.85]) {
+    addBox(car, [cx, 0.36, 2.18], [0.28, 0.32, 0.14], materials.m4GlossBlack);
+    addBox(car, [cx, 0.36, 2.19], [0.24, 0.28, 0.12], materials.metalDark);
+    // Vertical aero flick blade
+    addBox(car, [cx + (cx > 0 ? 0.12 : -0.12), 0.36, 2.22], [0.03, 0.30, 0.12], materials.m4GlossBlack);
+  }
+  // Center lower cooling intake duct
+  addBox(car, [0, 0.18, 2.23], [1.32, 0.09, 0.14], materials.metalDark);
+
+  // =========================================================================
+  // 3. M LASER HEADLIGHTS (Swept-back angular housings + DRL glowing arrows)
+  // =========================================================================
+  for (const hx of [-0.68, 0.68]) {
+    const rotY = hx > 0 ? -0.20 : 0.20;
+    // Outer glass cover with swept aerodynamic angle
+    addBox(car, [hx, 0.62, 2.14], [0.46, 0.15, 0.12], materials.glass, { rotation: [0, rotY, 0] });
+    // Inner dark projector bucket
+    addBox(car, [hx, 0.62, 2.13], [0.42, 0.13, 0.08], materials.m4GlossBlack, { rotation: [0, rotY, 0] });
+
+    // Dual glowing inverted-L DRL arrows (outer arrow + inner arrow)
+    const arrowOffsets = [-0.10, 0.10];
+    for (const aOff of arrowOffsets) {
+      const ax = hx + aOff * Math.cos(rotY);
+      const az = 2.145 + aOff * Math.sin(-rotY);
+      // Horizontal bottom leg of DRL arrow
+      addBox(car, [ax, 0.58, az], [0.09, 0.02, 0.02], materials.m4DRLGlow, { rotation: [0, rotY, 0], shadow: false });
+      // Vertical / angled leg of DRL arrow
+      addBox(car, [ax + (hx > 0 ? -0.035 : 0.035), 0.63, az], [0.02, 0.08, 0.02], materials.m4DRLGlow, { rotation: [0, rotY, 0], shadow: false });
+    }
+
+    // Cyan Laser Accent strip along top brow of headlights
+    addBox(car, [hx * 0.94, 0.68, 2.15], [0.22, 0.022, 0.03], materials.m4LaserBlue, { rotation: [0, rotY, 0], shadow: false });
+  }
+
+  // =========================================================================
+  // 4. SCULPTED HOOD WITH TWIN POWER CHANNELS & CSL RACING STRIPES
+  // =========================================================================
+  // Sloped hood base
+  addBox(car, [0, 0.69, 1.25], [1.74, 0.15, 1.88], materials.m4Paint);
+
+  // CSL Carbon Hood Center Panel with twin stripes & red pinstripe borders
+  addBox(car, [0, 0.772, 1.25], [1.38, 0.016, 1.84], materials.m4HoodStripes);
+
+  // Sculpted Twin Power Bulge Ridges flanking the hood indentations
+  for (const bx of [-0.38, 0.38]) {
+    addBox(car, [bx, 0.785, 1.25], [0.06, 0.028, 1.82], materials.m4Paint);
+  }
+  // Outer hood muscular shoulder lines
+  for (const hx of [-0.78, 0.78]) {
+    addBox(car, [hx, 0.73, 1.25], [0.08, 0.05, 1.85], materials.m4Paint);
+  }
+
+  // =========================================================================
+  // 5. CABIN, M CARBON DOUBLE-BUBBLE ROOF & INTERIOR DETAILS
+  // =========================================================================
+  // Sleek Aerodynamic Greenhouse Cabin with Tinted Glass
+  addBox(car, [0, 1.06, -0.22], [1.60, 0.58, 2.38], materials.carGlass);
+
+  // Raked A-Pillars framing windshield
+  for (const ax of [-0.73, 0.73]) {
+    addBox(car, [ax, 1.06, 0.58], [0.08, 0.52, 0.12], materials.m4Paint, {
+      rotation: [0.46, 0, ax > 0 ? -0.14 : 0.14],
+    });
+  }
+  // Muscular C-Pillars with iconic BMW Hofmeister Kink
+  for (const cx of [-0.76, 0.76]) {
+    addBox(car, [cx, 1.05, -1.02], [0.10, 0.48, 0.32], materials.m4Paint, {
+      rotation: [-0.40, 0, cx > 0 ? -0.12 : 0.12],
+    });
+  }
+
+  // M Carbon Fiber Double-Bubble Roof (twin roof mounds + center aero channel)
+  // Left roof bubble
+  addBox(car, [-0.42, 1.35, -0.22], [0.66, 0.055, 1.88], materials.m4Carbon);
+  // Right roof bubble
+  addBox(car, [0.42, 1.35, -0.22], [0.66, 0.055, 1.88], materials.m4Carbon);
+  // Recessed aerodynamic center depression channel
+  addBox(car, [0, 1.33, -0.22], [0.26, 0.035, 1.88], materials.m4Carbon);
+
+  // Gloss Black Roof Shark Fin Antenna
+  addBox(car, [0, 1.39, -0.96], [0.045, 0.075, 0.18], materials.m4GlossBlack);
+
+  // Interior: BMW Curved Display, M Sport Steering Wheel & M Carbon Bucket Seats
+  // Dashboard & Curved Display Screens
+  addBox(car, [0, 0.82, 0.40], [1.36, 0.12, 0.28], materials.m4InteriorLeather);
+  addBox(car, [-0.12, 0.89, 0.36], [0.74, 0.08, 0.02], materials.screenCode);
+
+  // M Sport Steering Wheel with Red 12 o'clock stripe
+  addCylinder(car, [-0.38, 0.88, 0.20], 0.14, 0.14, 0.03, materials.m4GlossBlack, {
+    rotation: [Math.PI * 0.42, 0, 0],
+    segments: 16,
+  });
+  addBox(car, [-0.38, 0.99, 0.16], [0.03, 0.02, 0.03], materials.coralDark); // Red 12 o'clock center stripe
+
+  // 2x M Carbon Bucket Seats (Driver & Passenger)
+  for (const sx of [-0.38, 0.38]) {
+    // Seat base
+    addBox(car, [sx, 0.54, -0.22], [0.46, 0.14, 0.48], materials.m4InteriorLeather);
+    // Sculpted backrest with carbon shell
+    addBox(car, [sx, 0.82, -0.42], [0.44, 0.46, 0.10], materials.m4Carbon, { rotation: [-0.18, 0, 0] });
+    // Bright contrast bucket cushion insert (Kyalami Orange / Gold)
+    addBox(car, [sx, 0.82, -0.38], [0.28, 0.40, 0.04], materials.m4BucketAccent, { rotation: [-0.18, 0, 0] });
+    // Integrated headrest with harness passthroughs
+    addBox(car, [sx, 1.10, -0.48], [0.26, 0.16, 0.08], materials.m4InteriorLeather, { rotation: [-0.18, 0, 0] });
+    addBox(car, [sx, 1.05, -0.47], [0.14, 0.04, 0.09], materials.m4Carbon, { rotation: [-0.18, 0, 0] });
+  }
+
+  // =========================================================================
+  // 6. M AERODYNAMIC TWIN-STALK SIDE MIRRORS & FRONT FENDER GILLS
+  // =========================================================================
+  for (const mx of [-0.98, 0.98]) {
+    // Mirror lower mount stalk
+    addBox(car, [mx * 0.94, 0.89, 0.58], [0.10, 0.03, 0.06], materials.m4GlossBlack);
+    // Main aerodynamic carbon mirror cap
+    addBox(car, [mx * 1.05, 0.93, 0.58], [0.18, 0.10, 0.14], materials.m4Carbon);
+    // Iconic M upper aerodynamic horn / fang pointing inwards
+    addBox(car, [mx * 0.98, 0.98, 0.56], [0.08, 0.035, 0.06], materials.m4Carbon);
+    // Reflective mirror glass facing rear
+    addBox(car, [mx * 1.04, 0.93, 0.51], [0.15, 0.08, 0.012], materials.mirror);
+
+    // M Fender Side Gills (Gloss Black vent on front fenders behind wheels)
+    addBox(car, [mx * 1.02, 0.58, 0.72], [0.02, 0.18, 0.09], materials.m4GlossBlack);
+    addBox(car, [mx * 1.025, 0.60, 0.72], [0.012, 0.03, 0.06], materials.carChrome); // Chrome M4 script bar
+  }
+
+  // =========================================================================
+  // 7. REAR FASCIA: CSL DUCKTAIL SPOILER, 3D OLED TAILLIGHTS, DIFFUSER & QUAD EXHAUSTS
+  // =========================================================================
+  // Sloped rear trunk deck
+  addBox(car, [0, 0.74, -1.82], [1.70, 0.16, 0.96], materials.m4Paint);
+
+  // CSL Integrated Carbon Ducktail Spoiler (curls up aggressively from trunk lid)
+  addBox(car, [0, 0.88, -2.25], [1.66, 0.08, 0.22], materials.m4Carbon, { rotation: [-0.22, 0, 0] });
+  // Center high-downforce peak
+  addBox(car, [0, 0.92, -2.28], [0.58, 0.045, 0.14], materials.m4Carbon, { rotation: [-0.22, 0, 0] });
+
+  // Rear BMW Roundel Emblem on trunk lid below spoiler
+  addCylinder(car, [0, 0.73, -2.26], 0.046, 0.046, 0.01, materials.m4BmwEmblem, {
+    rotation: [Math.PI * 0.5, 0, 0],
+    segments: 18,
+  });
+
+  // Chrome ///M4 Competition Trunk Badge
+  addBox(car, [0.46, 0.71, -2.26], [0.15, 0.035, 0.01], materials.carChrome);
+
+  // Rear German DIN License Plate `M DI 4015` in recessed trunk bay
+  addBox(car, [0, 0.52, -2.25], [0.72, 0.165, 0.015], materials.m4GlossBlack);
+  addBox(car, [0, 0.52, -2.258], [0.68, 0.145, 0.005], materials.m4PlateRear);
+
+  // 3D Slim OLED Taillights (Flowing L-shaped red light bars)
+  for (const tx of [-0.68, 0.68]) {
+    // Glowing red OLED light bar
+    addBox(car, [tx, 0.66, -2.24], [0.48, 0.09, 0.05], materials.m4TaillightOLED, { shadow: false });
+    // Smoked outer protective glass lens
+    addBox(car, [tx, 0.66, -2.25], [0.52, 0.11, 0.03], materials.carGlass);
+    // Inner L-shaped turn flick
+    addBox(car, [tx + (tx > 0 ? 0.20 : -0.20), 0.63, -2.24], [0.08, 0.05, 0.04], materials.m4TaillightOLED, { shadow: false });
+  }
+
+  // Massive Carbon Fiber Rear Diffuser with 4 Aerodynamic Strakes
+  addBox(car, [0, 0.22, -2.22], [1.86, 0.22, 0.26], materials.m4Carbon);
+  // 4 Vertical Diffuser Strakes (aero fins channeling underbody airflow)
+  const strakeX = [-0.36, -0.12, 0.12, 0.36];
+  for (const stX of strakeX) {
+    addBox(car, [stX, 0.20, -2.26], [0.03, 0.17, 0.22], materials.m4Carbon);
+  }
+  // Center F1-Style Rain Light / Reflector
+  addBox(car, [0, 0.15, -2.28], [0.11, 0.045, 0.02], materials.m4TaillightOLED, { shadow: false });
+
+  // Quad M Chrome Exhaust Pipes (Dual tips on left, Dual tips on right)
+  const exhaustX = [-0.64, -0.46, 0.46, 0.64];
+  for (const ex of exhaustX) {
+    // Polished chrome exhaust tip sleeve
+    addCylinder(car, [ex, 0.22, -2.31], 0.065, 0.065, 0.16, materials.carChrome, {
+      rotation: [Math.PI * 0.5, 0, 0],
+      segments: 16,
+    });
+    // Inner dark hollow exhaust bore
+    addCylinder(car, [ex, 0.22, -2.38], 0.052, 0.052, 0.025, materials.m4GlossBlack, {
+      rotation: [Math.PI * 0.5, 0, 0],
+      segments: 14,
+    });
+  }
+
+  // =========================================================================
+  // 8. 4x M FORGED MULTI-SPOKE ALLOY WHEELS & CARBON CERAMIC BRAKES
+  // =========================================================================
+  const wheelZPositions = [1.38, -1.35]; // Front axle and rear axle
+  const wheelXPositions = [-1.04, 1.04]; // Left and right wheel tracks
+
+  for (const wz of wheelZPositions) {
+    for (const wx of wheelXPositions) {
+      const isRight = wx > 0;
+      const xDir = isRight ? 1 : -1;
+
+      // High-performance Michelin rubber tire
+      addCylinder(car, [wx, 0.36, wz], 0.36, 0.36, 0.28, materials.carRubber, {
+        rotation: [0, 0, Math.PI * 0.5],
+        segments: 24,
+      });
+
+      // M Forged Wheel Face (Satin black concave hub)
+      addCylinder(car, [wx + xDir * 0.03, 0.36, wz], 0.27, 0.27, 0.25, materials.m4WheelRim, {
+        rotation: [0, 0, Math.PI * 0.5],
+        segments: 18,
+      });
+
+      // Diamond-Cut Polished Rim Outer Lip
+      addCylinder(car, [wx + xDir * 0.07, 0.36, wz], 0.265, 0.265, 0.03, materials.m4WheelLip, {
+        rotation: [0, 0, Math.PI * 0.5],
+        segments: 18,
+      });
+
+      // Cross-Drilled Carbon Ceramic Brake Rotor Disc
+      addCylinder(car, [wx - xDir * 0.04, 0.36, wz], 0.22, 0.22, 0.04, materials.m4RotorBrake, {
+        rotation: [0, 0, Math.PI * 0.5],
+        segments: 18,
+      });
+
+      // Gold 6-Piston M Carbon Ceramic Brake Caliper
+      const caliperZ = wz + (wz > 0 ? 0.08 : -0.08);
+      addBox(car, [wx - xDir * 0.03, 0.46, caliperZ], [0.10, 0.13, 0.16], materials.m4CaliperGold);
+
+      // Floating BMW Roundel Center Hub Cap
+      addCylinder(car, [wx + xDir * 0.086, 0.36, wz], 0.045, 0.045, 0.02, materials.m4BmwEmblem, {
+        rotation: [0, 0, Math.PI * 0.5],
+        segments: 16,
+      });
+
+      // 5 Y-Spoke Wheel Face Details (Radial pairs of spokes)
+      for (let s = 0; s < 5; s += 1) {
+        const spokeAngle = (s / 5) * Math.PI * 2;
+        const spY = 0.36 + Math.sin(spokeAngle) * 0.14;
+        const spZ = wz + Math.cos(spokeAngle) * 0.14;
+        addBox(car, [wx + xDir * 0.075, spY, spZ], [0.02, 0.03, 0.18], materials.m4WheelRim, {
+          rotation: [spokeAngle, 0, 0],
+        });
+      }
+    }
   }
 }
+

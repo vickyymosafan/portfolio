@@ -79,13 +79,13 @@ const cameraBlockers = [];
 const staticBodies = [];
 
 const WORLD_MARKERS = [
-  { id: 'farm', label: 'Peternakan', sub: 'Sapi, Ayam, Ikan', icon: '🐮', pos: [-28.0, 8.5, -34.0], targetRoom: 'farm' },
-  { id: 'rice', label: 'Sawah', sub: 'Pertanian Modern', icon: '🌾', pos: [14.0, 7.5, -34.0], targetRoom: 'rice' },
-  { id: 'road', label: 'Jalan Utama', sub: 'Akses Menuju Rumah', icon: '🚗', pos: [32.0, 5.0, 32.0], targetRoom: 'road' },
-  { id: 'pool', label: 'Kolam Renang', sub: 'Swim & Relax', icon: '🏊', pos: [-25.0, 5.5, -5.0], targetRoom: 'pool' },
-  { id: 'security', label: 'Security', sub: '24/7 Guard', icon: '🛡️', pos: [-18.0, 5.0, 24.0], targetRoom: 'security' },
-  { id: 'garage', label: 'Garasi', sub: 'BMW M Series', icon: '🏎️', pos: [21.0, 4.4, 2.0], targetRoom: 'garage' },
-  { id: 'zen', label: 'Taman', sub: 'Relax & Explore', icon: '🌲', pos: [36.0, 5.5, -6.0], targetRoom: 'zen' },
+  { id: 'farm', label: 'Peternakan', sub: 'Sapi, Ayam, Ikan', icon: '🐮', pos: [-28.0, 3.8, -32.0], targetRoom: 'farm' },
+  { id: 'rice', label: 'Sawah', sub: 'Pertanian Modern', icon: '🌾', pos: [14.0, 3.8, -32.0], targetRoom: 'rice' },
+  { id: 'road', label: 'Jalan Utama', sub: 'Akses Menuju Rumah', icon: '🚗', pos: [32.0, 3.5, 32.0], targetRoom: 'road' },
+  { id: 'pool', label: 'Kolam Renang', sub: 'Swim & Relax', icon: '🏊', pos: [-25.0, 3.5, -5.0], targetRoom: 'pool' },
+  { id: 'security', label: 'Security', sub: '24/7 Guard', icon: '🛡️', pos: [-18.0, 3.5, 24.0], targetRoom: 'security' },
+  { id: 'garage', label: 'Garasi', sub: 'BMW M Series', icon: '🏎️', pos: [21.0, 3.5, 2.0], targetRoom: 'garage' },
+  { id: 'zen', label: 'Taman', sub: 'Relax & Explore', icon: '🌲', pos: [35.0, 3.5, -8.0], targetRoom: 'zen' },
   { id: 'gallery', label: 'Project Gallery', sub: 'My Work & Showcase', icon: '🖼️', pos: [-11.0, 4.4, 2.0], targetRoom: 'projects' },
   { id: 'living', label: 'Living Room', sub: 'Chill & Connect', icon: '🛋️', pos: [0.0, 4.4, 2.0], targetRoom: 'about' },
   { id: 'office', label: 'Home Office', sub: 'Work & Build', icon: '💻', pos: [10.75, 4.4, 2.0], targetRoom: 'skills' },
@@ -96,8 +96,8 @@ const WORLD_MARKERS = [
 ];
 
 let overviewMode = false;
-const overviewCamPos = new THREE.Vector3(4.5, 30.0, 48.0);
-const overviewTarget = new THREE.Vector3(4.5, 5.5, 0.5);
+const overviewCamPos = new THREE.Vector3(4.5, 58.0, 36.0);
+const overviewTarget = new THREE.Vector3(4.5, 0.0, -8.0);
 const markerProjectVec = new THREE.Vector3();
 let markerElements = [];
 
@@ -187,7 +187,7 @@ function createRenderer() {
 function createScene() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xbfe0d5);
-  scene.fog = new THREE.Fog(0xbfe0d5, 80, 240);
+  scene.fog = new THREE.Fog(0xbfe0d5, 95, 275);
 
   // Soft warm ambient hemisphere light for vibrant natural cartoon fill
   const hemi = new THREE.HemisphereLight(0xfffaee, 0x78ab70, 1.95);
@@ -383,27 +383,41 @@ function createScene() {
 }
 
 function addDecorativeBackdrop(scene) {
-  // Distant Horizon Rolling Hills (outside expanded 84m estate perimeter)
+  // Distant Horizon Rolling Hills (85m - 120m far out on the horizon)
+  // Low-profile, wide gentle rolling ridges providing a beautiful cartoon landscape
+  // without protruding into the garden fence (Taman) or crowding the rice field (Sawah).
   const hills = [
-    [-58, -25, 20, materials.foliageBright],
-    [-62, 12, 18, materials.foliageMid],
-    [62, -22, 22, materials.foliageDeep],
-    [64, 15, 18, materials.foliageBright],
-    [0, -48, 24, materials.foliageDeep],
+    // North Horizon (far behind Sawah & Farm)
+    [-38, -108, 56, materials.foliageMid],
+    [6, -114, 64, materials.foliageDeep],
+    [48, -106, 54, materials.foliageBright],
+    // East Horizon (far behind Zen Garden / Taman)
+    [108, -25, 52, materials.foliageDeep],
+    [114, 22, 48, materials.foliageMid],
+    // West Horizon (far behind Animal Farm & Pool)
+    [-108, -25, 52, materials.foliageDeep],
+    [-114, 22, 48, materials.foliageBright],
+    // South Horizon (far beyond entrance driveway)
+    [-32, 108, 48, materials.foliageBright],
+    [36, 108, 48, materials.foliageMid],
   ];
   for (const [hx, hz, hs, hMat] of hills) {
-    const hill = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), hMat);
-    hill.position.set(hx, -4.5, hz);
-    hill.scale.set(hs, hs * 0.45, hs * 0.75);
+    const hill = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), hMat);
+    // Submerged base (y = -hs * 0.32) with low-profile aspect (hs * 0.36)
+    // so only a soft, gentle rolling silhouette peak (~2m above ground) is visible far away
+    hill.position.set(hx, -hs * 0.32, hz);
+    hill.scale.set(hs, hs * 0.36, hs * 0.65);
     scene.add(hill);
   }
 
   const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 });
+  // High-altitude cartoon cumulus clouds floating gracefully well above roofs, trees, and gazebos
   const clouds = [
-    [-18, 11, -26, 1.6],
-    [18, 13, -32, 2.0],
-    [-32, 14, -9, 1.4],
-    [28, 12, 12, 1.7],
+    [-24, 26, -36, 2.8],
+    [24, 28, -42, 3.2],
+    [-42, 27, -12, 2.4],
+    [38, 26, 18, 2.6],
+    [0, 32, -64, 3.4],
   ];
   for (const [cx, cy, cz, cs] of clouds) {
     const cloud = new THREE.Group();
@@ -414,8 +428,9 @@ function addDecorativeBackdrop(scene) {
     addSphere(cloud, [cs * 0.68, -0.08, -0.02], [cs * 0.68, cs * 0.45, cs * 0.42], cloudMat, { lowPoly: true });
   }
 
+  // Expanded sky hemisphere encompassing the distant horizon
   const sky = new THREE.Mesh(
-    new THREE.SphereGeometry(85, 18, 12),
+    new THREE.SphereGeometry(175, 24, 16),
     new THREE.MeshBasicMaterial({ color: 0xbfe0d5, side: THREE.BackSide })
   );
   scene.add(sky);
@@ -841,9 +856,9 @@ function onMarkerClick(marker) {
     } else if (marker.targetRoom === 'farm') {
       teleportToZone(-30.0, 1.12, -28.0, Math.PI);
     } else if (marker.targetRoom === 'rice') {
-      teleportToZone(18.0, 1.12, -28.0, Math.PI);
+      teleportToZone(18.0, 1.12, -26.0, Math.PI);
     } else if (marker.targetRoom === 'zen') {
-      teleportToZone(34.0, 1.12, -6.0, -Math.PI * 0.5);
+      teleportToZone(33.0, 1.12, -4.5, -0.45);
     } else if (marker.targetRoom === 'security') {
       teleportToZone(0.0, 1.12, 26.0, 0);
     } else if (marker.targetRoom === 'road') {
@@ -1185,11 +1200,11 @@ const tourStops = [
     name: 'Living Room · About Me',
     subtitle: 'THE PERSON BEHIND THE PIXELS',
     intro: 'Creative developer blending software engineering, 3D graphics, and practical AI to make tech feel warm and human.',
-    position: [0.0, 1.12, 0.5],
+    position: [-1.0, 1.12, 2.0],
     archX: 0,
-    facing: 0.0,
-    cameraYaw: 0.1,
-    cameraPitch: 0.22,
+    facing: -Math.PI * 0.5,
+    cameraYaw: -Math.PI * 0.5,
+    cameraPitch: 0.16,
   },
   {
     id: 'skills',

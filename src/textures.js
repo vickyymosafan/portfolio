@@ -947,3 +947,202 @@ export function createMonumentSignTexture(variant = 'main', width = 512, height 
   return texture;
 }
 
+// Procedural European / German License Plate Texture (M DI 4015)
+export function createGermanPlateTexture(plateText = 'M DI 4015') {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+
+  // White reflective background with embossed black border
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 256, 64);
+  ctx.strokeStyle = '#111111';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(2, 2, 252, 60);
+
+  // Blue EU band on left
+  ctx.fillStyle = '#003399';
+  ctx.fillRect(4, 4, 34, 56);
+
+  // 12 yellow EU stars circle
+  ctx.fillStyle = '#ffcc00';
+  for (let i = 0; i < 12; i += 1) {
+    const angle = (i / 12) * Math.PI * 2;
+    const sx = 21 + Math.cos(angle) * 9;
+    const sy = 22 + Math.sin(angle) * 9;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 1.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // White "D" for Deutschland
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 20px "Arial", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('D', 21, 52);
+
+  // Munich registration seals (City seal & TÜV emission badge)
+  ctx.fillStyle = '#d4af37';
+  ctx.beginPath();
+  ctx.arc(88, 24, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#3b82f6';
+  ctx.beginPath();
+  ctx.arc(88, 42, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Bold German DIN plate number (e.g. M DI 4015)
+  ctx.fillStyle = '#111111';
+  ctx.font = '900 36px "Arial Black", "Impact", sans-serif';
+  ctx.textAlign = 'left';
+  // "M" for Munich
+  ctx.fillText('M', 48, 46);
+  // Registration letters and numbers
+  ctx.fillText(plateText.replace(/^M\s*/, ''), 104, 46);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+// Procedural BMW Roundel Emblem Texture
+export function createBmwEmblemTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+
+  // Outer black ring
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.arc(64, 64, 62, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Outer chrome border
+  ctx.strokeStyle = '#d1d5db';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // Inner ring chrome separator
+  ctx.strokeStyle = '#9ca3af';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(64, 64, 42, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // BMW Text in silver around top ring
+  ctx.fillStyle = '#e5e7eb';
+  ctx.font = 'bold 15px "Arial", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('B', 40, 26);
+  ctx.fillText('M', 64, 18);
+  ctx.fillText('W', 88, 26);
+
+  // 4 Bavarian quadrants
+  // Top-left: Bavarian Sky Blue (#0066b1)
+  ctx.fillStyle = '#0066b1';
+  ctx.beginPath();
+  ctx.moveTo(64, 64);
+  ctx.arc(64, 64, 40, Math.PI, Math.PI * 1.5);
+  ctx.fill();
+
+  // Top-right: Pure White
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(64, 64);
+  ctx.arc(64, 64, 40, Math.PI * 1.5, Math.PI * 2);
+  ctx.fill();
+
+  // Bottom-right: Bavarian Sky Blue
+  ctx.fillStyle = '#0066b1';
+  ctx.beginPath();
+  ctx.moveTo(64, 64);
+  ctx.arc(64, 64, 40, 0, Math.PI * 0.5);
+  ctx.fill();
+
+  // Bottom-left: Pure White
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(64, 64);
+  ctx.arc(64, 64, 40, Math.PI * 0.5, Math.PI);
+  ctx.fill();
+
+  // Center chrome quadrant divider cross
+  ctx.strokeStyle = '#9ca3af';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(24, 64);
+  ctx.lineTo(104, 64);
+  ctx.moveTo(64, 24);
+  ctx.lineTo(64, 104);
+  ctx.stroke();
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+// Procedural 2x2 Twill Carbon Fiber Weave Texture
+export function createCarbonFiberTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#111315';
+  ctx.fillRect(0, 0, 64, 64);
+
+  const step = 8;
+  for (let y = 0; y < 64; y += step) {
+    for (let x = 0; x < 64; x += step) {
+      const isAlt = ((x / step) + (y / step)) % 2 === 0;
+      ctx.fillStyle = isAlt ? '#1d2126' : '#0a0b0d';
+      ctx.fillRect(x, y, step, step);
+
+      ctx.fillStyle = isAlt ? '#2d333b' : '#15171a';
+      ctx.fillRect(x + 1, y + 1, step - 2, step * 0.5 - 1);
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(8, 8);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+// Procedural BMW M4 CSL Dual Hood Stripes Texture
+export function createM4CSLStripeTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+
+  // Base metallic white matching car body
+  ctx.fillStyle = '#ebedf0';
+  ctx.fillRect(0, 0, 256, 256);
+
+  // Twin recessed carbon hood stripes running lengthwise
+  // Left stripe
+  ctx.fillStyle = '#14171a';
+  ctx.fillRect(72, 0, 36, 256);
+  // Red CSL accent pinstripe borders
+  ctx.fillStyle = '#e11d48';
+  ctx.fillRect(70, 0, 3, 256);
+  ctx.fillRect(107, 0, 3, 256);
+
+  // Right stripe
+  ctx.fillStyle = '#14171a';
+  ctx.fillRect(148, 0, 36, 256);
+  // Red CSL accent pinstripe borders
+  ctx.fillStyle = '#e11d48';
+  ctx.fillRect(146, 0, 3, 256);
+  ctx.fillRect(183, 0, 3, 256);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+

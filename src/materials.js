@@ -14,6 +14,10 @@ import {
   createCobbleCircleTexture,
   createStripedAwningTexture,
   createMonumentSignTexture,
+  createGermanPlateTexture,
+  createBmwEmblemTexture,
+  createCarbonFiberTexture,
+  createM4CSLStripeTexture,
 } from './textures.js';
 
 export const palette = {
@@ -243,6 +247,73 @@ export const materials = {
   }),
   carChrome: std(0xeef2f6, 0.15, { metalness: 0.92 }),
   carRubber: std(0x181a1c, 0.88, { metalness: 0.02 }),
+
+  // High-Fidelity BMW M4 Competition G82 / CSL Dedicated Materials
+  m4Paint: new THREE.MeshPhysicalMaterial({
+    color: 0xecf0f2,
+    roughness: 0.13,
+    metalness: 0.16,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.04,
+  }),
+  m4Carbon: new THREE.MeshPhysicalMaterial({
+    map: createCarbonFiberTexture(),
+    roughness: 0.22,
+    metalness: 0.35,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.06,
+  }),
+  m4HoodStripes: new THREE.MeshStandardMaterial({
+    map: createM4CSLStripeTexture(),
+    roughness: 0.16,
+    metalness: 0.16,
+  }),
+  m4GlossBlack: new THREE.MeshPhysicalMaterial({
+    color: 0x090a0d,
+    roughness: 0.08,
+    metalness: 0.40,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.03,
+  }),
+  m4PlateFront: new THREE.MeshStandardMaterial({
+    map: createGermanPlateTexture('M DI 4015'),
+    roughness: 0.28,
+    metalness: 0.08,
+  }),
+  m4PlateRear: new THREE.MeshStandardMaterial({
+    map: createGermanPlateTexture('M DI 4015'),
+    roughness: 0.28,
+    metalness: 0.08,
+  }),
+  m4BmwEmblem: new THREE.MeshStandardMaterial({
+    map: createBmwEmblemTexture(),
+    roughness: 0.22,
+    metalness: 0.35,
+  }),
+  m4LaserBlue: new THREE.MeshStandardMaterial({
+    color: 0x38bdf8,
+    emissive: 0x0284c7,
+    emissiveIntensity: 2.2,
+    roughness: 0.1,
+  }),
+  m4DRLGlow: new THREE.MeshStandardMaterial({
+    color: 0xf8fafc,
+    emissive: 0xe2e8f0,
+    emissiveIntensity: 2.4,
+    roughness: 0.08,
+  }),
+  m4TaillightOLED: new THREE.MeshStandardMaterial({
+    color: 0xef4444,
+    emissive: 0xdc2626,
+    emissiveIntensity: 2.5,
+    roughness: 0.12,
+  }),
+  m4CaliperGold: std(0xd4af37, 0.25, { metalness: 0.88 }),
+  m4RotorBrake: std(0x788088, 0.30, { metalness: 0.85 }),
+  m4WheelRim: std(0x181a1d, 0.22, { metalness: 0.82 }),
+  m4WheelLip: std(0xe2e8f0, 0.12, { metalness: 0.95 }),
+  m4InteriorLeather: std(0x1a1c1e, 0.72, { roughness: 0.78 }),
+  m4BucketAccent: std(0xf59e0b, 0.48),
 
   // Leisure & Water
   poolWater: new THREE.MeshPhysicalMaterial({
