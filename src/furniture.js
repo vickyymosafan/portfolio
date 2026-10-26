@@ -105,10 +105,12 @@ function createFloorBeacon(parent, x, y, z, colorHex) {
 function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
   const { x, y, id, title, subtitle, accent } = room;
 
-  // Mount seamlessly on the back wall of the room (z = -7.8)
-  const bx = x;
+  // Mount seamlessly on the wall
+  // For 'about' (Living Room), mount on the solid West partition wall at x = -3.8, z = -8.0
+  // so the central glass doors to the rear terrace (x: [-2.0, 2.0], z = -8.2) are 100% clear!
+  const bx = id === 'about' ? -3.8 : x;
   const by = y;
-  const bz = id === 'contact' ? -15.2 : -7.8;
+  const bz = id === 'contact' ? -15.2 : (id === 'about' ? -8.0 : -7.8);
 
   const display = new THREE.Group();
   display.position.set(bx, by, bz);

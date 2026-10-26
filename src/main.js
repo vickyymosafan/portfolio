@@ -977,13 +977,15 @@ function findInteraction() {
   const nearbySeat = worldInteractions ? worldInteractions.getNearbySeat(physX, physZ, physY) : null;
   const nearbyInspectable = worldInteractions ? worldInteractions.getNearbyInspectable(physX, physZ) : null;
 
-  // Door interaction candidate (E)
-  const doorPoint = interactionPoints.find((item) => item.id === 'door');
+  // Door interaction candidate (E) - front entrance or rear terrace glass doors
   let doorCandidate = null;
-  if (doorPoint) {
-    const dist = Math.hypot(physX - doorPoint.position.x, physZ - doorPoint.position.z);
-    if (dist < doorPoint.radius) {
-      doorCandidate = { point: doorPoint, dist };
+  let bestDoorDist = Infinity;
+  for (const item of interactionPoints) {
+    if (item.type !== 'door') continue;
+    const dist = Math.hypot(physX - item.position.x, physZ - item.position.z);
+    if (dist < item.radius && dist < bestDoorDist) {
+      bestDoorDist = dist;
+      doorCandidate = { point: item, dist };
     }
   }
 
@@ -992,7 +994,7 @@ function findInteraction() {
   let bestRoomDist = Infinity;
   for (let i = 0; i < interactionPoints.length; i += 1) {
     const item = interactionPoints[i];
-    if (item.id === 'door') continue;
+    if (item.type === 'door') continue;
     if (item.position?.y !== undefined && Math.abs(physY - item.position.y) > 2.8) continue;
     const dist = Math.hypot(physX - item.position.x, physZ - item.position.z);
     if (dist < item.radius && dist < bestRoomDist) {
@@ -1011,13 +1013,15 @@ function findInteraction() {
   // 4. Environmental Inspection (F)
   let chosen = null;
   if (doorCandidate) {
+    const pt = doorCandidate.point;
+    const isDoorOpen = pt.controls?.isOpen?.() ?? false;
     chosen = {
       key: 'E',
-      label: doorPoint.getLabel ? doorPoint.getLabel() : (doorControls?.isOpen() ? 'Close the garden door' : 'Open the garden door'),
-      touch: doorControls?.isOpen() ? 'Close' : 'Open',
-      target: doorPoint,
+      label: pt.getLabel ? pt.getLabel() : (isDoorOpen ? 'Close door' : 'Open door'),
+      touch: isDoorOpen ? 'Close' : 'Open',
+      target: pt,
     };
-    currentInteraction = doorPoint;
+    currentInteraction = pt;
   } else if (nearbySeat && (seatDist <= bestRoomDist)) {
     chosen = {
       key: 'C',
@@ -1102,23 +1106,27 @@ function dispatchInteraction(code) {
     // KeyE: ONLY doors and room exhibits. NEVER triggers sitting!
     if (w.mode !== InteractionMode.NONE) return reject('other_interaction_active');
 
-    // Priority 1: Check door
-    const doorPoint = interactionPoints.find((item) => item.id === 'door');
+    // Priority 1: Check nearest door (front entrance or terrace glass doors)
     let doorTarget = null;
-    if (doorPoint) {
-      const dist = Math.hypot(physX - doorPoint.position.x, physZ - doorPoint.position.z);
-      if (dist < doorPoint.radius) doorTarget = doorPoint;
+    let bestDoorDist = Infinity;
+    for (const item of interactionPoints) {
+      if (item.type !== 'door') continue;
+      const dist = Math.hypot(physX - item.position.x, physZ - item.position.z);
+      if (dist < item.radius && dist < bestDoorDist) {
+        bestDoorDist = dist;
+        doorTarget = item;
+      }
     }
 
     if (doorTarget) {
-      if (import.meta.env.DEV) console.log('[Interaction] KeyE -> door toggle');
+      if (import.meta.env.DEV) console.log('[Interaction] KeyE -> door toggle:', doorTarget.id);
       result = doorTarget.action() !== false;
     } else {
       // Priority 2: Check nearest room exhibit
       let bestRoom = null;
       let bestDist = Infinity;
       for (const item of interactionPoints) {
-        if (item.id === 'door') continue;
+        if (item.type === 'door') continue;
         if (item.position?.y !== undefined && Math.abs(physY - item.position.y) > 2.8) continue;
         const dist = Math.hypot(physX - item.position.x, physZ - item.position.z);
         if (dist < item.radius && dist < bestDist) {
@@ -1616,7 +1624,7 @@ function updateCamera(dt, timestamp) {
 
   // Camera goal distance & height with responsive mobile compensation
   const isPortrait = camera.aspect < 1.0;
-  const baseDistance = inHouse ? (isPortrait ? 4.2 : 4.4) : (isPortrait ? 7.6 : 6.8);
+  const baseDistance = inHouse ? (isPortrait ? 3.2 : 3.4) : (isPortrait ? 7.6 : 6.8);
   cameraDistanceGoal = baseDistance * userZoom;
 
   const targetY = physY + (isPortrait ? 1.35 : 1.25);
@@ -1648,11 +1656,11 @@ function updateCamera(dt, timestamp) {
     physZ + Math.cos(yaw) * horizontal + shoulderZ
   );
 
-  // Ceiling height clamp: indoor camera height adapts between Ground Floor (max 5.0m) and Second Floor (max 10.2m)
+  // Ceiling height clamp: indoor camera height adapts between Ground Floor (max 3.8m) and Second Floor (max 10.2m)
   if (inHouse) {
     const isUpperFloor = physY > 3.0;
     const minCamY = isUpperFloor ? 5.5 : 0.8;
-    const maxCamY = isUpperFloor ? 10.2 : 5.0;
+    const maxCamY = isUpperFloor ? 10.2 : 3.8;
     cameraDesired.y = THREE.MathUtils.clamp(cameraDesired.y, minCamY, maxCamY);
   }
 

@@ -185,12 +185,23 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   cameraBlockers.push(rearGarage);
   addColliderBox([21.0, 5.2, -8.2], [5.0, 5.2, 0.325]);
 
-  // French glass sliding doors to rear garden terrace (x: [-3.0, 3.0], z = -8.2)
-  addBox(building, [-2.25, 2.4, -8.2], [1.5, 4.6, 0.08], materials.glass);
-  addColliderBox([-2.25, 2.4, -8.2], [0.75, 2.4, 0.08]);
-  addBox(building, [2.25, 2.4, -8.2], [1.5, 4.6, 0.08], materials.glass);
-  addColliderBox([2.25, 2.4, -8.2], [0.75, 2.4, 0.08]);
-  addBox(building, [0, 4.4, -8.2], [3.0, 0.6, 0.18], materials.woodDark);
+  // Chapter 1 Living Room rear wall flanks & terrace opening portal (z = -8.2, x: [-5.5, 5.5])
+  // Solid left wall flank (x: [-5.5, -2.4], width 3.1m) - mounts the "About Me" display board
+  const rearFlankLeft = addBox(building, [-3.95, 2.4, -8.2], [3.1, 4.8, 0.65], materials.wall, { shadow: true });
+  cameraBlockers.push(rearFlankLeft);
+  addColliderBox([-3.95, 2.4, -8.2], [1.55, 2.4, 0.325]);
+
+  // Solid right wall flank (x: [2.4, 5.5], width 3.1m) - wraps alongside the staircase
+  const rearFlankRight = addBox(building, [3.95, 2.4, -8.2], [3.1, 4.8, 0.65], materials.wall, { shadow: true });
+  cameraBlockers.push(rearFlankRight);
+  addColliderBox([3.95, 2.4, -8.2], [1.55, 2.4, 0.325]);
+
+  // Lintel beam & header over the 4.8m wide sliding glass portal
+  const rearLintel = addBox(building, [0, 4.55, -8.2], [5.0, 0.5, 0.65], materials.wall, { shadow: true });
+  cameraBlockers.push(rearLintel);
+  addColliderBox([0, 4.55, -8.2], [2.5, 0.25, 0.325]);
+  archBatch.addBox([0, 4.35, -8.2], [5.0, 0.12, 0.36], materials.trim);
+  archBatch.addBox([0, 0.04, -8.2], [5.0, 0.08, 0.24], materials.trim);
 
   // Rear Garden Veranda & Terrace (z = [-8.2, -15.5], x = [-10.0, 10.0])
   addBox(building, [0, 0.04, -11.85], [20.0, 0.24, 7.3], materials.stone, { shadow: true, receive: true });
@@ -603,26 +614,43 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
 }
 
 export function createInteractiveDoors(scene, world, RAPIER, doorColliders, interactionPoints) {
-  const frame = new THREE.Group();
-  frame.position.set(0, 0, 3.75);
-  scene.add(frame);
+  const frameMat = materials.windowFrame || materials.metalDark;
 
-  addBox(frame, [-1.7, 1.8, 0], [0.32, 3.6, 0.36], materials.coral);
-  addBox(frame, [1.7, 1.8, 0], [0.32, 3.6, 0.36], materials.coral);
-  addBox(frame, [0, 3.65, 0], [3.72, 0.32, 0.38], materials.yellow);
+  // -----------------------------------------------------------------
+  // 1. FRONT ENTRANCE FULL-GLASS DOORS (z = 3.75, x: [-1.6, 1.6])
+  // -----------------------------------------------------------------
+  const frontFrame = new THREE.Group();
+  frontFrame.position.set(0, 0, 3.75);
+  scene.add(frontFrame);
+
+  // Modern architectural portal frame
+  addBox(frontFrame, [-1.65, 1.8, 0], [0.18, 3.6, 0.22], frameMat);
+  addBox(frontFrame, [1.65, 1.8, 0], [0.18, 3.6, 0.22], frameMat);
+  addBox(frontFrame, [0, 3.65, 0], [3.48, 0.18, 0.24], frameMat);
 
   const doorLeft = new THREE.Group();
   const doorRight = new THREE.Group();
   doorLeft.position.set(-1.54, 0, 0.04);
   doorRight.position.set(1.54, 0, 0.04);
-  frame.add(doorLeft, doorRight);
+  frontFrame.add(doorLeft, doorRight);
 
-  addBox(doorLeft, [0.77, 1.65, 0], [1.54, 3.3, 0.12], materials.woodLight);
-  addBox(doorRight, [-0.77, 1.65, 0], [1.54, 3.3, 0.12], materials.woodLight);
-  addBox(doorLeft, [0.77, 1.7, 0.07], [1.12, 2.4, 0.04], materials.wainscot);
-  addBox(doorRight, [-0.77, 1.7, 0.07], [1.12, 2.4, 0.04], materials.wainscot);
-  addSphere(doorLeft, [1.36, 1.55, 0.12], [0.08, 0.08, 0.08], materials.brass);
-  addSphere(doorRight, [-1.36, 1.55, 0.12], [0.08, 0.08, 0.08], materials.brass);
+  // Left leaf (Full glass with sleek aluminum frame & brass handle)
+  addBox(doorLeft, [0.77, 3.25, 0], [1.52, 0.10, 0.08], frameMat);
+  addBox(doorLeft, [0.77, 0.08, 0], [1.52, 0.16, 0.08], frameMat);
+  addBox(doorLeft, [0.05, 1.65, 0], [0.10, 3.3, 0.08], frameMat);
+  addBox(doorLeft, [1.49, 1.65, 0], [0.10, 3.3, 0.08], frameMat);
+  addBox(doorLeft, [0.77, 1.65, 0], [1.38, 3.10, 0.04], materials.glass);
+  addCylinder(doorLeft, [1.38, 1.55, 0.06], [0.022, 0.85, 0.022], materials.brass);
+  addCylinder(doorLeft, [1.38, 1.55, -0.06], [0.022, 0.85, 0.022], materials.brass);
+
+  // Right leaf (Full glass with sleek aluminum frame & brass handle)
+  addBox(doorRight, [-0.77, 3.25, 0], [1.52, 0.10, 0.08], frameMat);
+  addBox(doorRight, [-0.77, 0.08, 0], [1.52, 0.16, 0.08], frameMat);
+  addBox(doorRight, [-0.05, 1.65, 0], [0.10, 3.3, 0.08], frameMat);
+  addBox(doorRight, [-1.49, 1.65, 0], [0.10, 3.3, 0.08], frameMat);
+  addBox(doorRight, [-0.77, 1.65, 0], [1.38, 3.10, 0.04], materials.glass);
+  addCylinder(doorRight, [-1.38, 1.55, 0.06], [0.022, 0.85, 0.022], materials.brass);
+  addCylinder(doorRight, [-1.38, 1.55, -0.06], [0.022, 0.85, 0.022], materials.brass);
 
   if (world && RAPIER && doorColliders) {
     for (const x of [-0.77, 0.77]) {
@@ -685,7 +713,7 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
     if (state === 'opening' || state === 'closing') finish();
   };
 
-  const controls = {
+  const frontControls = {
     toggle,
     settle,
     update,
@@ -702,23 +730,162 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
   interactionPoints.push({
     id: 'door',
     type: 'door',
-    title: 'Front door',
+    title: 'Front entrance glass doors',
     position: new THREE.Vector3(0, 0.7, 3.8),
     radius: 3.2,
-    controls,
+    controls: frontControls,
     action: () => {
       const manager = window.__worldInteractions;
       if (manager) {
-        return manager.toggleDoor(controls, window.__playerCameraState ? window.__playerCameraState() : {});
+        return manager.toggleDoor(frontControls, window.__playerCameraState ? window.__playerCameraState() : {});
       }
       return toggle();
     },
     getLabel: () => {
-      if (state === 'opening') return 'Opening the garden door...';
-      if (state === 'closing') return 'Closing the garden door...';
-      return state === 'open' ? 'Close the garden door' : 'Open the garden door';
+      if (state === 'opening') return 'Opening entrance doors...';
+      if (state === 'closing') return 'Closing entrance doors...';
+      return state === 'open' ? 'Close entrance doors' : 'Open entrance doors';
     },
   });
 
-  return controls;
+  // -----------------------------------------------------------------
+  // 2. REAR TERRACE FULL-GLASS SLIDING DOORS (z = -8.2, x: [-2.4, 2.4])
+  // -----------------------------------------------------------------
+  const rearGroup = new THREE.Group();
+  rearGroup.position.set(0, 0, -8.2);
+  scene.add(rearGroup);
+
+  // Modern perimeter frame and tracks
+  addBox(rearGroup, [-2.42, 2.18, 0], [0.10, 4.36, 0.20], frameMat);
+  addBox(rearGroup, [2.42, 2.18, 0], [0.10, 4.36, 0.20], frameMat);
+  addBox(rearGroup, [0, 4.32, 0], [4.94, 0.10, 0.22], frameMat);
+  addBox(rearGroup, [0, 0.04, 0], [4.94, 0.08, 0.22], frameMat);
+
+  // Left & Right sliding door leaves (slight z-offset so they bypass smoothly)
+  const rearDoorLeft = new THREE.Group();
+  const rearDoorRight = new THREE.Group();
+  rearDoorLeft.position.set(-1.2, 0, -0.02);
+  rearDoorRight.position.set(1.2, 0, 0.02);
+  rearGroup.add(rearDoorLeft, rearDoorRight);
+
+  // Left sliding leaf (width 2.40m, height 4.22m, full glass)
+  addBox(rearDoorLeft, [0, 2.16, 0], [2.28, 4.12, 0.05], materials.glass);
+  addBox(rearDoorLeft, [0, 4.24, 0], [2.38, 0.08, 0.08], frameMat);
+  addBox(rearDoorLeft, [0, 0.06, 0], [2.38, 0.12, 0.08], frameMat);
+  addBox(rearDoorLeft, [-1.15, 2.16, 0], [0.08, 4.24, 0.08], frameMat);
+  addBox(rearDoorLeft, [1.15, 2.16, 0], [0.08, 4.24, 0.08], frameMat);
+  addCylinder(rearDoorLeft, [0.95, 1.8, 0.055], [0.024, 0.95, 0.024], materials.brass);
+  addCylinder(rearDoorLeft, [0.95, 1.8, -0.055], [0.024, 0.95, 0.024], materials.brass);
+
+  // Right sliding leaf (width 2.40m, height 4.22m, full glass)
+  addBox(rearDoorRight, [0, 2.16, 0], [2.28, 4.12, 0.05], materials.glass);
+  addBox(rearDoorRight, [0, 4.24, 0], [2.38, 0.08, 0.08], frameMat);
+  addBox(rearDoorRight, [0, 0.06, 0], [2.38, 0.12, 0.08], frameMat);
+  addBox(rearDoorRight, [-1.15, 2.16, 0], [0.08, 4.24, 0.08], frameMat);
+  addBox(rearDoorRight, [1.15, 2.16, 0], [0.08, 4.24, 0.08], frameMat);
+  addCylinder(rearDoorRight, [-0.95, 1.8, 0.055], [0.024, 0.95, 0.024], materials.brass);
+  addCylinder(rearDoorRight, [-0.95, 1.8, -0.055], [0.024, 0.95, 0.024], materials.brass);
+
+  // Dynamic Rapier static colliders for rear sliding doors (active when closed)
+  const rearColliders = [];
+  if (world && RAPIER) {
+    for (const x of [-1.2, 1.2]) {
+      const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(x, 2.18, -8.2));
+      const collider = world.createCollider(RAPIER.ColliderDesc.cuboid(1.2, 2.18, 0.12), body);
+      rearColliders.push(collider);
+    }
+  }
+
+  let rearState = 'closed';
+  let rearFrom = 0;
+  let rearTo = 0;
+  let rearClock = 0;
+  let rearPendingCallback = null;
+  const SLIDE_TRAVEL = 2.2;
+
+  const setRearSlide = (t) => {
+    rearDoorLeft.position.x = -1.2 - SLIDE_TRAVEL * t;
+    rearDoorRight.position.x = 1.2 + SLIDE_TRAVEL * t;
+  };
+
+  const finishRear = () => {
+    setRearSlide(rearTo);
+    rearState = rearTo > 0 ? 'open' : 'closed';
+    if (rearState === 'closed') {
+      for (const col of rearColliders) col.setEnabled(true);
+    }
+    const cb = rearPendingCallback;
+    rearPendingCallback = null;
+    if (cb) cb(rearState === 'open');
+  };
+
+  const updateRear = (dt) => {
+    if (rearState !== 'opening' && rearState !== 'closing') return;
+    rearClock += dt;
+    const t = Math.min(1, rearClock / DOOR_DURATION);
+    const eased = easeInOut(t);
+    setRearSlide(rearFrom + (rearTo - rearFrom) * eased);
+    if (t >= 1) finishRear();
+  };
+
+  const toggleRear = (onComplete) => {
+    if (rearState === 'opening' || rearState === 'closing') return false;
+    const opening = rearState === 'closed';
+    rearFrom = rearState === 'closed' ? 0 : 1;
+    rearTo = opening ? 1 : 0;
+    rearClock = 0;
+    rearState = opening ? 'opening' : 'closing';
+    rearPendingCallback = onComplete || null;
+    if (opening) {
+      for (const col of rearColliders) col.setEnabled(false);
+    }
+    return true;
+  };
+
+  const settleRear = () => {
+    if (rearState === 'opening' || rearState === 'closing') finishRear();
+  };
+
+  const rearControls = {
+    toggle: toggleRear,
+    settle: settleRear,
+    update: updateRear,
+    isOpen: () => rearState === 'open',
+    isBusy: () => rearState === 'opening' || rearState === 'closing',
+    getState: () => rearState,
+    panels: { rearDoorLeft, rearDoorRight },
+  };
+
+  interactionPoints.push({
+    id: 'door_rear',
+    type: 'door',
+    title: 'Terrace glass doors',
+    position: new THREE.Vector3(0, 0.7, -8.2),
+    radius: 3.5,
+    controls: rearControls,
+    action: () => toggleRear(),
+    getLabel: () => {
+      if (rearState === 'opening') return 'Opening terrace glass doors...';
+      if (rearState === 'closing') return 'Closing terrace glass doors...';
+      return rearState === 'open' ? 'Close terrace glass doors' : 'Open terrace glass doors';
+    },
+  });
+
+  return {
+    front: frontControls,
+    rear: rearControls,
+    toggle: (cb) => frontControls.toggle(cb),
+    settle: () => { frontControls.settle(); rearControls.settle(); },
+    update: (dt) => { frontControls.update(dt); rearControls.update(dt); },
+    isOpen: () => frontControls.isOpen() || rearControls.isOpen(),
+    isBusy: () => frontControls.isBusy() || rearControls.isBusy(),
+    getState: () => frontControls.getState(),
+    panels: {
+      doorLeft,
+      doorRight,
+      rearDoorLeft,
+      rearDoorRight,
+    },
+    hingeWorld: frontControls.hingeWorld,
+  };
 }
