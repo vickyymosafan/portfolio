@@ -311,17 +311,18 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   addColliderBox([-5.5, 2.6, -6.8], [0.225, 2.6, 1.4]);
 
   // Partition Living Room / Home Office at x = 5.5 (z: [3.8, -8.2])
-  // Front section
-  const partEastG1 = addBox(building, [5.5, 2.6, 2.2], [0.45, 5.2, 3.2], materials.wall, { shadow: true });
-  cameraBlockers.push(partEastG1);
-  addColliderBox([5.5, 2.6, 2.2], [0.225, 2.6, 1.6]);
-  // Grand arched walkthrough portal (4.0m wide, z: [-1.4, -5.4])
-  archBatch.addBox([5.5, 4.5, -3.4], [0.48, 1.4, 4.0], materials.wall);
-  archBatch.addBox([5.5, 3.75, -3.4], [0.52, 0.16, 4.0], materials.woodWarm);
-  // Rear section
-  const partEastG2 = addBox(building, [5.5, 2.6, -6.8], [0.45, 5.2, 2.8], materials.wall, { shadow: true });
-  cameraBlockers.push(partEastG2);
-  addColliderBox([5.5, 2.6, -6.8], [0.225, 2.6, 1.4]);
+  // Front entrance portal from foyer into Home Office (width 2.2m, z: [0.9, 3.1])
+  const partEastFrontPost = addBox(building, [5.5, 2.6, 3.45], [0.45, 5.2, 0.7], materials.wall, { shadow: true });
+  cameraBlockers.push(partEastFrontPost);
+  addColliderBox([5.5, 2.6, 3.45], [0.225, 2.6, 0.35]);
+
+  archBatch.addBox([5.5, 4.4, 2.0], [0.48, 1.6, 2.2], materials.wall);
+  archBatch.addBox([5.5, 3.55, 2.0], [0.52, 0.14, 2.2], materials.woodWarm);
+
+  // Solid structural wall behind portal against which the side staircase ascends (z: [-8.2, 0.9], length 9.1m)
+  const partEastSolid = addBox(building, [5.5, 2.6, -3.65], [0.45, 5.2, 9.1], materials.wall, { shadow: true });
+  cameraBlockers.push(partEastSolid);
+  addColliderBox([5.5, 2.6, -3.65], [0.225, 2.6, 4.55]);
 
   // Partition Home Office / Garasi at x = 16.0 (z: [3.8, -8.2])
   // Front wall section (z: [3.8, -0.9], depth 4.7m)
@@ -348,25 +349,29 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   addBox(building, [-11.0, 5.06, -2.2], [11.0, 0.28, 12.0], materials.woodFloor, { shadow: false, receive: true });
   addColliderBox([-11.0, 5.06, -2.2], [5.5, 0.14, 6.0]);
 
-  // Master Bathroom Floor Slabs & Central Stairwell Atrium (Bay 2: x: [-5.5, 5.5], z: [3.8, -8.2])
-  // West bathroom floor slab (under spa bathtub & shower, x: [-5.5, -1.9], width 3.6m)
-  addBox(building, [-3.7, 5.06, -2.2], [3.6, 0.28, 12.0], materials.bathroomTile, { shadow: false, receive: true });
-  addColliderBox([-3.7, 5.06, -2.2], [1.8, 0.14, 6.0]);
+  // Master Bathroom Floor Slabs & Upper Mezzanine (Bay 2: x: [-5.5, 5.5], z: [3.8, -8.2])
+  // Main bathroom & atrium floor slab (x: [-5.5, 2.6], width 8.1m, depth 12.0m)
+  addBox(building, [-1.45, 5.06, -2.2], [8.1, 0.28, 12.0], materials.bathroomTile, { shadow: false, receive: true });
+  addColliderBox([-1.45, 5.06, -2.2], [4.05, 0.14, 6.0]);
 
-  // East bathroom floor slab (under vanity counter, x: [1.9, 5.5], width 3.6m)
-  addBox(building, [3.7, 5.06, -2.2], [3.6, 0.28, 12.0], materials.bathroomTile, { shadow: false, receive: true });
-  addColliderBox([3.7, 5.06, -2.2], [1.8, 0.14, 6.0]);
+  // Rear upper landing floor slab (connecting top of stairs to bathroom, bedroom, & library, x: [2.6, 5.5], z: [-5.6, -8.2])
+  addBox(building, [4.05, 5.06, -6.9], [2.9, 0.28, 2.6], materials.bathroomTile, { shadow: false, receive: true });
+  addColliderBox([4.05, 5.06, -6.9], [1.45, 0.14, 1.3]);
 
-  // Rear upper landing floor slab (connecting stairs to bathroom, bedroom, & library, z: [-4.6, -8.2], depth 3.6m)
-  addBox(building, [0.0, 5.06, -6.4], [3.8, 0.28, 3.6], materials.bathroomTile, { shadow: false, receive: true });
-  addColliderBox([0.0, 5.06, -6.4], [1.9, 0.14, 1.8]);
+  // Front upper overlook floor slab (x: [2.6, 5.5], z: [0.8, 3.8])
+  addBox(building, [4.05, 5.06, 2.3], [2.9, 0.28, 3.0], materials.bathroomTile, { shadow: false, receive: true });
+  addColliderBox([4.05, 5.06, 2.3], [1.45, 0.14, 1.5]);
 
-  // Modern safety glass balustrades framing the open stairwell atrium on Lantai 2 (x = -1.85 and x = 1.85, z: [-4.6, 3.8])
-  for (const bx of [-1.85, 1.85]) {
-    addBox(building, [bx, 5.65, -0.4], [0.06, 0.9, 8.4], materials.glass);
-    archBatch.addBox([bx, 6.12, -0.4], [0.1, 0.08, 8.4], materials.woodWarm);
-    addColliderBox([bx, 5.65, -0.4], [0.06, 0.45, 4.2]);
-  }
+  // Modern safety glass balustrades framing the stairwell opening on Lantai 2 (open well at x: [2.6, 5.5], z: [-5.6, 0.8])
+  // Inner side balustrade along x = 2.65
+  addBox(building, [2.65, 5.65, -2.4], [0.06, 0.9, 6.4], materials.glass);
+  archBatch.addBox([2.65, 6.12, -2.4], [0.1, 0.08, 6.4], materials.woodWarm);
+  addColliderBox([2.65, 5.65, -2.4], [0.06, 0.45, 3.2]);
+
+  // Front balustrade along z = 0.8 (x: [2.7, 5.4])
+  addBox(building, [4.05, 5.65, 0.8], [2.7, 0.9, 0.06], materials.glass);
+  archBatch.addBox([4.05, 6.12, 0.8], [2.7, 0.08, 0.1], materials.woodWarm);
+  addColliderBox([4.05, 5.65, 0.8], [1.35, 0.45, 0.06]);
 
   // Library Nook Floor Slab (Bay 3: x: [5.5, 16.0], z: [3.8, -8.2])
   addBox(building, [10.75, 5.06, -2.2], [10.5, 0.28, 12.0], materials.woodFloor, { shadow: false, receive: true });
@@ -417,17 +422,24 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   addColliderBox([-5.5, 7.8, -6.2], [0.225, 2.6, 2.0]);
 
   // Partition Bathroom / Library at x = 5.5 (z: [3.8, -8.2])
-  // Front section
-  const partLibS = addBox(building, [5.5, 7.8, 1.8], [0.45, 5.2, 4.0], materials.wall, { shadow: true });
+  // Front section (z: [0.8, 3.8])
+  const partLibS = addBox(building, [5.5, 7.8, 2.3], [0.45, 5.2, 3.0], materials.wall, { shadow: true });
   cameraBlockers.push(partLibS);
-  addColliderBox([5.5, 7.8, 1.8], [0.225, 2.6, 2.0]);
-  // Arched walkthrough portal connecting Library to Bathroom / Mezzanine (z: [-1.2, -4.2])
-  archBatch.addBox([5.5, 9.6, -2.7], [0.48, 1.6, 3.0], materials.wall);
-  archBatch.addBox([5.5, 8.75, -2.7], [0.52, 0.16, 3.0], materials.woodWarm);
-  // Rear section
-  const partLibN = addBox(building, [5.5, 7.8, -6.2], [0.45, 5.2, 4.0], materials.wall, { shadow: true });
+  addColliderBox([5.5, 7.8, 2.3], [0.225, 2.6, 1.5]);
+
+  // Mid section along stairwell ascent (z: [-5.6, 0.8], depth 6.4m - solid structural backdrop)
+  const partLibMid = addBox(building, [5.5, 7.8, -2.4], [0.45, 5.2, 6.4], materials.wall, { shadow: true });
+  cameraBlockers.push(partLibMid);
+  addColliderBox([5.5, 7.8, -2.4], [0.225, 2.6, 3.2]);
+
+  // Arched walkthrough portal connecting Upper Landing to Library (z: [-5.8, -7.8])
+  archBatch.addBox([5.5, 9.3, -6.8], [0.48, 2.2, 2.0], materials.wall);
+  archBatch.addBox([5.5, 8.2, -6.8], [0.52, 0.16, 2.0], materials.woodWarm);
+
+  // North corner post (z: [-7.8, -8.2])
+  const partLibN = addBox(building, [5.5, 7.8, -8.0], [0.45, 5.2, 0.4], materials.wall, { shadow: true });
   cameraBlockers.push(partLibN);
-  addColliderBox([5.5, 7.8, -6.2], [0.225, 2.6, 2.0]);
+  addColliderBox([5.5, 7.8, -8.0], [0.225, 2.6, 0.2]);
 
   // Partition Library / Creative Studio at x = 16.0 (z: [3.8, -8.2])
   // Front section
@@ -443,15 +455,18 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   addColliderBox([16.0, 7.8, -6.2], [0.225, 2.6, 2.0]);
 
   // =========================================================================
-  // 7. GRAND WALKABLE CENTRAL STAIRCASE (Ground Floor to Lantai 2)
-  // Origin: x: 0, starts at z = 1.2 (y = 0.0), ascends smoothly northward to z = -4.6 (y = 5.2)
-  // Run = 5.8m, Rise = 5.2m. 26 steps (rise: 20cm, depth: 22.3cm).
+  // 7. ARCHITECTURAL FLOATING SIDE STAIRCASE (Ground Floor to Lantai 2)
+  // Positioned along East flank of Living Room (x = 4.05), leaving the central
+  // entrance-to-terrace grand axis (x: [-3.0, 3.0]) 100% open and unobstructed.
+  // Origin: x: 4.05, starts at z = 0.6 (y = 0.0), ascends smoothly northward to z = -5.8 (y = 5.2)
+  // Run = 6.4m, Rise = 5.2m. 26 steps (rise: 20cm, depth: 24.6cm).
   // Includes smooth inclined ramp collider for effortless 100% snag-free climbing.
   // =========================================================================
   const numSteps = 26;
-  const stairWidth = 3.4;
-  const startZ = 1.2;
-  const endZ = -4.6;
+  const stairX = 4.05;
+  const stairWidth = 1.7;
+  const startZ = 0.6;
+  const endZ = -5.8;
   const startY = 0.0;
   const endY = 5.2;
 
@@ -463,49 +478,55 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
     const stepHeight = (endY - startY) / numSteps;
 
     // Wooden tread
-    archBatch.addBox([0, curY, curZ], [stairWidth, 0.08, stepDepth], materials.woodWarm);
+    archBatch.addBox([stairX, curY, curZ], [stairWidth, 0.08, stepDepth], materials.woodWarm);
     // Brass edge riser trim
-    archBatch.addBox([0, curY + 0.03, curZ + stepDepth * 0.45], [stairWidth, 0.03, 0.03], materials.brass);
+    archBatch.addBox([stairX, curY + 0.03, curZ + stepDepth * 0.45], [stairWidth, 0.03, 0.03], materials.brass);
     // Solid riser support below
-    archBatch.addBox([0, curY - stepHeight * 0.5, curZ], [stairWidth - 0.1, stepHeight, stepDepth - 0.02], materials.woodDark);
-
-    // Multi-tier low-height colliders ensuring perfect Rapier autostep (<0.20m step height)
-    addColliderBox([0, curY - 0.04, curZ], [stairWidth * 0.48, stepHeight * 0.5, stepDepth * 0.5]);
+    archBatch.addBox([stairX, curY - stepHeight * 0.5, curZ], [stairWidth - 0.08, stepHeight, stepDepth - 0.02], materials.woodDark);
   }
 
-  // Seamless ramp collider under treads for butter-smooth slope gliding in Rapier
+  // Smooth inclined ramp collider for butter-smooth slope climbing in Rapier
   if (world && RAPIER && staticBodies) {
     const stairLen = Math.hypot(endZ - startZ, endY - startY);
     const stairAngle = Math.atan2(endY - startY, Math.abs(endZ - startZ));
     const rampBody = world.createRigidBody(
       RAPIER.RigidBodyDesc.fixed()
-        .setTranslation(0, (startY + endY) * 0.5 - 0.06, (startZ + endZ) * 0.5)
+        .setTranslation(stairX, (startY + endY) * 0.5, (startZ + endZ) * 0.5)
         .setRotation({ x: Math.sin(stairAngle * 0.5), y: 0, z: 0, w: Math.cos(stairAngle * 0.5) })
     );
-    world.createCollider(RAPIER.ColliderDesc.cuboid(stairWidth * 0.48, 0.08, stairLen * 0.5), rampBody);
+    world.createCollider(RAPIER.ColliderDesc.cuboid(stairWidth * 0.48, 0.06, stairLen * 0.5 + 0.15), rampBody);
     staticBodies.push(rampBody);
   }
 
-  // Polished mahogany stair stringers and balustrades with handrails
-  for (const side of [-1, 1]) {
-    const sx = side * (stairWidth * 0.5);
-    const midZ = (startZ + endZ) * 0.5;
-    const midY = (startY + endY) * 0.5 + 1.0;
-    const stairLen = Math.hypot(endZ - startZ, endY - startY);
-    const stairAngle = Math.atan2(endY - startY, Math.abs(endZ - startZ));
+  // Inner floating glass balustrade with mahogany handrail along the open (left) side of the stairs
+  const sx = stairX - stairWidth * 0.5; // x = 3.2
+  const midZ = (startZ + endZ) * 0.5;
+  const midY = (startY + endY) * 0.5 + 1.0;
+  const stairLen = Math.hypot(endZ - startZ, endY - startY);
+  const stairAngle = Math.atan2(endY - startY, Math.abs(endZ - startZ));
 
-    archBatch.addBox([sx, midY, midZ], [0.12, 0.12, stairLen], materials.woodDark, {
-      rotation: [stairAngle, 0, 0],
-    });
+  // Polished mahogany top handrail
+  archBatch.addBox([sx, midY, midZ], [0.10, 0.10, stairLen], materials.woodDark, {
+    rotation: [stairAngle, 0, 0],
+  });
 
-    for (let i = 0; i < numSteps; i += 2) {
-      const t = (i + 0.5) / numSteps;
-      const bz = startZ + (endZ - startZ) * t;
-      const by = startY + (endY - startY) * t + 0.5;
-      archBatch.addCylinder([sx, by, bz], 0.03, 0.03, 0.95, materials.trim, { segments: 8 });
-    }
-    addColliderBox([sx, midY - 0.35, midZ], [0.1, 0.75, stairLen * 0.5]);
+  // Architectural crystal clear glass balustrade panel along staircase flight
+  archBatch.addBox([sx, midY - 0.42, midZ], [0.04, 0.76, stairLen], materials.glass, {
+    rotation: [stairAngle, 0, 0],
+  });
+
+  // Vertical stainless steel standoff balusters
+  for (let i = 0; i < numSteps; i += 3) {
+    const t = (i + 0.5) / numSteps;
+    const bz = startZ + (endZ - startZ) * t;
+    const by = startY + (endY - startY) * t + 0.5;
+    archBatch.addCylinder([sx, by, bz], 0.025, 0.025, 0.95, materials.trim, { segments: 8 });
   }
+  addColliderBox([sx, midY - 0.35, midZ], [0.08, 0.75, stairLen * 0.5]);
+
+  // Under-stair modern architectural feature (minimalist warm teak plinth with ambient display ledge)
+  archBatch.addBox([stairX, 0.15, -4.0], [stairWidth - 0.1, 0.3, 3.2], materials.woodDark);
+  archBatch.addBox([stairX, 0.31, -4.0], [stairWidth - 0.2, 0.02, 3.0], materials.stone);
 
   // =========================================================================
   // 8. LUXURY PITCHED GABLED ROOF STRUCTURE (`roofGroup`)

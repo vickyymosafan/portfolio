@@ -1268,21 +1268,34 @@ function planTourWaypoints(startX, startZ, targetStop) {
 
   // Handle cross-floor traversal between Ground Floor and Second Floor
   if (!startIsUpper && targetIsUpper) {
-    // Ground to Upper: Navigate to foot of Grand Staircase (z = 1.6), then ascend smoothly to mezzanine landing (z = -5.5)
+    // Ground to Upper: Navigate to foot of side staircase (x = 4.05, z = 1.0), ascend to landing (x = 4.05, z = -6.0)
     if (isOutdoor) {
       points.push([0, 1.12, 3.8]);
     }
-    points.push([0, 1.12, 1.6]); // Foot of grand central staircase
-    points.push([0, 6.32, -5.5]); // Top mezzanine landing
-    if (Math.abs(targetArchX) > 0.5) points.push([targetArchX, 6.32, targetZ]);
+    points.push([4.05, 1.12, 1.0]); // Foot of grand architectural side staircase
+    points.push([4.05, 6.32, -6.0]); // Top mezzanine landing
+    if (targetX > 4.5) {
+      // East side (Library / Studio)
+      points.push([5.5, 6.32, -6.8]);
+      if (targetArchX === 16.0) points.push([16.0, 6.32, -2.7]);
+    } else {
+      // West side (Bathroom / Bedroom)
+      points.push([2.0, 6.32, -6.5]);
+      if (targetArchX === -5.5) points.push([-5.5, 6.32, -2.7]);
+    }
     points.push([targetX, targetY, targetZ]);
     return points;
   }
 
   if (startIsUpper && !targetIsUpper) {
-    // Upper to Ground: Walk to staircase top landing, descend to ground
-    points.push([0, 6.32, -5.5]); // Top of staircase
-    points.push([0, 1.12, 1.6]); // Foot of staircase on ground floor
+    // Upper to Ground: Walk along landing, descend staircase to ground
+    if (startX > 4.5) {
+      points.push([5.5, 6.32, -6.8]);
+    } else {
+      points.push([2.0, 6.32, -6.5]);
+    }
+    points.push([4.05, 6.32, -6.0]); // Top of staircase
+    points.push([4.05, 1.12, 1.0]); // Foot of staircase on ground floor
     if (targetIsOutdoor) {
       if (targetZ > 4.2) {
         points.push([0, 1.12, 3.8]);
@@ -1292,7 +1305,10 @@ function planTourWaypoints(startX, startZ, targetStop) {
       }
     } else {
       points.push([0, 1.12, targetZ]);
-      if (Math.abs(targetArchX) > 0.5) points.push([targetArchX, 1.12, targetZ]);
+      if (Math.abs(targetArchX) > 0.5) {
+        const enterArchZ = targetArchX === 5.5 ? 2.0 : targetZ;
+        points.push([targetArchX, 1.12, enterArchZ]);
+      }
     }
     points.push([targetX, targetY, targetZ]);
     return points;
@@ -1300,8 +1316,21 @@ function planTourWaypoints(startX, startZ, targetStop) {
 
   if (startIsUpper && targetIsUpper) {
     // Upper floor room to room
-    points.push([0, 6.32, -5.5]);
-    if (Math.abs(targetArchX) > 0.5) points.push([targetArchX, 6.32, targetZ]);
+    if (startX > 4.5 && targetX <= 4.5) {
+      // East to West
+      points.push([5.5, 6.32, -6.8]);
+      points.push([4.05, 6.32, -6.0]);
+      points.push([2.0, 6.32, -6.5]);
+      if (targetArchX === -5.5) points.push([-5.5, 6.32, -2.7]);
+    } else if (startX <= 4.5 && targetX > 4.5) {
+      // West to East
+      points.push([2.0, 6.32, -6.5]);
+      points.push([4.05, 6.32, -6.0]);
+      points.push([5.5, 6.32, -6.8]);
+      if (targetArchX === 16.0) points.push([16.0, 6.32, -2.7]);
+    } else if (Math.abs(targetArchX) > 0.5) {
+      points.push([targetArchX, 6.32, -2.7]);
+    }
     points.push([targetX, targetY, targetZ]);
     return points;
   }
@@ -1313,12 +1342,16 @@ function planTourWaypoints(startX, startZ, targetStop) {
     if (startZ > 7.0) points.push([0, 1.12, 6.2]);
     points.push([0, 1.12, 3.8]);
     points.push([0, 1.12, targetZ]);
-    if (Math.abs(targetArchX) > 0.5) points.push([targetArchX, 1.12, targetZ]);
+    if (Math.abs(targetArchX) > 0.5) {
+      const enterArchZ = targetArchX === 5.5 ? 2.0 : targetZ;
+      points.push([targetArchX, 1.12, enterArchZ]);
+    }
     points.push([targetX, targetY, targetZ]);
   } else if (!isOutdoor && targetIsOutdoor) {
     if (Math.abs(startX) > 2.0) {
       const exitArchX = startX < 0 ? -5.5 : 5.5;
-      points.push([exitArchX, 1.12, startZ]);
+      const archZ = exitArchX === 5.5 ? 2.0 : startZ;
+      points.push([exitArchX, 1.12, archZ]);
     }
     points.push([0, 1.12, startZ]);
     if (targetZ > 4.2) {
@@ -1332,12 +1365,14 @@ function planTourWaypoints(startX, startZ, targetStop) {
     // Indoor ground room to room
     if (Math.abs(startX) > 2.0) {
       const exitArchX = startX < 0 ? -5.5 : 5.5;
-      points.push([exitArchX, 1.12, startZ]);
+      const archZ = exitArchX === 5.5 ? 2.0 : startZ;
+      points.push([exitArchX, 1.12, archZ]);
     }
-    points.push([0, 1.12, startZ]);
-    points.push([0, 1.12, targetZ]);
+    const midZ = (targetArchX === 5.5 || startX > 2.0) ? 2.0 : targetZ;
+    points.push([0, 1.12, midZ]);
     if (Math.abs(targetArchX) > 0.5) {
-      points.push([targetArchX, 1.12, targetZ]);
+      const enterArchZ = targetArchX === 5.5 ? 2.0 : targetZ;
+      points.push([targetArchX, 1.12, enterArchZ]);
     }
     points.push([targetX, targetY, targetZ]);
   }

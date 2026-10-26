@@ -46,9 +46,8 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
       const rugD = 6.4;
       addBox(building, [spec.x, spec.y + 0.005, spec.z], [rugW, 0.02, rugD], spec.rugMat, { receive: true, shadow: false });
     } else if (spec.id === 'about') {
-      // Flanking designer rugs for West sofa lounge & East armchair lounge, leaving 3.6m marble promenade clear to stairs
-      addBox(building, [spec.x - 3.4, spec.y + 0.005, spec.z + 0.6], [3.2, 0.02, 3.8], spec.rugMat, { receive: true, shadow: false });
-      addBox(building, [spec.x + 3.4, spec.y + 0.005, spec.z + 0.6], [3.0, 0.02, 3.8], materials.carpetBauhaus, { receive: true, shadow: false });
+      // Grand central designer area rug in Living Room, leaving clear promenade to front and rear
+      addBox(building, [0.0, spec.y + 0.005, -2.4], [5.6, 0.02, 4.6], spec.rugMat, { receive: true, shadow: false });
     }
 
     // Presentation Display Board Mounted on back wall of room (leaving center clear)
@@ -154,51 +153,51 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
       addCylinder(chandelier, [Math.cos(angle) * 1.5, 0.35, Math.sin(angle) * 1.5], 0.015, 0.015, 0.7, materials.brass);
     }
 
-    // --- WEST SEATING LOUNGE (Leaving central 3.6m corridor completely clear) ---
-    // Curved Contemporary Sectional Sofa on West side facing Southeast
+    // --- GRAND CENTRAL ARCHITECTURAL LOUNGE ---
+    // Curved Contemporary Sectional Sofa on West side facing East towards coffee table
     const sofaWest = new THREE.Group();
-    sofaWest.position.set(x - 3.4, y, z + 0.6);
+    sofaWest.position.set(x - 1.5, y, z - 0.4);
     parent.add(sofaWest);
-    addBox(sofaWest, [0, 0.42, 0], [1.6, 0.45, 2.4], materials.coral);
-    addBox(sofaWest, [-0.65, 0.95, 0], [0.32, 0.65, 2.4], materials.coral);
-    addBox(sofaWest, [0, 0.42, 1.0], [1.8, 0.45, 0.8], materials.coral);
-    addBox(sofaWest, [0, 0.95, 1.25], [1.8, 0.65, 0.3], materials.coral);
+    addBox(sofaWest, [0, 0.42, 0], [1.5, 0.45, 2.2], materials.coral);
+    addBox(sofaWest, [-0.62, 0.95, 0], [0.30, 0.65, 2.2], materials.coral);
+    addBox(sofaWest, [0, 0.42, 0.9], [1.6, 0.45, 0.8], materials.coral);
+    addBox(sofaWest, [0, 0.95, 1.15], [1.6, 0.65, 0.3], materials.coral);
     // Decorative throw cushions
-    addBox(sofaWest, [-0.4, 0.8, -0.5], [0.42, 0.42, 0.2], materials.cushionYellow, { rotation: [0.1, 0.2, 0] });
-    addBox(sofaWest, [-0.4, 0.8, 0.4], [0.42, 0.42, 0.2], materials.cushionMint, { rotation: [0.1, -0.2, 0] });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.4, y + 0.5, z + 0.6], [0.95, 0.5, 1.4]);
+    addBox(sofaWest, [-0.35, 0.8, -0.45], [0.42, 0.42, 0.2], materials.cushionYellow, { rotation: [0.1, 0.2, 0] });
+    addBox(sofaWest, [-0.35, 0.8, 0.35], [0.42, 0.42, 0.2], materials.cushionMint, { rotation: [0.1, -0.2, 0] });
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 1.5, y + 0.5, z - 0.4], [0.9, 0.5, 1.3]);
 
-    // Low Round Solid Oak & Marble Coffee Table beside sofa
-    addCylinder(parent, [x - 2.2, y + 0.36, z + 0.2], 0.65, 0.65, 0.08, materials.woodDark, { segments: 20 });
-    addCylinder(parent, [x - 2.2, y + 0.18, z + 0.2], 0.18, 0.24, 0.34, materials.brass, { segments: 14 });
-    addSphere(parent, [x - 2.1, y + 0.48, z + 0.2], [0.1, 0.1, 0.1], materials.ceramicTeal);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 2.2, y + 0.25, z + 0.2], [0.65, 0.25, 0.65]);
+    // Low Round Solid Oak & Marble Coffee Table in center of lounge
+    addCylinder(parent, [x - 0.1, y + 0.36, z - 0.4], 0.65, 0.65, 0.08, materials.woodDark, { segments: 20 });
+    addCylinder(parent, [x - 0.1, y + 0.18, z - 0.4], 0.18, 0.24, 0.34, materials.brass, { segments: 14 });
+    addSphere(parent, [x, y + 0.48, z - 0.4], [0.1, 0.1, 0.1], materials.ceramicTeal);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 0.1, y + 0.25, z - 0.4], [0.65, 0.25, 0.65]);
 
-    // Wall-Mounted OLED Art Screen on West Wall (leaving floor 100% clear)
+    // Pair of Contemporary Accent Armchairs on East side facing West towards sofa
+    for (const cz of [-1.1, 0.3]) {
+      const arm = new THREE.Group();
+      arm.position.set(x + 1.5, y, z - 0.4 + cz);
+      arm.rotation.y = Math.PI; // Face West towards sofa and table
+      parent.add(arm);
+      addBox(arm, [0, 0.42, 0], [0.85, 0.42, 0.8], materials.woodLight);
+      addBox(arm, [0.38, 0.85, 0], [0.14, 0.55, 0.8], materials.coral);
+      addBox(arm, [0, 0.85, -0.35], [0.8, 0.55, 0.14], materials.coral);
+      addFurnitureCollider(world, RAPIER, staticBodies, [x + 1.5, y + 0.5, z - 0.4 + cz], [0.5, 0.5, 0.5]);
+    }
+    // Small drinks table between armchairs
+    addCylinder(parent, [x + 1.5, y + 0.4, z - 0.8], 0.30, 0.30, 0.06, materials.woodDark, { segments: 14 });
+    addCylinder(parent, [x + 1.5, y + 0.2, z - 0.8], 0.04, 0.04, 0.38, materials.brass);
+
+    // Wall-Mounted OLED Art Screen on West Wall
     const mediaWall = new THREE.Group();
-    mediaWall.position.set(x - 5.35, y + 2.4, z + 0.6);
+    mediaWall.position.set(x - 5.35, y + 2.4, z - 0.4);
     mediaWall.rotation.y = Math.PI * 0.5;
     parent.add(mediaWall);
     addBox(mediaWall, [0, 0, 0], [2.6, 1.5, 0.06], materials.metalDark);
     addBox(mediaWall, [0, 0, 0.04], [2.48, 1.38, 0.02], materials.artLandscape, { shadow: false });
 
-    // --- EAST SEATING LOUNGE ---
-    // Pair of Contemporary Accent Armchairs on East side
-    for (const cz of [-0.4, 1.0]) {
-      const arm = new THREE.Group();
-      arm.position.set(x + 3.4, y, z + cz);
-      parent.add(arm);
-      addBox(arm, [0, 0.42, 0], [0.9, 0.42, 0.85], materials.woodLight);
-      addBox(arm, [0.4, 0.85, 0], [0.15, 0.55, 0.85], materials.coral);
-      addBox(arm, [0, 0.85, -0.38], [0.85, 0.55, 0.15], materials.coral);
-      addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.4, y + 0.5, z + cz], [0.55, 0.5, 0.55]);
-    }
-    // Small drink table between armchairs
-    addCylinder(parent, [x + 3.4, y + 0.4, z + 0.3], 0.32, 0.32, 0.06, materials.woodDark, { segments: 14 });
-    addCylinder(parent, [x + 3.4, y + 0.2, z + 0.3], 0.04, 0.04, 0.38, materials.brass);
-
-    // Flanking Potted Fiddle-leaf Fig Palms tucked into front exterior corners
-    for (const px of [-4.8, 4.8]) {
+    // Flanking Potted Fiddle-leaf Fig Palms in foyer & corner
+    for (const px of [-4.6, 1.8]) {
       addCylinder(parent, [x + px, y + 0.45, z + 3.2], 0.4, 0.3, 0.9, materials.ceramicTerracotta, { segments: 16 });
       for (let i = 0; i < 6; i += 1) {
         const angle = (i / 6) * Math.PI * 2;
@@ -473,8 +472,8 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
     addCylinder(parent, [showerX, y + 4.0, showerZ], 0.025, 0.025, 0.4, materials.chrome);
     addFurnitureCollider(world, RAPIER, staticBodies, [showerX, y + 2.0, showerZ], [1.15, 2.0, 1.15]);
 
-    // Floating Double Vanity Counter with Illuminated Mirror in Rear-East Corner (x = 3.6, z = -4.4)
-    const vanityX = x + 3.6;
+    // Floating Double Vanity Counter with Illuminated Mirror on Bathroom Back Wall
+    const vanityX = x - 0.4;
     const vanityZ = z - 4.4;
     // Wood vanity cabinet
     addBox(parent, [vanityX, y + 0.85, vanityZ], [3.0, 0.48, 1.0], materials.woodDark);
