@@ -55,18 +55,18 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
     // Room-specific furnishings with physics colliders
     buildRoomFurniture(building, spec, world, RAPIER, staticBodies);
 
-    // Interactive glowing floor beacon placed conveniently in front of each room
+    // Interactive glowing floor beacon placed conveniently in front/center of each room
     const beaconX = spec.x;
-    const beaconZ = spec.id === 'contact' ? -11.8 : 1.2;
+    const beaconZ = spec.id === 'contact' ? -11.8 : -1.5;
     createFloorBeacon(building, beaconX, spec.y, beaconZ, spec.accent);
 
-    // Register interaction point
+    // Register interaction point covering the full room bay
     const roomInfo = portfolio.rooms.find((r) => r.id === spec.id);
     interactionPoints.push({
       id: spec.id,
       title: roomInfo ? roomInfo.title : spec.subtitle,
       position: new THREE.Vector3(beaconX, spec.y + 0.9, beaconZ),
-      radius: 4.2,
+      radius: 6.8,
       action: () => openDetailsCallback(spec.id),
       getLabel: () => `Explore ${roomInfo ? roomInfo.title : spec.subtitle}`,
     });

@@ -214,6 +214,39 @@ export class CinematicDirector {
         charFacing = 0.35;
         break;
 
+      case 'garage':
+        // Private garage: Ground floor far right (rx = 21.0, rz = 0.5)
+        camX = rx - 2.5;
+        camY = ry + 1.9;
+        camZ = rz + 2.5;
+        lookX = rx + 1.2;
+        lookY = ry + 1.7;
+        lookZ = rz - 2.0;
+        charFacing = 0.25;
+        break;
+
+      case 'bedroom':
+        // Master bedroom: Upper floor left (rx = -11.0, ry = 5.2, rz = -1.0)
+        camX = rx + 2.2;
+        camY = ry + 1.88;
+        camZ = rz + 2.5;
+        lookX = rx - 1.2;
+        lookY = ry + 1.85;
+        lookZ = rz - 2.8;
+        charFacing = -0.3;
+        break;
+
+      case 'bathroom':
+        // Master bathroom: Upper floor center (rx = 0.0, ry = 5.2, rz = -1.0)
+        camX = rx + 2.0;
+        camY = ry + 1.88;
+        camZ = rz + 2.5;
+        lookX = rx - 1.0;
+        lookY = ry + 1.85;
+        lookZ = rz - 2.5;
+        charFacing = -0.25;
+        break;
+
       case 'contact':
         // Garden terrace (rx = 0.0, rz = -22.5)
         camX = rx - 2.4;
@@ -499,10 +532,16 @@ export class CinematicDirector {
       case 'process':
         this.renderProcessBody(body, content);
         break;
+      case 'garage':
+      case 'bedroom':
+      case 'bathroom':
+        this.renderDisciplinesBody(body, content);
+        break;
       case 'contact':
         this.renderContactBody(body, content);
         break;
       default:
+        this.renderDefaultBody(body, content);
         break;
     }
 
@@ -560,6 +599,53 @@ export class CinematicDirector {
         tags.append(span);
       }
       container.append(tags);
+    }
+  }
+
+  renderDisciplinesBody(container, content) {
+    if (content.body) {
+      const p = document.createElement('p');
+      p.className = 'cinematic-text';
+      p.textContent = content.body;
+      container.append(p);
+    }
+
+    if (content.disciplines && content.disciplines.length) {
+      const grid = document.createElement('div');
+      grid.className = 'cinematic-grid-cards';
+      for (const disc of content.disciplines) {
+        const item = document.createElement('div');
+        item.className = 'cinematic-subcard';
+        const h4 = document.createElement('h4');
+        h4.textContent = disc.title;
+        const desc = document.createElement('p');
+        desc.textContent = disc.desc;
+        item.append(h4, desc);
+        grid.append(item);
+      }
+      container.append(grid);
+    }
+
+    if (content.tags && content.tags.length) {
+      const tags = document.createElement('div');
+      tags.className = 'cinematic-tags';
+      for (const t of content.tags) {
+        const span = document.createElement('span');
+        span.className = 'cinematic-tag';
+        span.textContent = t;
+        tags.append(span);
+      }
+      container.append(tags);
+    }
+  }
+
+  renderDefaultBody(container, content) {
+    if (content.disciplines) {
+      this.renderDisciplinesBody(container, content);
+    } else if (content.items) {
+      this.renderProjectsBody(container, content);
+    } else if (content.categories) {
+      this.renderSkillsBody(container, content);
     }
   }
 

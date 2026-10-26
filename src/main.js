@@ -446,19 +446,37 @@ function openDetails(id) {
   ui.panelContent.replaceChildren();
   ui.panelFooter.replaceChildren();
 
-  if (content.intro) {
+  const leadText = content.lead || content.intro;
+  if (leadText) {
     const intro = document.createElement('p');
     intro.className = 'lead';
-    intro.textContent = content.intro;
+    intro.textContent = leadText;
     ui.panelContent.append(intro);
   }
-  if (content.detail) {
+  if (content.subtitle) {
+    const sub = document.createElement('p');
+    sub.className = 'subtitle';
+    sub.style.cssText = 'color:#db553c;font-weight:700;font-size:12px;margin:-6px 0 10px;text-transform:uppercase;';
+    sub.textContent = content.subtitle;
+    ui.panelContent.append(sub);
+  }
+  if (content.detail || content.body) {
     const paragraph = document.createElement('p');
-    paragraph.textContent = content.detail;
+    paragraph.textContent = content.detail || content.body;
     ui.panelContent.append(paragraph);
   }
-  if (content.groups) {
-    for (const [heading, ...skills] of content.groups) {
+  if (content.quote) {
+    const quote = document.createElement('blockquote');
+    quote.className = 'cinematic-quote';
+    quote.textContent = content.quote;
+    ui.panelContent.append(quote);
+  }
+
+  const categories = content.categories || content.groups;
+  if (categories) {
+    for (const group of categories) {
+      const heading = group.name || (Array.isArray(group) ? group[0] : '');
+      const skills = group.items || (Array.isArray(group) ? group.slice(1) : []);
       const section = document.createElement('section');
       section.className = 'skill-group';
       const title = document.createElement('strong');
@@ -470,80 +488,133 @@ function openDetails(id) {
       ui.panelContent.append(section);
     }
   }
+
   if (content.milestones) {
     const list = document.createElement('div');
     list.className = 'timeline';
-    for (const [date, text] of content.milestones) {
-      const item = document.createElement('div');
-      item.className = 'timeline-item';
+    for (const item of content.milestones) {
+      const date = item.period || (Array.isArray(item) ? item[0] : '');
+      const role = item.role ? `${item.role} · ${item.org}` : (Array.isArray(item) ? item[1] : '');
+      const desc = item.desc || (Array.isArray(item) ? item[2] : '');
+      const row = document.createElement('div');
+      row.className = 'timeline-item';
       const marker = document.createElement('b');
       marker.textContent = date;
       const copy = document.createElement('p');
-      copy.textContent = text;
-      item.append(marker, copy);
-      list.append(item);
+      copy.innerHTML = `<strong>${role}</strong><br>${desc}`;
+      row.append(marker, copy);
+      list.append(row);
     }
     ui.panelContent.append(list);
   }
-  if (content.projects) {
+
+  const projectItems = content.items || content.projects;
+  if (projectItems) {
     const list = document.createElement('div');
     list.className = 'project-list';
-    for (const project of content.projects) {
+    for (const project of projectItems) {
       const item = document.createElement('article');
       item.className = 'project-item';
       const heading = document.createElement('div');
       heading.className = 'project-heading';
       const name = document.createElement('h3');
       name.textContent = project.title;
-      const year = document.createElement('span');
-      year.textContent = project.year;
-      heading.append(name, year);
       const kind = document.createElement('span');
       kind.className = 'project-kind';
-      kind.textContent = project.kind;
-      const description = document.createElement('p');
-      description.textContent = project.description;
+      kind.textContent = project.badge || project.category || project.kind || '';
+      heading.append(name, kind);
+
+      if (project.challenge) {
+        const chal = document.createElement('p');
+        chal.innerHTML = `<strong>Challenge:</strong> ${project.challenge}`;
+        item.append(chal);
+      } else if (project.description) {
+        const desc = document.createElement('p');
+        desc.textContent = project.description;
+        item.append(desc);
+      }
+
+      if (project.engineering) {
+        const eng = document.createElement('p');
+        eng.innerHTML = `<strong>Architecture:</strong> ${project.engineering}`;
+        item.append(eng);
+      }
+
       const tags = document.createElement('div');
       tags.className = 'skill-list';
-      for (const tag of project.tags) tags.append(makeTag(tag));
-      item.append(heading, kind, description, tags);
+      const stackList = project.stack || project.tags || [];
+      for (const tag of stackList) tags.append(makeTag(tag));
+      item.append(heading, tags);
+
+      if (project.github || project.demo) {
+        const actions = document.createElement('div');
+        actions.className = 'project-actions';
+        actions.style.cssText = 'margin-top:8px;display:flex;gap:8px;';
+        if (project.github) {
+          const gh = document.createElement('a');
+          gh.className = 'project-btn project-btn-primary';
+          gh.href = project.github;
+          gh.target = '_blank';
+          gh.rel = 'noreferrer';
+          gh.textContent = 'View Code ↗';
+          actions.append(gh);
+        }
+        if (project.demo) {
+          const dm = document.createElement('a');
+          dm.className = 'project-btn project-btn-secondary';
+          dm.href = project.demo;
+          dm.target = '_blank';
+          dm.rel = 'noreferrer';
+          dm.textContent = 'Live Demo ↗';
+          actions.append(dm);
+        }
+        item.append(actions);
+      }
+
       list.append(item);
     }
     ui.panelContent.append(list);
   }
-  if (content.steps) {
-    for (const [number, title, text] of content.steps) {
+
+  const stages = content.stages || content.disciplines || content.steps;
+  if (stages) {
+    for (const s of stages) {
       const step = document.createElement('div');
       step.className = 'process-step';
       const strong = document.createElement('strong');
-      strong.textContent = `${number} · ${title}`;
+      strong.textContent = s.step ? `${s.step} · ${s.name}` : (s.title || (Array.isArray(s) ? `${s[0]} · ${s[1]}` : ''));
       const detail = document.createElement('small');
-      detail.textContent = text;
+      detail.textContent = s.desc || s.text || (Array.isArray(s) ? s[2] : '');
       step.append(strong, detail);
       ui.panelContent.append(step);
     }
   }
+
   if (content.email) {
     const link = document.createElement('a');
     link.className = 'contact-mail';
     link.href = `mailto:${content.email}`;
     link.textContent = content.email;
     ui.panelContent.append(link);
-    const links = document.createElement('div');
-    links.className = 'contact-links';
-    for (const profile of content.links) {
-      const anchor = document.createElement('a');
-      anchor.href = profile.href;
-      anchor.target = '_blank';
-      anchor.rel = 'noreferrer';
-      anchor.textContent = profile.label;
-      links.append(anchor);
+    if (content.links) {
+      const links = document.createElement('div');
+      links.className = 'contact-links';
+      for (const profile of content.links) {
+        const anchor = document.createElement('a');
+        anchor.href = profile.href;
+        anchor.target = '_blank';
+        anchor.rel = 'noreferrer';
+        anchor.textContent = profile.label;
+        links.append(anchor);
+      }
+      ui.panelContent.append(links);
     }
-    ui.panelContent.append(links);
-    const note = document.createElement('p');
-    note.className = 'contact-note';
-    note.textContent = content.note;
-    ui.panelContent.append(note);
+    if (content.note) {
+      const note = document.createElement('p');
+      note.className = 'contact-note';
+      note.textContent = content.note;
+      ui.panelContent.append(note);
+    }
   }
   if (content.tags) for (const tag of content.tags) ui.panelFooter.append(makeTag(tag));
 
