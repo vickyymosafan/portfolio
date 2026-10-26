@@ -77,25 +77,25 @@ const cameraBlockers = [];
 const staticBodies = [];
 
 const WORLD_MARKERS = [
-  { id: 'farm', label: 'Peternakan', sub: 'Sapi, Ayam, Ikan', icon: '🐮', pos: [-30.0, 7.5, -34.0], targetRoom: 'farm' },
-  { id: 'rice', label: 'Sawah', sub: 'Pertanian Modern', icon: '🌾', pos: [18.0, 6.0, -34.0], targetRoom: 'rice' },
-  { id: 'road', label: 'Jalan Utama', sub: 'Akses Menuju Rumah', icon: '🚗', pos: [28.0, 4.5, 34.0], targetRoom: 'road' },
-  { id: 'pool', label: 'Kolam Renang', sub: 'Swim & Relax', icon: '🏊', pos: [-24.5, 5.0, -6.0], targetRoom: 'pool' },
-  { id: 'security', label: 'Security', sub: '24/7 Guard', icon: '🛡️', pos: [-16.0, 5.0, 26.0], targetRoom: 'security' },
-  { id: 'garage', label: 'Garasi', sub: 'BMW M Series', icon: '🏎️', pos: [21.0, 4.8, 1.4], targetRoom: 'garage' },
-  { id: 'zen', label: 'Taman', sub: 'Relax & Explore', icon: '🌲', pos: [35.0, 5.2, -9.0], targetRoom: 'zen' },
-  { id: 'gallery', label: 'Project Gallery', sub: 'My Work & Showcase', icon: '🖼️', pos: [-11.0, 3.8, -1.5], targetRoom: 'projects' },
-  { id: 'living', label: 'Living Room', sub: 'Chill & Connect', icon: '🛋️', pos: [0.0, 3.8, 0.5], targetRoom: 'about' },
-  { id: 'office', label: 'Home Office', sub: 'Work & Build', icon: '💻', pos: [10.75, 3.8, -1.5], targetRoom: 'skills' },
-  { id: 'bedroom', label: 'Master Bedroom', sub: 'Rest & Recharge', icon: '🛏️', pos: [-11.0, 8.8, 0.6], targetRoom: 'bedroom' },
-  { id: 'bathroom', label: 'Bathroom', sub: 'Relax & Refresh', icon: '🛁', pos: [0.0, 8.8, -11.8], targetRoom: 'bathroom' },
-  { id: 'library', label: 'Library Nook', sub: 'Read & Grow', icon: '📖', pos: [10.5, 8.8, -1.5], targetRoom: 'experience' },
-  { id: 'studio', label: 'Creative Studio', sub: 'Create & Explore', icon: '🎨', pos: [21.0, 8.8, -1.5], targetRoom: 'process' },
+  { id: 'farm', label: 'Peternakan', sub: 'Sapi, Ayam, Ikan', icon: '🐮', pos: [-28.0, 8.5, -34.0], targetRoom: 'farm' },
+  { id: 'rice', label: 'Sawah', sub: 'Pertanian Modern', icon: '🌾', pos: [14.0, 7.5, -34.0], targetRoom: 'rice' },
+  { id: 'road', label: 'Jalan Utama', sub: 'Akses Menuju Rumah', icon: '🚗', pos: [32.0, 5.0, 32.0], targetRoom: 'road' },
+  { id: 'pool', label: 'Kolam Renang', sub: 'Swim & Relax', icon: '🏊', pos: [-25.0, 5.5, -5.0], targetRoom: 'pool' },
+  { id: 'security', label: 'Security', sub: '24/7 Guard', icon: '🛡️', pos: [-18.0, 5.0, 24.0], targetRoom: 'security' },
+  { id: 'garage', label: 'Garasi', sub: 'BMW M Series', icon: '🏎️', pos: [21.0, 4.4, 2.0], targetRoom: 'garage' },
+  { id: 'zen', label: 'Taman', sub: 'Relax & Explore', icon: '🌲', pos: [36.0, 5.5, -6.0], targetRoom: 'zen' },
+  { id: 'gallery', label: 'Project Gallery', sub: 'My Work & Showcase', icon: '🖼️', pos: [-11.0, 4.4, 2.0], targetRoom: 'projects' },
+  { id: 'living', label: 'Living Room', sub: 'Chill & Connect', icon: '🛋️', pos: [0.0, 4.4, 2.0], targetRoom: 'about' },
+  { id: 'office', label: 'Home Office', sub: 'Work & Build', icon: '💻', pos: [10.75, 4.4, 2.0], targetRoom: 'skills' },
+  { id: 'bedroom', label: 'Master Bedroom', sub: 'Rest & Recharge', icon: '🛏️', pos: [-11.0, 10.2, 2.0], targetRoom: 'bedroom' },
+  { id: 'bathroom', label: 'Bathroom', sub: 'Relax & Refresh', icon: '🛁', pos: [0.0, 10.2, 2.0], targetRoom: 'bathroom' },
+  { id: 'library', label: 'Library Nook', sub: 'Read & Grow', icon: '📖', pos: [10.75, 10.2, 2.0], targetRoom: 'experience' },
+  { id: 'studio', label: 'Creative Studio', sub: 'Create & Explore', icon: '🎨', pos: [21.0, 10.2, 2.0], targetRoom: 'process' },
 ];
 
 let overviewMode = false;
-const overviewCamPos = new THREE.Vector3(0, 38.0, 46.0);
-const overviewTarget = new THREE.Vector3(0, 5.0, 0.0);
+const overviewCamPos = new THREE.Vector3(4.5, 30.0, 48.0);
+const overviewTarget = new THREE.Vector3(4.5, 5.5, 0.5);
 const markerProjectVec = new THREE.Vector3();
 let markerElements = [];
 
@@ -833,7 +833,7 @@ function toggleOverviewMode(force) {
     ui.mapBtn.classList.toggle('is-active', overviewMode);
   }
   if (roofGroup) {
-    roofGroup.visible = !overviewMode && physZ > 4.0;
+    roofGroup.visible = true;
   }
 }
 
@@ -1480,9 +1480,9 @@ function updatePhysics(dt) {
 }
 
 function updateCamera(dt, timestamp) {
-  const inHouse = physZ <= 4.2 && physZ >= -18.0 && physX >= -16.5 && physX <= 26.0;
+  const inHouse = physZ <= 3.8 && physZ >= -8.0 && physX >= -16.5 && physX <= 26.0;
   if (roofGroup) {
-    roofGroup.visible = !inHouse;
+    roofGroup.visible = overviewMode ? true : !inHouse;
   }
 
   if (cinematicDirector && cinematicDirector.isActive()) {
@@ -1510,7 +1510,7 @@ function updateCamera(dt, timestamp) {
   }
 
   if (overviewMode) {
-    if (roofGroup) roofGroup.visible = false;
+    if (roofGroup) roofGroup.visible = true;
     camera.position.x = THREE.MathUtils.damp(camera.position.x, overviewCamPos.x, 5.0, dt);
     camera.position.y = THREE.MathUtils.damp(camera.position.y, overviewCamPos.y, 5.0, dt);
     camera.position.z = THREE.MathUtils.damp(camera.position.z, overviewCamPos.z, 5.0, dt);

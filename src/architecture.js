@@ -8,6 +8,7 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   const archBatch = new BatchCollector();
 
   const addColliderBox = (pos, halfExtents) => {
+    if (!world || !RAPIER || !staticBodies) return null;
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(pos[0], pos[1], pos[2]));
     world.createCollider(RAPIER.ColliderDesc.cuboid(halfExtents[0], halfExtents[1], halfExtents[2]), body);
     staticBodies.push(body);
@@ -16,360 +17,330 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
 
   // =========================================================================
   // 1. FOUNDATION & GROUND FLOOR SLABS
-  // Footprint: x: [-16.5, 26.0] (42.5m wide), z: [4.2, -18.0] (22.2m deep)
-  // Center: x ≈ 4.75, z ≈ -6.9
+  // Footprint: x: [-16.5, 26.0] (42.5m wide), z: [3.8, -8.2] (12.0m deep)
+  // Center: x ≈ 4.75, z ≈ -2.2
   // =========================================================================
 
-  // Main living / gallery / office hardwood floor (x: [-16.5, 16.0], z: [4.2, -18.0])
-  addBox(building, [-0.25, -0.12, -6.9], [32.5, 0.24, 22.2], materials.woodFloor, { shadow: false, receive: true });
-  addColliderBox([-0.25, -0.18, -6.9], [16.25, 0.18, 11.1]);
+  // Ground Floor Hardwood Floor (Bays 1-3: Gallery, Living Room, Home Office)
+  // x: [-16.5, 16.0], z: [3.8, -8.2] -> width 32.5m, depth 12.0m, center x = -0.25, z = -2.2
+  addBox(building, [-0.25, -0.12, -2.2], [32.5, 0.24, 12.0], materials.woodFloor, { shadow: false, receive: true });
+  addColliderBox([-0.25, -0.12, -2.2], [16.25, 0.12, 6.0]);
 
-  // Luxury private garage polished dark epoxy floor (x: [16.0, 26.0], z: [4.2, -18.0])
-  addBox(building, [21.0, -0.12, -6.9], [10.0, 0.24, 22.2], materials.epoxyFloor, { shadow: false, receive: true });
-  addColliderBox([21.0, -0.18, -6.9], [5.0, 0.18, 11.1]);
+  // Luxury Private Garage Dark Polished Epoxy Floor (Bay 4: x: [16.0, 26.0], z: [3.8, -8.2])
+  addBox(building, [21.0, -0.12, -2.2], [10.0, 0.24, 12.0], materials.epoxyFloor, { shadow: false, receive: true });
+  addColliderBox([21.0, -0.12, -2.2], [5.0, 0.12, 6.0]);
 
-  // Exterior stone plinth skirting foundation around entire 42.5m perimeter
-  archBatch.addBox([4.75, 0.16, 4.25], [42.8, 0.38, 0.4], materials.foundation);
-  archBatch.addBox([-16.6, 0.16, -6.9], [0.4, 0.38, 22.6], materials.foundation);
-  archBatch.addBox([26.1, 0.16, -6.9], [0.4, 0.38, 22.6], materials.foundation);
-  archBatch.addBox([4.75, 0.16, -18.05], [42.8, 0.38, 0.4], materials.foundation);
+  // Exterior Stone Plinth Skirting Foundation around perimeter
+  archBatch.addBox([4.75, 0.16, 3.85], [42.8, 0.38, 0.4], materials.foundation);
+  archBatch.addBox([-16.6, 0.16, -2.2], [0.4, 0.38, 12.4], materials.foundation);
+  archBatch.addBox([26.1, 0.16, -2.2], [0.4, 0.38, 12.4], materials.foundation);
+  archBatch.addBox([4.75, 0.16, -8.25], [42.8, 0.38, 0.4], materials.foundation);
 
   // =========================================================================
   // 2. GRAND ENTRANCE STEPS & FRONT PORCH
-  // Porch platform at z = [4.2, 7.8], x = [-6.5, 6.5]
+  // Porch platform at z = [3.8, 7.6], x = [-6.5, 6.5]
   // =========================================================================
-  archBatch.addBox([0, 0.08, 6.0], [13.0, 0.22, 3.6], materials.woodLight);
-  addColliderBox([0, -0.03, 6.0], [6.5, 0.11, 1.8]);
+  archBatch.addBox([0, 0.08, 5.7], [13.0, 0.22, 3.8], materials.woodLight);
+  addColliderBox([0, -0.03, 5.7], [6.5, 0.11, 1.9]);
 
-  // Grand descending stone stairs with wide treads leading to front roundabout
+  // Grand descending stone stairs with wide curved treads leading to front fountain roundabout
   for (let step = 0; step < 4; step += 1) {
     const sy = -0.04 - step * 0.08;
-    const sz = 7.8 + step * 0.55;
-    const sw = 9.2 - step * 0.4;
+    const sz = 7.6 + step * 0.55;
+    const sw = 9.6 - step * 0.4;
     archBatch.addBox([0, sy, sz], [sw, 0.16, 0.6], materials.stone);
     addColliderBox([0, sy - 0.06, sz], [sw * 0.5, 0.08, 0.3]);
   }
 
-  // Double-height front monumental columns (height 10.2m)
+  // Double-height front monumental columns (height 10.2m) flanking central entrance
   const frontColX = [-5.5, -2.2, 2.2, 5.5];
   for (const cx of frontColX) {
     // Pedestal base
-    archBatch.addBox([cx, 0.45, 7.6], [0.85, 0.7, 0.85], materials.stone);
-    archBatch.addCylinder([cx, 0.9, 7.6], 0.38, 0.42, 0.2, materials.woodWarm, { segments: 16 });
-    // Lower shaft
-    archBatch.addCylinder([cx, 3.0, 7.6], 0.32, 0.36, 4.0, materials.column, { segments: 20 });
+    archBatch.addBox([cx, 0.45, 7.4], [0.85, 0.7, 0.85], materials.stone);
+    archBatch.addCylinder([cx, 0.9, 7.4], 0.38, 0.42, 0.2, materials.woodWarm, { segments: 16 });
+    // Lower shaft (ground floor)
+    archBatch.addCylinder([cx, 3.0, 7.4], 0.32, 0.36, 4.0, materials.column, { segments: 20 });
     // Mid capital / floor ring at second floor level
-    archBatch.addBox([cx, 5.2, 7.6], [0.8, 0.3, 0.8], materials.woodWarm);
-    // Upper shaft
-    archBatch.addCylinder([cx, 7.6, 7.6], 0.28, 0.32, 4.5, materials.column, { segments: 20 });
+    archBatch.addBox([cx, 5.2, 7.4], [0.8, 0.3, 0.8], materials.woodWarm);
+    // Upper shaft (second floor)
+    archBatch.addCylinder([cx, 7.6, 7.4], 0.28, 0.32, 4.5, materials.column, { segments: 20 });
     // Upper ornate capital
-    archBatch.addBox([cx, 10.0, 7.6], [0.95, 0.35, 0.95], materials.stone);
-    addColliderBox([cx, 5.0, 7.6], [0.45, 5.0, 0.45]);
+    archBatch.addBox([cx, 10.0, 7.4], [0.95, 0.35, 0.95], materials.stone);
+    addColliderBox([cx, 5.0, 7.4], [0.45, 5.0, 0.45]);
   }
 
   // Porch balustrades & railings on ground floor
   for (const [x1, x2] of [[-5.5, -2.2], [2.2, 5.5]]) {
     const mx = (x1 + x2) * 0.5;
     const len = Math.abs(x2 - x1) - 0.8;
-    archBatch.addBox([mx, 1.05, 7.6], [len, 0.08, 0.14], materials.woodLight);
-    archBatch.addBox([mx, 0.45, 7.6], [len, 0.08, 0.14], materials.woodLight);
+    archBatch.addBox([mx, 1.05, 7.4], [len, 0.08, 0.14], materials.woodLight);
+    archBatch.addBox([mx, 0.45, 7.4], [len, 0.08, 0.14], materials.woodLight);
     for (let bx = x1 + 0.45; bx <= x2 - 0.45; bx += 0.35) {
-      archBatch.addCylinder([bx, 0.75, 7.6], 0.04, 0.04, 0.52, materials.trim, { segments: 8 });
+      archBatch.addCylinder([bx, 0.75, 7.4], 0.04, 0.04, 0.52, materials.trim, { segments: 8 });
     }
-    addColliderBox([mx, 0.7, 7.6], [len * 0.5, 0.65, 0.12]);
+    addColliderBox([mx, 0.7, 7.4], [len * 0.5, 0.65, 0.12]);
   }
 
   // Hanging porch flower planters
   for (const hx of [-3.85, 3.85]) {
-    archBatch.addCylinder([hx, 4.8, 7.6], 0.015, 0.015, 0.6, materials.metalDark);
-    archBatch.addSphere([hx, 4.45, 7.6], [0.36, 0.26, 0.36], materials.terracotta);
-    archBatch.addSphere([hx, 4.6, 7.6], [0.45, 0.3, 0.45], materials.foliageBright);
-    archBatch.addSphere([hx - 0.15, 4.65, 7.65], [0.12, 0.12, 0.12], materials.coral);
-    archBatch.addSphere([hx + 0.15, 4.62, 7.55], [0.12, 0.12, 0.12], materials.yellow);
+    archBatch.addCylinder([hx, 4.8, 7.4], 0.015, 0.015, 0.6, materials.metalDark);
+    archBatch.addSphere([hx, 4.45, 7.4], [0.36, 0.26, 0.36], materials.terracotta);
+    archBatch.addSphere([hx, 4.6, 7.4], [0.45, 0.3, 0.45], materials.foliageBright);
+    archBatch.addSphere([hx - 0.15, 4.65, 7.45], [0.12, 0.12, 0.12], materials.coral);
+    archBatch.addSphere([hx + 0.15, 4.62, 7.35], [0.12, 0.12, 0.12], materials.yellow);
   }
 
+  // Porch roof canopy over entrance (y = 5.2m to 5.6m)
+  archBatch.addBox([0, 5.35, 5.8], [13.4, 0.32, 4.0], materials.roof);
+  archBatch.addBox([0, 5.48, 5.8], [13.6, 0.14, 4.2], materials.roofTrim);
+  archBatch.addBox([0, 5.16, 5.8], [13.2, 0.12, 3.8], materials.woodWarm);
+
   // =========================================================================
-  // 3. EXTERIOR WALLS (Two-story structure, 10.4m height, with cameraBlockers)
+  // 3. EXTERIOR WALLS & ARCHITECTURAL CUTAWAY POSTS
+  // Full 2-story height (10.4m), with open cutaway facing south (+Z)
   // =========================================================================
-  // Left West Wall (x = -16.5, z: [4.2, -18.0])
-  const wallWest = addBox(building, [-16.5, 5.2, -6.9], [0.65, 10.4, 22.2], materials.wall, { shadow: true });
+
+  // Left West Wall (x = -16.5, z: [3.8, -8.2])
+  const wallWest = addBox(building, [-16.5, 5.2, -2.2], [0.65, 10.4, 12.0], materials.wall, { shadow: true });
   cameraBlockers.push(wallWest);
-  addColliderBox([-16.5, 5.2, -6.9], [0.325, 5.2, 11.1]);
-  archBatch.addBox([-16.45, 0.65, -6.9], [0.68, 1.1, 22.2], materials.wainscot);
-  archBatch.addBox([-16.45, 5.85, -6.9], [0.68, 0.5, 22.2], materials.trim);
+  addColliderBox([-16.5, 5.2, -2.2], [0.325, 5.2, 6.0]);
+  archBatch.addBox([-16.45, 0.65, -2.2], [0.68, 1.1, 12.0], materials.wainscot);
+  archBatch.addBox([-16.45, 5.2, -2.2], [0.68, 0.3, 12.0], materials.woodWarm);
 
-  // Right East Wall (x = 26.0, z: [4.2, -18.0])
-  const wallEast = addBox(building, [26.0, 5.2, -6.9], [0.65, 10.4, 22.2], materials.wall, { shadow: true });
+  // Right East Wall (x = 26.0, z: [3.8, -8.2])
+  const wallEast = addBox(building, [26.0, 5.2, -2.2], [0.65, 10.4, 12.0], materials.wall, { shadow: true });
   cameraBlockers.push(wallEast);
-  addColliderBox([26.0, 5.2, -6.9], [0.325, 5.2, 11.1]);
-  archBatch.addBox([25.95, 0.65, -6.9], [0.68, 1.1, 22.2], materials.wainscot);
-  archBatch.addBox([25.95, 5.85, -6.9], [0.68, 0.5, 22.2], materials.trim);
+  addColliderBox([26.0, 5.2, -2.2], [0.325, 5.2, 6.0]);
+  archBatch.addBox([25.95, 0.65, -2.2], [0.68, 1.1, 12.0], materials.wainscot);
+  archBatch.addBox([25.95, 5.2, -2.2], [0.68, 0.3, 12.0], materials.woodWarm);
 
-  // Front Facades (z = 4.2)
-  // Project Gallery front wall (x: [-16.5, -5.5], width 11.0m)
-  const frontGallery = addBox(building, [-11.0, 5.2, 4.2], [11.0, 10.4, 0.65], materials.wall, { shadow: true });
-  cameraBlockers.push(frontGallery);
-  addColliderBox([-11.0, 5.2, 4.2], [5.5, 5.2, 0.325]);
-  archBatch.addBox([-11.0, 0.65, 4.25], [11.0, 1.1, 0.68], materials.wainscot);
-
-  // Home Office front wall (x: [5.5, 16.0], width 10.5m)
-  const frontOffice = addBox(building, [10.75, 5.2, 4.2], [10.5, 10.4, 0.65], materials.wall, { shadow: true });
-  cameraBlockers.push(frontOffice);
-  addColliderBox([10.75, 5.2, 4.2], [5.25, 5.2, 0.325]);
-  archBatch.addBox([10.75, 0.65, 4.25], [10.5, 1.1, 0.68], materials.wainscot);
-
-  // Central Grand Entrance Header (z = 4.2, x: [-5.5, 5.5], width 11.0m)
-  // Entrance opening is 4.0m wide (x: [-2.0, 2.0]), door height 3.6m
-  const frontHeader = addBox(building, [0, 8.0, 4.2], [11.0, 4.8, 0.65], materials.wall, { shadow: true });
-  cameraBlockers.push(frontHeader);
-  addColliderBox([0, 8.0, 4.2], [5.5, 2.4, 0.325]);
-
-  const frontDoorLintel = addBox(building, [0, 4.4, 4.2], [4.0, 1.6, 0.65], materials.coral, { shadow: true });
-  cameraBlockers.push(frontDoorLintel);
-  addColliderBox([0, 4.4, 4.2], [2.0, 0.8, 0.325]);
-
-  // Flanking pillars at front entrance doorway (x = ±2.0)
-  for (const fx of [-2.0, 2.0]) {
-    const p = addBox(building, [fx, 2.2, 4.2], [0.55, 4.4, 0.65], materials.wall);
-    cameraBlockers.push(p);
-    addColliderBox([fx, 2.2, 4.2], [0.275, 2.2, 0.325]);
-  }
-
-  // Garage Front Facade (x: [16.0, 26.0], z = 4.2, width 10.0m)
-  // Wide open garage door opening (7.6m wide from x = 17.2 to 24.8, height 3.8m)
-  const garageHeader = addBox(building, [21.0, 7.3, 4.2], [10.0, 6.2, 0.65], materials.wall, { shadow: true });
-  cameraBlockers.push(garageHeader);
-  addColliderBox([21.0, 7.3, 4.2], [5.0, 3.1, 0.325]);
-
-  const garagePostL = addBox(building, [16.6, 2.0, 4.2], [1.2, 4.0, 0.65], materials.woodDark);
-  cameraBlockers.push(garagePostL);
-  addColliderBox([16.6, 2.0, 4.2], [0.6, 2.0, 0.325]);
-
-  const garagePostR = addBox(building, [25.4, 2.0, 4.2], [1.2, 4.0, 0.65], materials.woodDark);
-  cameraBlockers.push(garagePostR);
-  addColliderBox([25.4, 2.0, 4.2], [0.6, 2.0, 0.325]);
-
-  // Roll-up garage door in recessed track (open at upper position)
-  archBatch.addBox([21.0, 3.9, 4.1], [7.8, 0.45, 0.25], materials.metalDark);
-  archBatch.addBox([21.0, 4.05, 4.1], [7.6, 0.15, 0.35], materials.brass);
-
-  // Rear Facades (z = -18.0)
-  const rearWallLeft = addBox(building, [-11.0, 5.2, -18.0], [11.0, 10.4, 0.65], materials.wall, { shadow: true });
+  // Rear North Wall (z = -8.2, x: [-16.5, 26.0], width 42.5m)
+  const rearWallLeft = addBox(building, [-11.0, 5.2, -8.2], [11.0, 10.4, 0.65], materials.wall, { shadow: true });
   cameraBlockers.push(rearWallLeft);
-  addColliderBox([-11.0, 5.2, -18.0], [5.5, 5.2, 0.325]);
+  addColliderBox([-11.0, 5.2, -8.2], [5.5, 5.2, 0.325]);
 
-  const rearWallCenter = addBox(building, [0, 7.6, -18.0], [11.0, 5.6, 0.65], materials.wall, { shadow: true });
+  const rearWallCenter = addBox(building, [0, 7.6, -8.2], [11.0, 5.6, 0.65], materials.wall, { shadow: true });
   cameraBlockers.push(rearWallCenter);
-  addColliderBox([0, 7.6, -18.0], [5.5, 2.8, 0.325]);
+  addColliderBox([0, 7.6, -8.2], [5.5, 2.8, 0.325]);
 
-  const rearWallRight = addBox(building, [10.75, 5.2, -18.0], [10.5, 10.4, 0.65], materials.wall, { shadow: true });
+  const rearWallRight = addBox(building, [10.75, 5.2, -8.2], [10.5, 10.4, 0.65], materials.wall, { shadow: true });
   cameraBlockers.push(rearWallRight);
-  addColliderBox([10.75, 5.2, -18.0], [5.25, 5.2, 0.325]);
+  addColliderBox([10.75, 5.2, -8.2], [5.25, 5.2, 0.325]);
 
-  const rearGarage = addBox(building, [21.0, 5.2, -18.0], [10.0, 10.4, 0.65], materials.wall, { shadow: true });
+  const rearGarage = addBox(building, [21.0, 5.2, -8.2], [10.0, 10.4, 0.65], materials.wall, { shadow: true });
   cameraBlockers.push(rearGarage);
-  addColliderBox([21.0, 5.2, -18.0], [5.0, 5.2, 0.325]);
+  addColliderBox([21.0, 5.2, -8.2], [5.0, 5.2, 0.325]);
 
-  // French glass sliding doors to rear garden terrace (x: [-3.0, 3.0], z = -18.0)
-  // Left fixed side pane (x = -2.25, width 1.5m)
-  addBox(building, [-2.25, 2.4, -18.0], [1.5, 4.6, 0.08], materials.glass);
-  addColliderBox([-2.25, 2.4, -18.0], [0.75, 2.4, 0.08]);
-  // Right fixed side pane (x = 2.25, width 1.5m)
-  addBox(building, [2.25, 2.4, -18.0], [1.5, 4.6, 0.08], materials.glass);
-  addColliderBox([2.25, 2.4, -18.0], [0.75, 2.4, 0.08]);
-  // Top transom lintel above open doorway
-  addBox(building, [0, 4.4, -18.0], [3.0, 0.6, 0.18], materials.woodDark);
-  // Center (x: [-1.5, 1.5]) is completely clear and walkable out to the terrace!
+  // French glass sliding doors to rear garden terrace (x: [-3.0, 3.0], z = -8.2)
+  addBox(building, [-2.25, 2.4, -8.2], [1.5, 4.6, 0.08], materials.glass);
+  addColliderBox([-2.25, 2.4, -8.2], [0.75, 2.4, 0.08]);
+  addBox(building, [2.25, 2.4, -8.2], [1.5, 4.6, 0.08], materials.glass);
+  addColliderBox([2.25, 2.4, -8.2], [0.75, 2.4, 0.08]);
+  addBox(building, [0, 4.4, -8.2], [3.0, 0.6, 0.18], materials.woodDark);
 
-  // Architectural Raised Garden Veranda & Terrace (z = [-18.0, -26.5], x = [-10.0, 10.0])
-  addBox(building, [0, 0.04, -22.25], [20.0, 0.24, 8.5], materials.stone, { shadow: true, receive: true });
-  addColliderBox([0, 0.0, -22.25], [10.0, 0.16, 4.25]);
-  // Terracotta terrace tile finish
-  addBox(building, [0, 0.14, -22.25], [19.6, 0.04, 8.1], materials.terraceTiles, { shadow: false, receive: true });
+  // Rear Garden Veranda & Terrace (z = [-8.2, -15.5], x = [-10.0, 10.0])
+  addBox(building, [0, 0.04, -11.85], [20.0, 0.24, 7.3], materials.stone, { shadow: true, receive: true });
+  addColliderBox([0, 0.0, -11.85], [10.0, 0.16, 3.65]);
+  addBox(building, [0, 0.14, -11.85], [19.6, 0.04, 6.9], materials.terraceTiles, { shadow: false, receive: true });
 
-  // Wide descending stone steps leading down to rear lawn
+  // Rear descending stone steps
   for (let s = 0; s < 3; s += 1) {
-    const stepZ = -26.5 - s * 0.55;
+    const stepZ = -15.5 - s * 0.55;
     const stepY = 0.06 - s * 0.07;
     const stepW = 12.0 - s * 0.4;
     archBatch.addBox([0, stepY, stepZ], [stepW, 0.14, 0.55], materials.stone);
     addColliderBox([0, stepY - 0.05, stepZ], [stepW * 0.5, 0.07, 0.275]);
   }
 
-  // Modern perimeter glass & teak balustrade around terrace
+  // Modern perimeter glass & teak balustrade around rear terrace
   for (const [bx, bz, bw, bd] of [
-    [-9.7, -22.25, 0.14, 8.1],
-    [9.7, -22.25, 0.14, 8.1],
-    [-6.5, -26.45, 6.4, 0.14],
-    [6.5, -26.45, 6.4, 0.14],
+    [-9.7, -11.85, 0.14, 6.9],
+    [9.7, -11.85, 0.14, 6.9],
+    [-6.5, -15.45, 6.4, 0.14],
+    [6.5, -15.45, 6.4, 0.14],
   ]) {
     addBox(building, [bx, 0.65, bz], [bw, 0.95, bd], materials.glass);
     archBatch.addBox([bx, 1.15, bz], [bw + 0.06, 0.08, bd + 0.06], materials.woodWarm);
     addColliderBox([bx, 0.65, bz], [bw * 0.5 + 0.05, 0.5, bd * 0.5 + 0.05]);
   }
 
-  // =========================================================================
-  // 4. INTERIOR PARTITION WALLS & GRAND ARCADES
-  // Separating wings on Ground Floor & Upper Floor
-  // =========================================================================
-  // Ground Floor: Gallery/Living room partition at x = -5.5 (z: [4.2, -7.5])
-  const partWestG1 = addBox(building, [-5.5, 2.6, 1.8], [0.45, 5.2, 4.4], materials.wall, { shadow: true });
-  cameraBlockers.push(partWestG1);
-  addColliderBox([-5.5, 2.6, 1.8], [0.225, 2.6, 2.2]);
-
-  // Grand arched opening (3.4m wide) between Living Room and Gallery (z: [-0.4, -3.8])
-  archBatch.addBox([-5.5, 4.5, -2.1], [0.48, 1.4, 3.4], materials.wall);
-  archBatch.addBox([-5.5, 3.75, -2.1], [0.52, 0.16, 3.4], materials.woodWarm);
-
-  const partWestG2 = addBox(building, [-5.5, 2.6, -5.8], [0.45, 5.2, 3.8], materials.wall, { shadow: true });
-  cameraBlockers.push(partWestG2);
-  addColliderBox([-5.5, 2.6, -5.8], [0.225, 2.6, 1.9]);
-
-  // Ground Floor: Living room/Office partition at x = 5.5 (z: [4.2, -7.5])
-  const partEastG1 = addBox(building, [5.5, 2.6, 1.8], [0.45, 5.2, 4.4], materials.wall, { shadow: true });
-  cameraBlockers.push(partEastG1);
-  addColliderBox([5.5, 2.6, 1.8], [0.225, 2.6, 2.2]);
-
-  // Grand arched opening (3.4m wide) between Living Room and Home Office (z: [-0.4, -3.8])
-  archBatch.addBox([5.5, 4.5, -2.1], [0.48, 1.4, 3.4], materials.wall);
-  archBatch.addBox([5.5, 3.75, -2.1], [0.52, 0.16, 3.4], materials.woodWarm);
-
-  const partEastG2 = addBox(building, [5.5, 2.6, -5.8], [0.45, 5.2, 3.8], materials.wall, { shadow: true });
-  cameraBlockers.push(partEastG2);
-  addColliderBox([5.5, 2.6, -5.8], [0.225, 2.6, 1.9]);
-
-  // Ground Floor: Office/Garage partition at x = 16.0 (z: [4.2, -7.5])
-  const partGarage = addBox(building, [16.0, 2.6, -1.65], [0.45, 5.2, 11.7], materials.wall, { shadow: true });
-  cameraBlockers.push(partGarage);
-  addColliderBox([16.0, 2.6, -1.65], [0.225, 2.6, 5.85]);
-
-  // Rear Ground cross partition wall at z = -7.5 (separating front bays from rear promenade)
-  for (const [x1, x2] of [[-16.5, -5.5], [5.5, 26.0]]) {
-    const cx = (x1 + x2) * 0.5;
-    const w = Math.abs(x2 - x1);
-    const p = addBox(building, [cx, 2.6, -7.5], [w, 5.2, 0.45], materials.wall, { shadow: true });
-    cameraBlockers.push(p);
-    addColliderBox([cx, 2.6, -7.5], [w * 0.5, 2.6, 0.225]);
+  // Architectural Front Cutaway Framing Posts (Crisp room boundary pilasters at z = 3.8)
+  // Pilasters give the cutaway clean architectural framing without obstructing the rooms
+  const cutawayPilasterX = [-16.5, -5.5, 5.5, 16.0, 26.0];
+  for (const px of cutawayPilasterX) {
+    // Ground floor section (y: [0, 5.2])
+    archBatch.addBox([px, 2.6, 3.8], [0.65, 5.2, 0.65], materials.wall);
+    archBatch.addBox([px, 0.65, 3.82], [0.68, 1.1, 0.68], materials.wainscot);
+    // Floor band at y = 5.2
+    archBatch.addBox([px, 5.2, 3.82], [0.85, 0.35, 0.85], materials.woodWarm);
+    // Upper floor section (y: [5.2, 10.4])
+    archBatch.addBox([px, 7.8, 3.8], [0.65, 5.2, 0.65], materials.wall);
+    archBatch.addBox([px, 10.2, 3.82], [0.85, 0.35, 0.85], materials.stone);
+    addColliderBox([px, 5.2, 3.8], [0.325, 5.2, 0.325]);
   }
 
+  // Ground Floor Front Header Lintel Beams (framing the tops of Lantai 1 rooms, y = 4.8 to 5.2)
+  for (const [x1, x2] of [[-16.5, -5.5], [5.5, 16.0], [16.0, 26.0]]) {
+    const mx = (x1 + x2) * 0.5;
+    const w = Math.abs(x2 - x1);
+    archBatch.addBox([mx, 4.95, 3.8], [w, 0.5, 0.45], materials.trim);
+    archBatch.addBox([mx, 4.65, 3.8], [w, 0.12, 0.5], materials.woodWarm);
+  }
+
+  // Upper Floor Front Header Lintel Beams (framing the tops of Lantai 2 rooms, y = 9.8 to 10.4)
+  for (const [x1, x2] of [[-16.5, -5.5], [-5.5, 5.5], [5.5, 16.0], [16.0, 26.0]]) {
+    const mx = (x1 + x2) * 0.5;
+    const w = Math.abs(x2 - x1);
+    archBatch.addBox([mx, 10.15, 3.8], [w, 0.5, 0.45], materials.trim);
+    archBatch.addBox([mx, 9.85, 3.8], [w, 0.12, 0.5], materials.woodWarm);
+  }
+
+  // Garage Front Roll-up Door Frame & Header Housing (x: [16.0, 26.0], z = 3.8)
+  archBatch.addBox([21.0, 4.35, 3.75], [9.4, 0.7, 0.55], materials.woodDark);
+  archBatch.addBox([21.0, 4.15, 3.7], [8.8, 0.3, 0.4], materials.metalDark);
+  archBatch.addBox([16.4, 2.2, 3.8], [0.65, 4.4, 0.45], materials.woodDark);
+  archBatch.addBox([25.6, 2.2, 3.8], [0.65, 4.4, 0.45], materials.woodDark);
+
   // =========================================================================
-  // 5. SECOND FLOOR FLOOR-SLABS & MEZZANINE (Elevation y = 5.2m)
-  // Double-height living room atrium opening: x: [-4.5, 4.5], z: [0.0, 4.2]
-  // Stairwell opening: x: [-1.8, 1.8], z: [-2.2, -7.5]
-  // ALL OTHER AREAS HAVE 100% SOLID CONTINUOUS STRUCTURAL FLOORS (NO GAPS/HOLES)
+  // 4. INTERIOR PARTITION WALLS & ARCHWAYS (Ground Floor, y: [0, 5.2])
+  // Dividing Project Gallery, Living Room, Home Office, Garasi
   // =========================================================================
-  // Second floor thickness: 0.28m, top surface = 5.2, bottom surface = 4.92
 
-  // Master Bedroom entire West Wing floor slab (x: [-16.5, -4.5], z: [4.2, -18.0])
-  addBox(building, [-10.5, 5.06, -6.9], [12.0, 0.28, 22.2], materials.woodFloor, { shadow: false, receive: true });
-  addColliderBox([-10.5, 5.06, -6.9], [6.0, 0.14, 11.1]);
+  // Partition Gallery / Living Room at x = -5.5 (z: [3.8, -8.2])
+  // Front section
+  const partWestG1 = addBox(building, [-5.5, 2.6, 2.2], [0.45, 5.2, 3.2], materials.wall, { shadow: true });
+  cameraBlockers.push(partWestG1);
+  addColliderBox([-5.5, 2.6, 2.2], [0.225, 2.6, 1.6]);
+  // Grand arched walkthrough portal (4.0m wide, z: [-1.4, -5.4])
+  archBatch.addBox([-5.5, 4.5, -3.4], [0.48, 1.4, 4.0], materials.wall);
+  archBatch.addBox([-5.5, 3.75, -3.4], [0.52, 0.16, 4.0], materials.woodWarm);
+  // Rear section
+  const partWestG2 = addBox(building, [-5.5, 2.6, -6.8], [0.45, 5.2, 2.8], materials.wall, { shadow: true });
+  cameraBlockers.push(partWestG2);
+  addColliderBox([-5.5, 2.6, -6.8], [0.225, 2.6, 1.4]);
 
-  // Master Bedroom West Balcony (x: [-19.0, -16.5], z: [3.5, -6.5]) overlooking pool
-  addBox(building, [-17.75, 5.06, -1.5], [2.5, 0.28, 10.0], materials.terraceTiles, { shadow: true, receive: true });
-  addColliderBox([-17.75, 5.06, -1.5], [1.25, 0.14, 5.0]);
-  // Balcony modern glass railing
-  addBox(building, [-18.9, 5.75, -1.5], [0.08, 1.1, 10.0], materials.glass);
-  archBatch.addBox([-18.9, 6.32, -1.5], [0.12, 0.08, 10.0], materials.woodWarm);
-  addColliderBox([-18.9, 5.75, -1.5], [0.08, 0.55, 5.0]);
-  addColliderBox([-17.75, 5.75, 3.4], [1.25, 0.55, 0.08]);
-  addColliderBox([-17.75, 5.75, -6.4], [1.25, 0.55, 0.08]);
+  // Partition Living Room / Home Office at x = 5.5 (z: [3.8, -8.2])
+  // Front section
+  const partEastG1 = addBox(building, [5.5, 2.6, 2.2], [0.45, 5.2, 3.2], materials.wall, { shadow: true });
+  cameraBlockers.push(partEastG1);
+  addColliderBox([5.5, 2.6, 2.2], [0.225, 2.6, 1.6]);
+  // Grand arched walkthrough portal (4.0m wide, z: [-1.4, -5.4])
+  archBatch.addBox([5.5, 4.5, -3.4], [0.48, 1.4, 4.0], materials.wall);
+  archBatch.addBox([5.5, 3.75, -3.4], [0.52, 0.16, 4.0], materials.woodWarm);
+  // Rear section
+  const partEastG2 = addBox(building, [5.5, 2.6, -6.8], [0.45, 5.2, 2.8], materials.wall, { shadow: true });
+  cameraBlockers.push(partEastG2);
+  addColliderBox([5.5, 2.6, -6.8], [0.225, 2.6, 1.4]);
 
-  // Library Nook entire East Wing floor slab (x: [4.5, 16.0], z: [4.2, -18.0])
-  addBox(building, [10.25, 5.06, -6.9], [11.5, 0.28, 22.2], materials.woodFloor, { shadow: false, receive: true });
-  addColliderBox([10.25, 5.06, -6.9], [5.75, 0.14, 11.1]);
+  // Partition Home Office / Garasi at x = 16.0 (z: [3.8, -8.2])
+  const partGarage = addBox(building, [16.0, 2.6, -2.2], [0.45, 5.2, 12.0], materials.wall, { shadow: true });
+  cameraBlockers.push(partGarage);
+  addColliderBox([16.0, 2.6, -2.2], [0.225, 2.6, 6.0]);
+  // Service door portal between Office and Garage (at z = -2.0)
+  archBatch.addBox([16.0, 3.4, -2.0], [0.48, 0.8, 1.8], materials.wall);
+  archBatch.addBox([16.0, 2.95, -2.0], [0.52, 0.12, 1.8], materials.woodWarm);
 
-  // Creative Studio Far East Wing floor slab (x: [16.0, 26.0], z: [4.2, -18.0])
-  addBox(building, [21.0, 5.06, -6.9], [10.0, 0.28, 22.2], materials.woodFloor, { shadow: false, receive: true });
-  addColliderBox([21.0, 5.06, -6.9], [5.0, 0.14, 11.1]);
+  // =========================================================================
+  // 5. SECOND FLOOR SLABS & MEZZANINE (Elevation y = 5.2m)
+  // Perfectly stacked directly above Lantai 1 rooms
+  // Top surface = 5.2m, bottom surface = 4.92m, thickness = 0.28m
+  // =========================================================================
 
-  // Creative Studio East Balcony (x: [26.0, 28.5], z: [3.5, -6.5]) overlooking garden
-  addBox(building, [27.25, 5.06, -1.5], [2.5, 0.28, 10.0], materials.terraceTiles, { shadow: true, receive: true });
-  addColliderBox([27.25, 5.06, -1.5], [1.25, 0.14, 5.0]);
-  // Balcony modern glass railing
-  addBox(building, [28.4, 5.75, -1.5], [0.08, 1.1, 10.0], materials.glass);
-  archBatch.addBox([28.4, 6.32, -1.5], [0.12, 0.08, 10.0], materials.woodWarm);
-  addColliderBox([28.4, 5.75, -1.5], [0.08, 0.55, 5.0]);
-  addColliderBox([27.25, 5.75, 3.4], [1.25, 0.55, 0.08]);
-  addColliderBox([27.25, 5.75, -6.4], [1.25, 0.55, 0.08]);
+  // Master Bedroom Floor Slab (Bay 1: x: [-16.5, -5.5], z: [3.8, -8.2])
+  addBox(building, [-11.0, 5.06, -2.2], [11.0, 0.28, 12.0], materials.woodFloor, { shadow: false, receive: true });
+  addColliderBox([-11.0, 5.06, -2.2], [5.5, 0.14, 6.0]);
 
-  // Central Mezzanine landing & gallery walkway (x: [-4.5, 4.5], z: [-7.5, -10.0])
-  addBox(building, [0, 5.06, -8.75], [9.0, 0.28, 2.5], materials.woodFloor, { shadow: false, receive: true });
-  addColliderBox([0, 5.06, -8.75], [4.5, 0.14, 1.25]);
+  // Master Bathroom Floor Slab (Bay 2: x: [-5.5, 5.5], z: [3.8, -8.2])
+  // Luxury marble / porcelain tile floor directly above Living Room
+  addBox(building, [0.0, 5.06, -2.2], [11.0, 0.28, 12.0], materials.bathroomTile, { shadow: false, receive: true });
+  addColliderBox([0.0, 5.06, -2.2], [5.5, 0.14, 6.0]);
 
-  // Master Bathroom Suite floor slab (x: [-4.5, 4.5], z: [-10.0, -18.0])
-  addBox(building, [0, 5.06, -14.0], [9.0, 0.28, 8.0], materials.bathroomTile, { shadow: false, receive: true });
-  addColliderBox([0, 5.06, -14.0], [4.5, 0.14, 4.0]);
+  // Library Nook Floor Slab (Bay 3: x: [5.5, 16.0], z: [3.8, -8.2])
+  addBox(building, [10.75, 5.06, -2.2], [10.5, 0.28, 12.0], materials.woodFloor, { shadow: false, receive: true });
+  addColliderBox([10.75, 5.06, -2.2], [5.25, 0.14, 6.0]);
 
-  // Mezzanine safety glass & wood railings overlooking Living Room below
-  archBatch.addBox([-3.15, 5.75, -7.5], [2.7, 1.1, 0.08], materials.glass);
-  archBatch.addBox([-3.15, 6.32, -7.5], [2.7, 0.08, 0.12], materials.woodWarm);
-  addColliderBox([-3.15, 5.75, -7.5], [1.35, 0.55, 0.08]);
+  // Creative Studio Floor Slab (Bay 4: x: [16.0, 26.0], z: [3.8, -8.2])
+  addBox(building, [21.0, 5.06, -2.2], [10.0, 0.28, 12.0], materials.woodFloor, { shadow: false, receive: true });
+  addColliderBox([21.0, 5.06, -2.2], [5.0, 0.14, 6.0]);
 
-  archBatch.addBox([3.15, 5.75, -7.5], [2.7, 1.1, 0.08], materials.glass);
-  archBatch.addBox([3.15, 6.32, -7.5], [2.7, 0.08, 0.12], materials.woodWarm);
-  addColliderBox([3.15, 5.75, -7.5], [1.35, 0.55, 0.08]);
+  // Continuous Architectural Floor Fascia Beam along the front cutaway edge (z = 3.8, y = 5.06)
+  archBatch.addBox([4.75, 5.06, 3.85], [42.8, 0.32, 0.35], materials.woodWarm);
+  archBatch.addBox([4.75, 5.22, 3.87], [43.0, 0.08, 0.38], materials.trim);
 
-  // Second Floor Interior Partitions (Height y: [5.2, 10.4])
-  // 1. Master Bedroom / Mezzanine partition at x = -4.5
-  // South wall section (z: [0.0, -7.0])
-  const partMBS = addBox(building, [-4.5, 7.8, -3.5], [0.45, 5.2, 7.0], materials.wall, { shadow: true });
+  // Modern low architectural safety glass balustrades along front cutaway edge of Lantai 2 (y: [5.2, 5.9])
+  // Master Bedroom front balustrade
+  addBox(building, [-11.0, 5.55, 3.8], [10.2, 0.7, 0.06], materials.glass);
+  archBatch.addBox([-11.0, 5.92, 3.8], [10.2, 0.06, 0.1], materials.woodWarm);
+  addColliderBox([-11.0, 5.55, 3.8], [5.1, 0.35, 0.06]);
+
+  // Bathroom front balustrade (frosted/fluted glass for privacy)
+  addBox(building, [0.0, 5.55, 3.8], [10.2, 0.7, 0.06], materials.glass);
+  archBatch.addBox([0.0, 5.92, 3.8], [10.2, 0.06, 0.1], materials.woodWarm);
+  addColliderBox([0.0, 5.55, 3.8], [5.1, 0.35, 0.06]);
+
+  // Library Nook front balustrade
+  addBox(building, [10.75, 5.55, 3.8], [9.7, 0.7, 0.06], materials.glass);
+  archBatch.addBox([10.75, 5.92, 3.8], [9.7, 0.06, 0.1], materials.woodWarm);
+  addColliderBox([10.75, 5.55, 3.8], [4.85, 0.35, 0.06]);
+
+  // Creative Studio front balustrade
+  addBox(building, [21.0, 5.55, 3.8], [9.2, 0.7, 0.06], materials.glass);
+  archBatch.addBox([21.0, 5.92, 3.8], [9.2, 0.06, 0.1], materials.woodWarm);
+  addColliderBox([21.0, 5.55, 3.8], [4.6, 0.35, 0.06]);
+
+  // =========================================================================
+  // 6. SECOND FLOOR INTERIOR PARTITIONS (y: [5.2, 10.4])
+  // Separating Master Bedroom, Bathroom, Library Nook, Creative Studio
+  // =========================================================================
+
+  // Partition Bedroom / Bathroom at x = -5.5 (z: [3.8, -8.2])
+  // Front section
+  const partMBS = addBox(building, [-5.5, 7.8, 1.8], [0.45, 5.2, 4.0], materials.wall, { shadow: true });
   cameraBlockers.push(partMBS);
-  addColliderBox([-4.5, 7.8, -3.5], [0.225, 2.6, 3.5]);
-  // Grand Arched Doorway into Master Bedroom (z: [-7.0, -9.6], 2.6m wide walkthrough)
-  archBatch.addBox([-4.5, 9.45, -8.3], [0.48, 1.9, 2.6], materials.wall);
-  archBatch.addBox([-4.5, 8.45, -8.3], [0.52, 0.16, 2.6], materials.woodWarm);
-  // North wall section enclosing Bedroom & Bathroom (z: [-9.6, -18.0])
-  const partMBN = addBox(building, [-4.5, 7.8, -13.8], [0.45, 5.2, 8.4], materials.wall, { shadow: true });
+  addColliderBox([-5.5, 7.8, 1.8], [0.225, 2.6, 2.0]);
+  // Arched walkthrough portal connecting Bedroom to Bathroom / Mezzanine (z: [-1.2, -4.2])
+  archBatch.addBox([-5.5, 9.6, -2.7], [0.48, 1.6, 3.0], materials.wall);
+  archBatch.addBox([-5.5, 8.75, -2.7], [0.52, 0.16, 3.0], materials.woodWarm);
+  // Rear section
+  const partMBN = addBox(building, [-5.5, 7.8, -6.2], [0.45, 5.2, 4.0], materials.wall, { shadow: true });
   cameraBlockers.push(partMBN);
-  addColliderBox([-4.5, 7.8, -13.8], [0.225, 2.6, 4.2]);
+  addColliderBox([-5.5, 7.8, -6.2], [0.225, 2.6, 2.0]);
 
-  // 2. Library / Mezzanine partition at x = 4.5
-  // South wall section (z: [0.0, -7.0])
-  const partLibS = addBox(building, [4.5, 7.8, -3.5], [0.45, 5.2, 7.0], materials.wall, { shadow: true });
+  // Partition Bathroom / Library at x = 5.5 (z: [3.8, -8.2])
+  // Front section
+  const partLibS = addBox(building, [5.5, 7.8, 1.8], [0.45, 5.2, 4.0], materials.wall, { shadow: true });
   cameraBlockers.push(partLibS);
-  addColliderBox([4.5, 7.8, -3.5], [0.225, 2.6, 3.5]);
-  // Grand Arched Doorway into Library Nook (z: [-7.0, -9.6], 2.6m wide walkthrough)
-  archBatch.addBox([4.5, 9.45, -8.3], [0.48, 1.9, 2.6], materials.wall);
-  archBatch.addBox([4.5, 8.45, -8.3], [0.52, 0.16, 2.6], materials.woodWarm);
-  // North wall section enclosing Library & Bathroom (z: [-9.6, -18.0])
-  const partLibN = addBox(building, [4.5, 7.8, -13.8], [0.45, 5.2, 8.4], materials.wall, { shadow: true });
+  addColliderBox([5.5, 7.8, 1.8], [0.225, 2.6, 2.0]);
+  // Arched walkthrough portal connecting Library to Bathroom / Mezzanine (z: [-1.2, -4.2])
+  archBatch.addBox([5.5, 9.6, -2.7], [0.48, 1.6, 3.0], materials.wall);
+  archBatch.addBox([5.5, 8.75, -2.7], [0.52, 0.16, 3.0], materials.woodWarm);
+  // Rear section
+  const partLibN = addBox(building, [5.5, 7.8, -6.2], [0.45, 5.2, 4.0], materials.wall, { shadow: true });
   cameraBlockers.push(partLibN);
-  addColliderBox([4.5, 7.8, -13.8], [0.225, 2.6, 4.2]);
+  addColliderBox([5.5, 7.8, -6.2], [0.225, 2.6, 2.0]);
 
-  // 3. Master Bathroom Suite Front Wall at z = -10.0 (x: [-4.5, 4.5])
-  const partBathL = addBox(building, [-2.9, 7.8, -10.0], [3.2, 5.2, 0.45], materials.wall, { shadow: true });
-  cameraBlockers.push(partBathL);
-  addColliderBox([-2.9, 7.8, -10.0], [1.6, 2.6, 0.225]);
-
-  const partBathR = addBox(building, [2.9, 7.8, -10.0], [3.2, 5.2, 0.45], materials.wall, { shadow: true });
-  cameraBlockers.push(partBathR);
-  addColliderBox([2.9, 7.8, -10.0], [1.6, 2.6, 0.225]);
-  // Arched Bathroom doorway lintel & trim (2.6m wide walkthrough in center)
-  archBatch.addBox([0, 9.45, -10.0], [2.6, 1.9, 0.48], materials.wall);
-  archBatch.addBox([0, 8.45, -10.0], [2.6, 0.16, 0.52], materials.woodWarm);
-
-  // 4. Library / Creative Studio Connecting Wall at x = 16.0
-  // South wall section (z: [4.2, 0.5])
-  const partStudioS = addBox(building, [16.0, 7.8, 2.35], [0.45, 5.2, 3.7], materials.wall, { shadow: true });
+  // Partition Library / Creative Studio at x = 16.0 (z: [3.8, -8.2])
+  // Front section
+  const partStudioS = addBox(building, [16.0, 7.8, 1.8], [0.45, 5.2, 4.0], materials.wall, { shadow: true });
   cameraBlockers.push(partStudioS);
-  addColliderBox([16.0, 7.8, 2.35], [0.225, 2.6, 1.85]);
-  // Grand Connecting Gallery Portal between Library & Creative Studio (z: [0.5, -2.5], 3.0m wide walkthrough)
-  archBatch.addBox([16.0, 9.45, -1.0], [0.48, 1.9, 3.0], materials.wall);
-  archBatch.addBox([16.0, 8.45, -1.0], [0.52, 0.16, 3.0], materials.woodWarm);
-  // North wall section (z: [-2.5, -18.0])
-  const partStudioN = addBox(building, [16.0, 7.8, -10.25], [0.45, 5.2, 15.5], materials.wall, { shadow: true });
+  addColliderBox([16.0, 7.8, 1.8], [0.225, 2.6, 2.0]);
+  // Connecting Gallery Portal between Library & Creative Studio (z: [-1.2, -4.2])
+  archBatch.addBox([16.0, 9.6, -2.7], [0.48, 1.6, 3.0], materials.wall);
+  archBatch.addBox([16.0, 8.75, -2.7], [0.52, 0.16, 3.0], materials.woodWarm);
+  // Rear section
+  const partStudioN = addBox(building, [16.0, 7.8, -6.2], [0.45, 5.2, 4.0], materials.wall, { shadow: true });
   cameraBlockers.push(partStudioN);
-  addColliderBox([16.0, 7.8, -10.25], [0.225, 2.6, 7.75]);
+  addColliderBox([16.0, 7.8, -6.2], [0.225, 2.6, 2.0]);
 
   // =========================================================================
-  // 6. GRAND OPEN STAIRCASE (Walkable connection from Ground Floor to Floor 2)
-  // Origin: x: 0, starts at z = -2.2 (y = 0.0), ascends to z = -7.5 (y = 5.2)
-  // Step length = 5.3m, Rise = 5.2m. 16 steps of 0.33m run and 0.325m rise.
+  // 7. GRAND OPEN STAIRCASE (Walkable connection from Ground Floor to Lantai 2)
+  // Origin: x: 0, starts at z = -3.2 (y = 0.0), ascends northward to z = -7.8 (y = 5.2)
+  // Step length = 4.6m, Rise = 5.2m. 16 steps with smooth collider wedge.
   // =========================================================================
   const numSteps = 16;
   const stairWidth = 3.2;
-  const startZ = -2.2;
-  const endZ = -7.5;
+  const startZ = -3.2;
+  const endZ = -7.8;
   const startY = 0.0;
   const endY = 5.2;
 
@@ -387,7 +358,7 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
     // Solid riser support below
     archBatch.addBox([0, curY - stepHeight * 0.5, curZ], [stairWidth - 0.2, stepHeight, stepDepth - 0.04], materials.woodDark);
 
-    // Collider step block (autostep handles up to 0.32m; this step height is 0.325m, so we slice into smooth collider blocks)
+    // Collider step block
     addColliderBox([0, curY - 0.1, curZ], [stairWidth * 0.5, stepHeight * 0.5, stepDepth * 0.5]);
   }
 
@@ -396,13 +367,12 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
     const t = (i + 1) / numSteps;
     const wz = startZ + (endZ - startZ) * t;
     const wy = startY + (endY - startY) * t;
-    addColliderBox([0, wy - 0.25, wz], [stairWidth * 0.48, 0.25, (Math.abs(endZ - startZ) / numSteps)]);
+    addColliderBox([0, wy - 0.25, wz], [stairWidth * 0.48, 0.25, Math.abs(endZ - startZ) / numSteps]);
   }
 
   // Polished mahogany stair stringers and balustrades with turned balusters
   for (const side of [-1, 1]) {
     const sx = side * (stairWidth * 0.5 - 0.08);
-    // Continuous angled handrail
     const midZ = (startZ + endZ) * 0.5;
     const midY = (startY + endY) * 0.5 + 1.1;
     const stairLen = Math.hypot(endZ - startZ, endY - startY);
@@ -412,77 +382,50 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
       rotation: [side > 0 ? stairAngle : stairAngle, 0, 0],
     });
 
-    // Turned balusters every other step
     for (let i = 0; i < numSteps; i += 2) {
       const t = (i + 0.5) / numSteps;
       const bz = startZ + (endZ - startZ) * t;
       const by = startY + (endY - startY) * t + 0.55;
       archBatch.addCylinder([sx, by, bz], 0.035, 0.035, 1.0, materials.trim, { segments: 8 });
     }
-    // Lateral safety collider along stair edges
     addColliderBox([sx, midY - 0.4, midZ], [0.12, 0.8, stairLen * 0.5]);
   }
 
   // =========================================================================
-  // 7. WINDOWS & LIGHT-WELLS
-  // Large floor-to-ceiling panoramic glass arrays matching luxury modern estate
-  // =========================================================================
-  // Project Gallery ground floor west glass wall opening to pool (x = -16.48, z: [-1.0, -5.5])
-  addBox(building, [-16.48, 2.6, -3.25], [0.06, 4.4, 4.8], materials.glass);
-  archBatch.addBox([-16.45, 0.4, -3.25], [0.14, 0.8, 5.0], materials.trim);
-  archBatch.addBox([-16.45, 4.8, -3.25], [0.14, 0.4, 5.0], materials.trim);
-
-  // Master Bedroom second floor west sliding glass wall to balcony (x = -16.48, z: [-1.0, -5.5], y: [5.2, 9.6])
-  addBox(building, [-16.48, 7.6, -3.25], [0.06, 4.4, 4.8], materials.glass);
-  archBatch.addBox([-16.45, 9.8, -3.25], [0.14, 0.4, 5.0], materials.trim);
-
-  // Creative Studio second floor east sliding glass wall to balcony (x = 25.98, z: [-1.0, -5.5], y: [5.2, 9.6])
-  addBox(building, [25.98, 7.6, -3.25], [0.06, 4.4, 4.8], materials.glass);
-  archBatch.addBox([25.95, 9.8, -3.25], [0.14, 0.4, 5.0], materials.trim);
-
-  // Front panoramic windows on Ground & Second Floors
-  for (const wx of [-11.0, 10.75]) {
-    // Ground floor window (y = 2.6, height 3.2m, width 4.8m)
-    addBox(building, [wx, 2.6, 4.25], [4.8, 3.2, 0.06], materials.glass);
-    archBatch.addBox([wx, 0.95, 4.3], [5.2, 0.18, 0.2], materials.trim);
-    archBatch.addBox([wx, 4.25, 4.3], [5.2, 0.18, 0.2], materials.trim);
-
-    // Second floor window (y = 7.8, height 3.2m, width 4.8m)
-    addBox(building, [wx, 7.8, 4.25], [4.8, 3.2, 0.06], materials.glass);
-    archBatch.addBox([wx, 6.15, 4.3], [5.2, 0.18, 0.2], materials.trim);
-    archBatch.addBox([wx, 9.45, 4.3], [5.2, 0.18, 0.2], materials.trim);
-
-    // Flower boxes under ground floor windows
-    archBatch.addBox([wx, 0.72, 4.48], [4.6, 0.34, 0.42], materials.woodWarm);
-    archBatch.addBox([wx, 0.88, 4.48], [4.5, 0.05, 0.38], materials.soil);
-    for (let fi = -1.8; fi <= 1.8; fi += 0.45) {
-      archBatch.addSphere([wx + fi, 1.05, 4.48], [0.2, 0.2, 0.2], materials.foliageBright);
-      archBatch.addSphere([wx + fi, 1.16, 4.48], [0.09, 0.09, 0.09], fi % 0.9 === 0 ? materials.coral : materials.yellow);
-    }
-  }
-
-  // =========================================================================
-  // 8. ROOF STRUCTURE & CHIMNEY (In roofGroup for interior transparency)
+  // 8. LUXURY PITCHED GABLED ROOF STRUCTURE (`roofGroup`)
+  // Matching Vicky's World Map villa architecture:
+  // Pitched dark charcoal gables, warm wood soffits/overhangs, triangular pediments
   // =========================================================================
   const roofGroup = new THREE.Group();
   building.add(roofGroup);
   const roofBatch = new BatchCollector();
 
-  // Modern Multi-Tiered Gabled Roof Over Main 42.5m Estate (Elevation y = 10.4 to 12.6m)
-  // Left Wing Gable
-  roofBatch.addBox([-11.0, 11.2, -6.9], [12.8, 0.38, 23.8], materials.roof, { rotation: [0, 0, 0.14] });
-  // Center Double-Height Atrium Raised Skylight Roof
-  roofBatch.addBox([0, 12.1, -6.9], [11.8, 0.42, 23.8], materials.roof);
-  roofBatch.addBox([0, 12.5, -6.9], [1.2, 0.38, 24.2], materials.roofTrim);
-  // Right Wing Gable
-  roofBatch.addBox([11.0, 11.2, -6.9], [12.8, 0.38, 23.8], materials.roof, { rotation: [0, 0, -0.14] });
-  // Garage Flat Modern Overhang Roof with architectural trim
-  roofBatch.addBox([21.0, 10.8, -6.9], [11.5, 0.45, 23.8], materials.roof);
-  roofBatch.addBox([21.0, 11.1, -6.9], [11.8, 0.18, 24.2], materials.roofTrim);
+  // West Wing Gable (Over Master Bedroom, x: [-16.5, -5.5])
+  roofBatch.addBox([-11.0, 10.9, -2.2], [11.8, 0.38, 13.0], materials.roof, { rotation: [0, 0, 0.12] });
+  roofBatch.addBox([-11.0, 10.7, -2.2], [11.6, 0.18, 12.8], materials.woodWarm, { rotation: [0, 0, 0.12] });
+
+  // Center High Atrium Gable (Over Bathroom & Grand Entrance, x: [-5.5, 5.5])
+  // High triangular gable peak matching the map's prominent central pediment
+  roofBatch.addBox([0, 11.8, -2.2], [12.0, 0.42, 13.2], materials.roof);
+  roofBatch.addBox([0, 12.15, -2.2], [1.4, 0.38, 13.6], materials.roofTrim);
+  roofBatch.addBox([0, 11.55, -2.2], [11.6, 0.18, 12.8], materials.woodWarm);
+
+  // Triangular gable pediment front face over central entrance (z = 3.8)
+  roofBatch.addBox([0, 11.1, 3.85], [11.4, 1.6, 0.3], materials.wall);
+  roofBatch.addBox([0, 11.95, 3.9], [11.8, 0.22, 0.4], materials.roofTrim);
+
+  // East Wing Gable (Over Library Nook, x: [5.5, 16.0])
+  roofBatch.addBox([10.75, 10.9, -2.2], [11.2, 0.38, 13.0], materials.roof, { rotation: [0, 0, -0.12] });
+  roofBatch.addBox([10.75, 10.7, -2.2], [11.0, 0.18, 12.8], materials.woodWarm, { rotation: [0, 0, -0.12] });
+
+  // Garage Flat Modern Overhang Roof with Architectural Fascia (Bay 4, x: [16.0, 26.0])
+  roofBatch.addBox([21.0, 10.6, -2.2], [10.8, 0.45, 13.0], materials.roof);
+  roofBatch.addBox([21.0, 10.9, -2.2], [11.2, 0.18, 13.4], materials.roofTrim);
+  roofBatch.addBox([21.0, 10.35, -2.2], [10.6, 0.18, 12.8], materials.woodWarm);
 
   // Red Brick Fireplace Chimney on living room roof
   const cx = 4.2;
-  const cz = -1.8;
+  const cz = -2.0;
   roofBatch.addBox([cx, 11.8, cz], [1.4, 3.2, 1.4], materials.wainscot);
   roofBatch.addBox([cx, 13.5, cz], [1.6, 0.2, 1.6], materials.stone);
   roofBatch.addCylinder([cx, 13.9, cz], 0.32, 0.38, 0.6, materials.terracotta, { segments: 12 });
@@ -508,8 +451,9 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
 
   // =========================================================================
   // 9. GRAND ENTRANCE SIGNBOARD ("VICKY'S WORLD")
+  // Mounted directly above the porch entrance columns
   // =========================================================================
-  addBox(building, [0, 9.6, 4.6], [7.2, 1.6, 0.18], materials.woodDark);
+  addBox(building, [0, 5.85, 7.4], [7.2, 1.45, 0.18], materials.woodDark);
   const welcomeCanvas = document.createElement('canvas');
   welcomeCanvas.width = 1024;
   welcomeCanvas.height = 256;
@@ -531,16 +475,20 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   const signTex = new THREE.CanvasTexture(welcomeCanvas);
   signTex.colorSpace = THREE.SRGBColorSpace;
   const signMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(6.8, 1.45),
+    new THREE.PlaneGeometry(6.8, 1.35),
     new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.4, metalness: 0.05 })
   );
-  signMesh.position.set(0, 9.6, 4.71);
+  signMesh.position.set(0, 5.85, 7.51);
   building.add(signMesh);
 
-  // Sconces along front facade
-  for (const sx of [-11.0, -5.5, 5.5, 11.0, 16.0, 25.5]) {
-    archBatch.addBox([sx, 4.2, 4.35], [0.14, 0.28, 0.14], materials.brass);
-    addSphere(building, [sx, 4.2, 4.35], [0.14, 0.14, 0.14], materials.glow, { shadow: false });
+  // Warm Brass Wall Sconces along cutaway pilasters
+  for (const sx of [-16.5, -5.5, 5.5, 16.0, 25.5]) {
+    // Ground floor sconces
+    archBatch.addBox([sx, 3.8, 3.95], [0.14, 0.28, 0.14], materials.brass);
+    addSphere(building, [sx, 3.8, 3.95], [0.12, 0.12, 0.12], materials.glow, { shadow: false });
+    // Upper floor sconces
+    archBatch.addBox([sx, 8.8, 3.95], [0.14, 0.28, 0.14], materials.brass);
+    addSphere(building, [sx, 8.8, 3.95], [0.12, 0.12, 0.12], materials.glow, { shadow: false });
   }
 
   // Build batched architecture
@@ -551,7 +499,7 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
 
 export function createInteractiveDoors(scene, world, RAPIER, doorColliders, interactionPoints) {
   const frame = new THREE.Group();
-  frame.position.set(0, 0, 4.12);
+  frame.position.set(0, 0, 3.75);
   scene.add(frame);
 
   addBox(frame, [-1.7, 1.8, 0], [0.32, 3.6, 0.36], materials.coral);
@@ -571,10 +519,12 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
   addSphere(doorLeft, [1.36, 1.55, 0.12], [0.08, 0.08, 0.08], materials.brass);
   addSphere(doorRight, [-1.36, 1.55, 0.12], [0.08, 0.08, 0.08], materials.brass);
 
-  for (const x of [-0.77, 0.77]) {
-    const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(x, 1.65, 4.2));
-    const collider = world.createCollider(RAPIER.ColliderDesc.cuboid(0.77, 1.65, 0.1), body);
-    doorColliders.push(collider);
+  if (world && RAPIER && doorColliders) {
+    for (const x of [-0.77, 0.77]) {
+      const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(x, 1.65, 3.8));
+      const collider = world.createCollider(RAPIER.ColliderDesc.cuboid(0.77, 1.65, 0.1), body);
+      doorColliders.push(collider);
+    }
   }
 
   const OPEN_ANGLE = 1.6;
@@ -596,7 +546,7 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
   const finish = () => {
     setAngle(to);
     state = to > 0 ? 'open' : 'closed';
-    if (state === 'closed') {
+    if (state === 'closed' && doorColliders) {
       for (const collider of doorColliders) collider.setEnabled(true);
     }
     const cb = pendingCallback;
@@ -620,7 +570,7 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
     clock = 0;
     state = opening ? 'opening' : 'closing';
     pendingCallback = onComplete || null;
-    if (opening) {
+    if (opening && doorColliders) {
       for (const collider of doorColliders) collider.setEnabled(false);
     }
     return true;
@@ -648,7 +598,7 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
     id: 'door',
     type: 'door',
     title: 'Front door',
-    position: new THREE.Vector3(0, 0.7, 4.2),
+    position: new THREE.Vector3(0, 0.7, 3.8),
     radius: 3.2,
     controls,
     action: () => {

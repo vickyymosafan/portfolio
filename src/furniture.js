@@ -18,33 +18,36 @@ function addFurnitureCollider(world, RAPIER, staticBodies, position, halfExtents
 }
 
 export function createRoomInteriors(building, interactionPoints, openDetailsCallback, world, RAPIER, staticBodies) {
-  // 9 Grand Themed Mansion Environments across Ground Floor (y = 0) and Second Floor (y = 5.2)
+  // 8 Grand Themed Rooms across Ground Floor (y = 0) and Lantai 2 (y = 5.2)
+  // Matching Vicky's World Map:
+  // Lantai 1: Project Gallery, Living Room, Home Office, Garasi
+  // Lantai 2: Master Bedroom, Bathroom, Library Nook, Creative Studio
   const roomSpecs = [
-    // --- GROUND FLOOR ---
-    { id: 'about', x: 0.0, y: 0.0, z: 0.5, title: 'Beyond the Code', subtitle: 'CHAPTER 01 · ABOUT ME', accent: palette.coral, rugMat: materials.carpetPersian },
-    { id: 'projects', x: -11.0, y: 0.0, z: -1.5, title: 'The Artifact Gallery', subtitle: 'CHAPTER 03 · PROJECTS', accent: palette.pinkRose, rugMat: materials.carpetBauhaus },
-    { id: 'skills', x: 10.75, y: 0.0, z: -1.5, title: 'The Engineering Workshop', subtitle: 'CHAPTER 04 · SKILLS & TOOLS', accent: palette.blueSky, rugMat: materials.blue },
-    { id: 'garage', x: 21.0, y: 0.0, z: -1.5, title: 'Private Garage & Workshop', subtitle: 'BMW M-SERIES & TOOLS', accent: palette.goldBrass, rugMat: materials.epoxyFloor },
-    { id: 'contact', x: 0.0, y: 0.0, z: -22.5, title: 'The Final Scene', subtitle: 'COME SAY HELLO', accent: palette.coral, rugMat: materials.terraceTiles },
+    // --- LANTAI 1 (GROUND FLOOR, y = 0.0) ---
+    { id: 'about', x: 0.0, y: 0.0, z: -2.0, title: 'Beyond the Code', subtitle: 'CHAPTER 01 · ABOUT ME', accent: palette.coral, rugMat: materials.carpetPersian },
+    { id: 'projects', x: -11.0, y: 0.0, z: -2.0, title: 'The Artifact Gallery', subtitle: 'CHAPTER 03 · PROJECTS', accent: palette.pinkRose, rugMat: materials.carpetBauhaus },
+    { id: 'skills', x: 10.75, y: 0.0, z: -2.0, title: 'The Engineering Workshop', subtitle: 'CHAPTER 04 · SKILLS & TOOLS', accent: palette.blueSky, rugMat: materials.blue },
+    { id: 'garage', x: 21.0, y: 0.0, z: -2.0, title: 'Private Garage & Workshop', subtitle: 'BMW M-SERIES & TOOLS', accent: palette.goldBrass, rugMat: materials.epoxyFloor },
+    { id: 'contact', x: 0.0, y: 0.0, z: -11.8, title: 'The Final Scene', subtitle: 'COME SAY HELLO', accent: palette.coral, rugMat: materials.terraceTiles },
 
-    // --- SECOND FLOOR (y = 5.2m) ---
-    { id: 'bedroom', x: -11.0, y: 5.2, z: -1.5, title: 'Master Bedroom', subtitle: 'REST & RECHARGE', accent: palette.bluePastel, rugMat: materials.carpetBauhaus },
-    { id: 'bathroom', x: 0.0, y: 5.2, z: -13.5, title: 'Master Bathroom', subtitle: 'RELAX & REFRESH', accent: palette.mintSage, rugMat: materials.bathroomTile },
-    { id: 'experience', x: 10.5, y: 5.2, z: -1.5, title: 'The Engineering Journey', subtitle: 'STORY & MILESTONES', accent: palette.yellowSun, rugMat: materials.carpetPersian },
-    { id: 'process', x: 21.0, y: 5.2, z: -1.5, title: 'Creative Studio', subtitle: 'CHAPTER 02 · PROCESS', accent: palette.mintSage, rugMat: materials.mint },
+    // --- LANTAI 2 (SECOND FLOOR, y = 5.2m) ---
+    { id: 'bedroom', x: -11.0, y: 5.2, z: -2.0, title: 'Master Bedroom', subtitle: 'REST & RECHARGE', accent: palette.bluePastel, rugMat: materials.carpetBauhaus },
+    { id: 'bathroom', x: 0.0, y: 5.2, z: -2.0, title: 'Master Bathroom', subtitle: 'RELAX & REFRESH', accent: palette.mintSage, rugMat: materials.bathroomTile },
+    { id: 'experience', x: 10.75, y: 5.2, z: -2.0, title: 'The Engineering Journey', subtitle: 'STORY & MILESTONES', accent: palette.yellowSun, rugMat: materials.carpetPersian },
+    { id: 'process', x: 21.0, y: 5.2, z: -2.0, title: 'Creative Studio', subtitle: 'CHAPTER 02 · PROCESS', accent: palette.mintSage, rugMat: materials.mint },
   ];
 
   for (let i = 0; i < roomSpecs.length; i += 1) {
     const spec = roomSpecs[i];
 
     // Custom area rug for non-garage/bathroom spaces
-    if (spec.id !== 'garage' && spec.id !== 'bathroom') {
-      const rugW = spec.id === 'about' ? 8.2 : 8.8;
-      const rugD = spec.id === 'about' ? 6.2 : 6.8;
+    if (spec.id !== 'garage' && spec.id !== 'bathroom' && spec.id !== 'contact') {
+      const rugW = spec.id === 'about' ? 7.8 : 8.4;
+      const rugD = spec.id === 'about' ? 6.4 : 6.4;
       addBox(building, [spec.x, spec.y + 0.005, spec.z], [rugW, 0.02, rugD], spec.rugMat, { receive: true, shadow: false });
     }
 
-    // Presentation Display Board (Mounted on back wall of room)
+    // Presentation Display Board Mounted on back wall of room (leaving center clear)
     if (spec.id !== 'garage' && spec.id !== 'bathroom' && spec.id !== 'bedroom') {
       createDisplayBoard(building, spec, world, RAPIER, staticBodies);
     }
@@ -52,41 +55,9 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
     // Room-specific furnishings with physics colliders
     buildRoomFurniture(building, spec, world, RAPIER, staticBodies);
 
-    // Interactive glowing floor beacon placed directly in front of display board or key flagship object
-    let beaconX = spec.x;
-    let beaconZ = spec.z;
-    if (spec.id === 'about') {
-      // Placed at side foyer gallery wall, leaving center entrance 100% open
-      beaconX = -3.8;
-      beaconZ = 2.4;
-    } else if (spec.id === 'projects') {
-      beaconX = -11.0;
-      beaconZ = -3.5;
-    } else if (spec.id === 'skills') {
-      // Clear of arched doorway at x=5.5, placed in front of desk workstation
-      beaconX = 10.5;
-      beaconZ = -5.5;
-    } else if (spec.id === 'experience') {
-      // Inside library nook reading alcove, clearing top of stairs completely
-      beaconX = 10.5;
-      beaconZ = -5.0;
-    } else if (spec.id === 'process') {
-      // Inside creative studio back wall, clearing connecting arch from library
-      beaconX = 21.0;
-      beaconZ = -5.0;
-    } else if (spec.id === 'contact') {
-      beaconX = 3.6;
-      beaconZ = -20.2;
-    } else if (spec.id === 'garage') {
-      beaconX = 21.0;
-      beaconZ = 1.4;
-    } else if (spec.id === 'bedroom') {
-      beaconX = -11.0;
-      beaconZ = 0.6;
-    } else if (spec.id === 'bathroom') {
-      beaconX = 0.0;
-      beaconZ = -11.8;
-    }
+    // Interactive glowing floor beacon placed conveniently in front of each room
+    const beaconX = spec.x;
+    const beaconZ = spec.id === 'contact' ? -11.8 : 1.2;
     createFloorBeacon(building, beaconX, spec.y, beaconZ, spec.accent);
 
     // Register interaction point
@@ -128,73 +99,32 @@ function createFloorBeacon(parent, x, y, z, colorHex) {
 }
 
 function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
-  const { x, y, z, id, title, subtitle, accent } = room;
+  const { x, y, id, title, subtitle, accent } = room;
 
-  let bx = x;
-  let by = y;
-  let bz = z - 3.4 + 0.16;
-  let brotY = 0;
-
-  if (id === 'about') {
-    // Mounted against West foyer wall: leaves 100% of the front entrance door & walkway spacious & open
-    bx = -5.0;
-    bz = 2.4;
-    brotY = Math.PI * 0.5;
-  } else if (id === 'projects') {
-    // Mounted on back wall of gallery
-    bx = -11.0;
-    bz = -4.75;
-    brotY = 0;
-  } else if (id === 'skills') {
-    // Mounted on rear North wall: leaves arched door at x=5.5 completely clear
-    bx = 10.5;
-    bz = -7.0;
-    brotY = 0;
-  } else if (id === 'experience') {
-    // Inside Library Nook reading alcove: leaving stairs & mezzanine landing 100% clear
-    bx = 10.5;
-    bz = -6.8;
-    brotY = 0;
-  } else if (id === 'process') {
-    // Back wall of studio: leaves connecting archway from library wide open
-    bx = 21.0;
-    bz = -6.8;
-    brotY = 0;
-  } else if (id === 'contact') {
-    // Terrace side pergola column: leaves center panoramic view completely open
-    bx = 4.8;
-    bz = -20.2;
-    brotY = -Math.PI * 0.5;
-  }
+  // Mount seamlessly on the back wall of the room (z = -7.8)
+  const bx = x;
+  const by = y;
+  const bz = id === 'contact' ? -15.2 : -7.8;
 
   const display = new THREE.Group();
   display.position.set(bx, by, bz);
-  display.rotation.y = brotY;
   parent.add(display);
 
-  // Elevated easel & frame stand
-  addBox(display, [0, 2.9, 0], [3.8, 2.2, 0.14], materials.woodDark);
-  addBox(display, [0, 1.65, 0.22], [3.5, 0.12, 0.5], materials.woodWarm);
-  addBox(display, [-1.45, 0.8, 0.25], [0.16, 1.6, 0.16], materials.metalDark);
-  addBox(display, [1.45, 0.8, 0.25], [0.16, 1.6, 0.16], materials.metalDark);
+  // Wall mounted plaque frame
+  addBox(display, [0, 2.8, 0.08], [3.6, 2.0, 0.1], materials.woodDark);
 
   // Canvas sign texture
   const signTex = createSignTexture(title, subtitle, accent, 512, 340);
   const signMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.6, 2.0),
+    new THREE.PlaneGeometry(3.4, 1.8),
     new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.45, metalness: 0.05 })
   );
-  signMesh.position.set(0, 2.9, 0.085);
+  signMesh.position.set(0, 2.8, 0.14);
   display.add(signMesh);
 
   // Brass picture lamp over board
-  addBox(display, [0, 4.1, 0.25], [1.8, 0.08, 0.16], materials.brass);
-  addSphere(display, [0, 4.02, 0.25], [0.16, 0.06, 0.16], materials.glow, { shadow: false });
-
-  // Physics collider preventing walking through easel
-  if (world && RAPIER && staticBodies) {
-    addFurnitureCollider(world, RAPIER, staticBodies, [bx, by + 1.5, bz], [1.8, 1.5, 0.25]);
-  }
+  addBox(display, [0, 3.9, 0.25], [1.8, 0.08, 0.16], materials.brass);
+  addSphere(display, [0, 3.82, 0.25], [0.16, 0.06, 0.16], materials.glow, { shadow: false });
 }
 
 function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
@@ -202,832 +132,544 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
 
   if (id === 'about') {
     // =========================================================================
-    // 1. GRAND LIVING ROOM (Ground Floor Center, x = 0, y = 0, z = 0.5)
-    // Double-height atrium, modern ring chandelier, sectional sofa, fireplace,
-    // media wall with slatted wood, coffee table with tea set, wall art
+    // 1. GRAND LIVING ROOM (Lantai 1 Center, x = 0.0, y = 0.0, z = -2.0)
+    // Curving contemporary sectional sofa, round coffee table, media wall with OLED TV,
+    // fireplace, brass ring chandelier, potted palms, open to front porch
     // =========================================================================
-    // Modern Sculptural Ring Chandelier suspended from double-height ceiling (y = 8.6)
+
+    // Modern Sculptural Ring Chandelier (y = 4.8)
     const chandelier = new THREE.Group();
-    chandelier.position.set(x, y + 8.6, z);
+    chandelier.position.set(x, y + 4.6, z);
     parent.add(chandelier);
-    addCylinder(chandelier, [0, 0, 0], 1.6, 1.6, 0.12, materials.brass, { segments: 24 });
-    addCylinder(chandelier, [0, -0.05, 0], 1.5, 1.5, 0.08, materials.glow, { segments: 24, shadow: false });
-    // Thin brass suspension cables to ceiling
+    addCylinder(chandelier, [0, 0, 0], 1.6, 1.6, 0.1, materials.brass, { segments: 24 });
+    addCylinder(chandelier, [0, -0.04, 0], 1.5, 1.5, 0.06, materials.glow, { segments: 24, shadow: false });
     for (let c = 0; c < 3; c += 1) {
       const angle = (c / 3) * Math.PI * 2;
-      addCylinder(chandelier, [Math.cos(angle) * 1.5, 0.9, Math.sin(angle) * 1.5], 0.015, 0.015, 1.8, materials.brass);
+      addCylinder(chandelier, [Math.cos(angle) * 1.5, 0.35, Math.sin(angle) * 1.5], 0.015, 0.015, 0.7, materials.brass);
     }
 
-    // Grand Entrance Foyer Inlaid Architectural Medallion (Spacious, open entrance welcoming the player)
-    addCylinder(parent, [x, y + 0.008, z + 2.0], 1.8, 1.8, 0.01, materials.wainscot, { segments: 32 });
-    addCylinder(parent, [x, y + 0.012, z + 2.0], 1.5, 1.5, 0.01, materials.woodDark, { segments: 32 });
-    addCylinder(parent, [x, y + 0.016, z + 2.0], 0.65, 0.65, 0.01, materials.brass, { segments: 24 });
+    // Curved Contemporary Sectional Sofa facing forward (+Z)
+    // Center curved section
+    addBox(parent, [x, y + 0.42, z - 0.2], [4.4, 0.45, 1.2], materials.coral);
+    addBox(parent, [x, y + 0.95, z - 0.7], [4.4, 0.65, 0.32], materials.coral);
+    // Left wing
+    addBox(parent, [x - 2.2, y + 0.42, z + 0.5], [1.2, 0.45, 1.8], materials.coral);
+    addBox(parent, [x - 2.7, y + 0.65, z + 0.5], [0.3, 0.6, 1.8], materials.coral);
+    // Right wing
+    addBox(parent, [x + 2.2, y + 0.42, z + 0.5], [1.2, 0.45, 1.8], materials.coral);
+    addBox(parent, [x + 2.7, y + 0.65, z + 0.5], [0.3, 0.6, 1.8], materials.coral);
 
-    // Luxury sectional sofa in warm coral fabric shifted westward to leave foyer 100% open
-    const sofaGroup = new THREE.Group();
-    sofaGroup.position.set(x - 2.8, y, z - 0.4);
-    sofaGroup.rotation.y = 0.25;
-    parent.add(sofaGroup);
-    addBox(sofaGroup, [0, 0.42, 0], [4.2, 0.45, 1.2], materials.coral);
-    addBox(sofaGroup, [0, 0.95, -0.45], [4.2, 0.65, 0.32], materials.coral);
-    addBox(sofaGroup, [-2.0, 0.65, 0], [0.35, 0.6, 1.2], materials.coral);
-    addBox(sofaGroup, [1.7, 0.42, 1.1], [1.2, 0.45, 1.2], materials.coral);
-    addBox(sofaGroup, [2.15, 0.65, 1.1], [0.3, 0.6, 1.2], materials.coral);
-    addBox(sofaGroup, [-1.4, 0.8, -0.25], [0.45, 0.45, 0.22], materials.cushionYellow, { rotation: [0.1, 0.2, 0] });
-    addBox(sofaGroup, [0.8, 0.8, -0.25], [0.45, 0.45, 0.22], materials.cushionMint, { rotation: [0.1, -0.2, 0] });
-    addBox(sofaGroup, [-0.2, 0.8, -0.25], [0.45, 0.45, 0.22], materials.cushionBlue, { rotation: [0.1, -0.1, 0] });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 2.8, y + 0.48, z - 0.4], [2.1, 0.48, 0.65]);
+    // Decorative throw cushions on sofa
+    addBox(parent, [x - 1.4, y + 0.8, z - 0.5], [0.45, 0.45, 0.22], materials.cushionYellow, { rotation: [0.1, 0.2, 0] });
+    addBox(parent, [x + 1.4, y + 0.8, z - 0.5], [0.45, 0.45, 0.22], materials.cushionMint, { rotation: [0.1, -0.2, 0] });
+    addBox(parent, [x, y + 0.8, z - 0.5], [0.45, 0.45, 0.22], materials.cushionBlue, { rotation: [0.1, 0, 0] });
 
-    // Accent Lounge Armchair facing west toward coffee table & sofa
-    const armChair = new THREE.Group();
-    armChair.position.set(x - 0.8, y, z - 0.4);
-    armChair.rotation.y = -Math.PI * 0.5;
-    parent.add(armChair);
-    addBox(armChair, [0, 0.42, 0], [1.1, 0.42, 1.1], materials.cushionMint);
-    addBox(armChair, [0, 0.95, -0.45], [1.1, 0.65, 0.24], materials.cushionMint);
-    addBox(armChair, [-0.48, 0.65, 0], [0.16, 0.5, 1.0], materials.woodDark);
-    addBox(armChair, [0.48, 0.65, 0], [0.16, 0.5, 1.0], materials.woodDark);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 0.8, y + 0.5, z - 0.4], [0.6, 0.5, 0.6]);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.5, z - 0.2], [2.2, 0.5, 0.8]);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 2.2, y + 0.5, z + 0.5], [0.65, 0.5, 0.9]);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x + 2.2, y + 0.5, z + 0.5], [0.65, 0.5, 0.9]);
 
-    // Low Glass & Oak Round Coffee Table
-    addCylinder(parent, [x - 1.8, y + 0.38, z - 0.4], 1.05, 1.05, 0.08, materials.glass, { segments: 24 });
-    addCylinder(parent, [x - 1.8, y + 0.18, z - 0.4], 0.22, 0.35, 0.34, materials.woodDark, { segments: 12 });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 1.8, y + 0.22, z - 0.4], [1.05, 0.22, 1.05]);
+    // Low Round Solid Oak & Marble Center Coffee Table
+    addCylinder(parent, [x, y + 0.36, z + 0.8], 1.1, 1.1, 0.08, materials.woodDark, { segments: 24 });
+    addCylinder(parent, [x, y + 0.18, z + 0.8], 0.28, 0.38, 0.34, materials.brass, { segments: 16 });
+    // Decorative ceramic teapot & cups on table
+    addSphere(parent, [x + 0.2, y + 0.48, z + 0.8], [0.12, 0.11, 0.12], materials.ceramicTeal);
+    addCylinder(parent, [x - 0.2, y + 0.46, z + 0.7], 0.06, 0.05, 0.08, materials.ceramic, { segments: 12 });
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.25, z + 0.8], [1.1, 0.25, 1.1]);
 
-    // Ceramic Teapot, Cups & Fruit Bowl on table
-    addSphere(parent, [x - 1.6, y + 0.52, z - 0.4], [0.12, 0.11, 0.12], materials.ceramicTeal);
-    addSphere(parent, [x - 1.6, y + 0.62, z - 0.4], [0.035, 0.035, 0.035], materials.brass, { shadow: false });
-    addCylinder(parent, [x - 1.95, y + 0.48, z - 0.25], 0.06, 0.05, 0.09, materials.ceramic, { segments: 12 });
-    addCylinder(parent, [x - 1.8, y + 0.48, z - 0.58], 0.06, 0.05, 0.09, materials.ceramic, { segments: 12 });
-    // Decorative fruit bowl with oranges
-    addCylinder(parent, [x - 2.1, y + 0.46, z - 0.3], 0.18, 0.12, 0.08, materials.ceramic, { segments: 14 });
-    addSphere(parent, [x - 2.1, y + 0.54, z - 0.3], [0.07, 0.07, 0.07], materials.coral, { shadow: false });
-    addSphere(parent, [x - 2.04, y + 0.53, z - 0.24], [0.06, 0.06, 0.06], materials.coral, { shadow: false });
-
-    // Side Table with Brass Table Lamp
-    const sideTable = new THREE.Group();
-    sideTable.position.set(x - 4.6, y, z + 0.6);
-    parent.add(sideTable);
-    addCylinder(sideTable, [0, 0.55, 0], 0.38, 0.38, 0.06, materials.woodWarm);
-    addCylinder(sideTable, [0, 0.27, 0], 0.05, 0.05, 0.54, materials.brass);
-    addCylinder(sideTable, [0, 0.8, 0], 0.18, 0.24, 0.35, materials.cream, { segments: 16 });
-    addSphere(sideTable, [0, 0.75, 0], [0.1, 0.1, 0.1], materials.glow, { shadow: false });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.6, y + 0.4, z + 0.6], [0.38, 0.4, 0.38]);
-
-    // Stone Fireplace with Hearth, Glowing Embers & Log Basket on West wall
-    const fp = new THREE.Group();
-    fp.position.set(x - 5.0, y, z - 0.6);
-    fp.rotation.y = Math.PI * 0.5;
-    parent.add(fp);
-    addBox(fp, [0, 1.4, 0], [0.95, 2.8, 2.8], materials.wainscot);
-    addBox(fp, [0.08, 0.95, 0], [0.85, 1.7, 2.0], materials.metalDark);
-    addBox(fp, [0.05, 2.85, 0], [1.15, 0.18, 3.1], materials.woodDark);
-    // Glowing coals, fire, and hearth logs
-    addBox(fp, [0.22, 0.25, 0], [0.65, 0.18, 1.4], materials.fireEmber, { shadow: false });
-    addSphere(fp, [0.18, 0.55, 0], [0.26, 0.38, 0.26], materials.fire, { shadow: false });
-    addSphere(fp, [0.18, 0.52, 0], [0.45, 0.3, 0.45], materials.glow, { shadow: false });
-    // Firewood log basket next to fireplace
-    addCylinder(fp, [0.15, 0.3, 1.5], 0.28, 0.24, 0.38, materials.bark, { segments: 12 });
-    // Brass candlesticks with glowing flame on mantelpiece
-    addCylinder(fp, [0.12, 3.15, -0.9], 0.05, 0.07, 0.42, materials.brass);
-    addSphere(fp, [0.12, 3.4, -0.9], [0.03, 0.06, 0.03], materials.fire, { shadow: false });
-    addCylinder(fp, [0.12, 3.12, 0.9], 0.05, 0.07, 0.36, materials.brass);
-    addSphere(fp, [0.12, 3.34, 0.9], [0.03, 0.06, 0.03], materials.fire, { shadow: false });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 5.0, y + 1.4, z - 0.6], [0.55, 1.4, 1.55]);
-
-    // Media Wall on East Wall (x = 4.8): Slatted wood accent, 75" TV, Soundbar, Media Console
+    // Back Feature Media Wall (z = -7.8)
     const mediaWall = new THREE.Group();
-    mediaWall.position.set(x + 4.8, y, z - 0.6);
-    mediaWall.rotation.y = -Math.PI * 0.5;
+    mediaWall.position.set(x, y, z - 5.6);
     parent.add(mediaWall);
-    // Slatted wood accent panel
-    addBox(mediaWall, [0, 2.6, -0.05], [4.6, 5.2, 0.1], materials.woodSlats);
-    // OLED Television with ambient art
-    addBox(mediaWall, [0, 2.4, 0.1], [3.2, 1.8, 0.08], materials.metalDark);
-    addBox(mediaWall, [0, 2.4, 0.15], [3.05, 1.65, 0.02], materials.artLandscape, { shadow: false });
-    // Soundbar below TV
-    addBox(mediaWall, [0, 1.35, 0.14], [2.2, 0.14, 0.18], materials.metalDark);
-    // Media console cabinet
-    addBox(mediaWall, [0, 0.48, 0.45], [4.0, 0.72, 0.75], materials.woodDark);
-    // Decorative ceramics & coffee table design books on media console
-    addCylinder(mediaWall, [-1.2, 0.98, 0.45], 0.12, 0.08, 0.28, materials.ceramicTeal, { segments: 14 });
-    addBox(mediaWall, [1.1, 0.88, 0.45], [0.45, 0.08, 0.35], materials.coral);
-    addBox(mediaWall, [1.1, 0.94, 0.45], [0.42, 0.06, 0.32], materials.cream);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 4.8, y + 0.48, z - 0.6], [0.5, 0.48, 2.1]);
+    // Dark slatted wood feature panel
+    addBox(mediaWall, [0, 2.6, 0], [6.8, 5.0, 0.1], materials.woodSlats);
+    // 85" OLED TV Screen showing landscape artwork
+    addBox(mediaWall, [0, 2.8, 0.12], [3.8, 2.1, 0.08], materials.metalDark);
+    addBox(mediaWall, [0, 2.8, 0.17], [3.65, 1.95, 0.02], materials.artLandscape, { shadow: false });
+    // Soundbar
+    addBox(mediaWall, [0, 1.55, 0.14], [2.4, 0.14, 0.16], materials.metalDark);
+    // Floating media console
+    addBox(mediaWall, [0, 0.65, 0.4], [5.0, 0.65, 0.7], materials.woodDark);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.65, z - 5.2], [2.5, 0.65, 0.4]);
 
-    // Potted indoor Monstera Deliciosa palm in decorative ceramic planter
-    addCylinder(parent, [x + 3.8, y + 0.45, z + 2.2], 0.45, 0.35, 0.9, materials.ceramicTerracotta, { segments: 16 });
-    for (let i = 0; i < 7; i += 1) {
-      const angle = (i / 7) * Math.PI * 2;
-      const px = x + 3.8 + Math.cos(angle) * 0.42;
-      const pz = z + 2.2 + Math.sin(angle) * 0.42;
-      addSphere(parent, [px, y + 1.45 + (i % 2) * 0.22, pz], [0.42, 0.22, 0.42], materials.foliageBright);
+    // Flanking Potted Fiddle-leaf Fig Palms in Ceramic Planters
+    for (const px of [-3.8, 3.8]) {
+      addCylinder(parent, [x + px, y + 0.45, z + 2.2], 0.45, 0.35, 0.9, materials.ceramicTerracotta, { segments: 16 });
+      for (let i = 0; i < 7; i += 1) {
+        const angle = (i / 7) * Math.PI * 2;
+        addSphere(parent, [x + px + Math.cos(angle) * 0.4, y + 1.4 + (i % 2) * 0.2, z + 2.2 + Math.sin(angle) * 0.4], [0.4, 0.22, 0.4], materials.foliageBright);
+      }
+      addFurnitureCollider(world, RAPIER, staticBodies, [x + px, y + 0.6, z + 2.2], [0.45, 0.6, 0.45]);
     }
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.8, y + 0.6, z + 2.2], [0.45, 0.6, 0.45]);
-
-    // Framed modern art canvas on upper gallery wall
-    addBox(parent, [x - 2.8, y + 6.2, z - 3.2], [2.4, 1.6, 0.08], materials.woodDark);
-    addBox(parent, [x - 2.8, y + 6.2, z - 3.15], [2.2, 1.4, 0.04], materials.artModern, { shadow: false });
   } else if (id === 'projects') {
     // =========================================================================
-    // 2. PROJECT GALLERY (Ground Floor Left, x = -11.0, y = 0, z = -1.5)
-    // 4 Dedicated Flagship Project Holographic Pedestals, velvet stanchions,
-    // upholstered museum bench, gallery wall spotlights, potted olive tree
+    // 2. PROJECT GALLERY (Lantai 1 Left, x = -11.0, y = 0.0, z = -2.0)
+    // 3 Large Illuminated Digital Showcase Screens on back wall, gallery bench,
+    // museum pedestals with holographic artifacts, spotlight track
     // =========================================================================
-    const projectVitrines = [
-      { pz: z + 2.4, title: 'IntelliChat AI', color: materials.blueSky, shape: 'gem' },
-      { pz: z + 0.8, title: 'System Gov', color: materials.brass, shape: 'ring' },
-      { pz: z - 0.8, title: 'Beyond-RAG ASI', color: materials.screenGlow, shape: 'sphere' },
-      { pz: z - 2.4, title: 'Smart Kost SaaS', color: materials.coral, shape: 'box' },
+
+    // 3 Large Illuminated Project Wall Showcases on back wall (z = -7.7)
+    const showcases = [
+      { dx: -3.2, title: 'Beyond-RAG ASI', mat: materials.screenCode },
+      { dx: 0.0, title: 'IntelliChat AI', mat: materials.screenGlow },
+      { dx: 3.2, title: 'Smart Kost SaaS', mat: materials.screenCad },
     ];
 
-    for (const v of projectVitrines) {
-      const ped = new THREE.Group();
-      ped.position.set(x - 3.8, y, v.pz);
-      parent.add(ped);
+    for (const sc of showcases) {
+      const frame = new THREE.Group();
+      frame.position.set(x + sc.dx, y + 2.6, z - 5.7);
+      parent.add(frame);
+      // Modern beveled black frame
+      addBox(frame, [0, 0, 0], [2.8, 1.9, 0.1], materials.metalDark);
+      // Glowing showcase screen
+      addBox(frame, [0, 0, 0.06], [2.6, 1.7, 0.03], sc.mat, { shadow: false });
+      // Brass title plaque below screen
+      addBox(frame, [0, -1.1, 0.06], [1.6, 0.18, 0.04], materials.brass);
+      // Top picture spotlight
+      addBox(frame, [0, 1.15, 0.2], [1.2, 0.06, 0.14], materials.brass);
+      addSphere(frame, [0, 1.08, 0.2], [0.1, 0.04, 0.1], materials.glow, { shadow: false });
+    }
 
-      // Fluted wood pedestal with dark top
+    // Upholstered Gallery Center Bench in Navy Velvet
+    addBox(parent, [x, y + 0.45, z + 0.5], [3.2, 0.42, 1.2], materials.cushionBlue);
+    addBox(parent, [x - 1.2, y + 0.2, z + 0.5], [0.16, 0.4, 1.1], materials.woodDark);
+    addBox(parent, [x + 1.2, y + 0.2, z + 0.5], [0.16, 0.4, 1.1], materials.woodDark);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.35, z + 0.5], [1.6, 0.35, 0.65]);
+
+    // 2 Flanking Museum Pedestals with Holographic Glass Vitrines
+    for (const px of [-3.8, 3.8]) {
+      const ped = new THREE.Group();
+      ped.position.set(x + px, y, z - 1.2);
+      parent.add(ped);
       addBox(ped, [0, 0.55, 0], [1.1, 1.1, 1.1], materials.woodWarm);
       addBox(ped, [0, 1.12, 0], [1.2, 0.08, 1.2], materials.woodDark);
-      // Acrylic museum vitrine glass case
       addBox(ped, [0, 1.75, 0], [1.05, 1.15, 1.05], materials.glass);
-
-      // Rotating Holographic Core Artifact
-      if (v.shape === 'gem') {
-        addSphere(ped, [0, 1.75, 0], [0.28, 0.35, 0.28], v.color, { shadow: false });
+      // Rotating core artifact
+      if (px < 0) {
+        addSphere(ped, [0, 1.75, 0], [0.28, 0.35, 0.28], materials.blueSky, { shadow: false });
         addCylinder(ped, [0, 1.75, 0], 0.45, 0.45, 0.03, materials.brass, { rotation: [0.35, 0, 0.35] });
-      } else if (v.shape === 'ring') {
-        addCylinder(ped, [0, 1.75, 0], 0.32, 0.32, 0.28, materials.brass, { segments: 16 });
-        addSphere(ped, [0, 1.75, 0], [0.18, 0.18, 0.18], materials.coral, { shadow: false });
-      } else if (v.shape === 'sphere') {
-        addSphere(ped, [0, 1.75, 0], [0.3, 0.3, 0.3], v.color, { shadow: false });
-        addCylinder(ped, [0, 1.75, 0], 0.48, 0.48, 0.02, materials.carChrome, { rotation: [0.4, 0, 0.2] });
       } else {
-        addBox(ped, [0, 1.75, 0], [0.36, 0.36, 0.36], v.color, { shadow: false, rotation: [0.2, 0.4, 0] });
+        addBox(ped, [0, 1.75, 0], [0.36, 0.36, 0.36], materials.coral, { shadow: false, rotation: [0.2, 0.4, 0] });
       }
-
-      // Small plaque on front of pedestal
-      addBox(ped, [0.56, 0.85, 0], [0.04, 0.2, 0.48], materials.brass);
-
-      // Ceiling recessed spotlight highlighting this vitrine
-      addCylinder(parent, [x - 3.8, y + 5.15, v.pz], 0.14, 0.18, 0.12, materials.metalDark);
-      addSphere(parent, [x - 3.8, y + 5.08, v.pz], [0.1, 0.04, 0.1], materials.glow, { shadow: false });
-
-      addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.8, y + 0.9, v.pz], [0.62, 0.9, 0.62]);
+      addFurnitureCollider(world, RAPIER, staticBodies, [x + px, y + 0.9, z - 1.2], [0.62, 0.9, 0.62]);
     }
 
-    // Museum Velvet Rope Stanchions guarding the pedestals
-    for (let sz = z - 2.8; sz <= z + 2.8; sz += 1.4) {
-      addCylinder(parent, [x - 2.6, y + 0.48, sz], 0.04, 0.04, 0.96, materials.brass);
-      addSphere(parent, [x - 2.6, y + 0.98, sz], [0.08, 0.08, 0.08], materials.brass);
-      addCylinder(parent, [x - 2.6, y + 0.04, sz], 0.22, 0.22, 0.08, materials.brass, { segments: 16 });
-    }
-    // Velvet connecting cord
-    addBox(parent, [x - 2.6, y + 0.92, z], [0.04, 0.05, 5.6], materials.coral);
-
-    // Museum upholstered gallery bench
-    addBox(parent, [x + 1.2, y + 0.45, z], [2.4, 0.42, 1.1], materials.cushionBlue);
-    addBox(parent, [x + 0.2, y + 0.2, z], [0.14, 0.4, 1.0], materials.woodDark);
-    addBox(parent, [x + 2.2, y + 0.2, z], [0.14, 0.4, 1.0], materials.woodDark);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 1.2, y + 0.35, z], [1.25, 0.35, 0.6]);
-
-    // Potted indoor olive tree in corner
+    // Potted olive tree in front left corner
     addCylinder(parent, [x - 4.2, y + 0.45, z + 2.8], 0.45, 0.35, 0.9, materials.ceramicTerracotta, { segments: 16 });
-    addCylinder(parent, [x - 4.2, y + 1.25, z + 2.8], 0.08, 0.1, 1.05, materials.bark);
     for (let i = 0; i < 6; i += 1) {
       const angle = (i / 6) * Math.PI * 2;
-      addSphere(parent, [x - 4.2 + Math.cos(angle) * 0.42, y + 1.5, z + 2.8 + Math.sin(angle) * 0.42], [0.35, 0.24, 0.35], materials.foliageMid);
+      addSphere(parent, [x - 4.2 + Math.cos(angle) * 0.4, y + 1.45, z + 2.8 + Math.sin(angle) * 0.4], [0.35, 0.24, 0.35], materials.foliageMid);
     }
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.2, y + 0.55, z + 2.8], [0.45, 0.55, 0.45]);
-
-    // Gallery Guest Book / Catalog Stand near entryway
-    const catalogStand = new THREE.Group();
-    catalogStand.position.set(x + 2.8, y, z + 2.4);
-    catalogStand.rotation.y = -Math.PI * 0.35;
-    parent.add(catalogStand);
-    addCylinder(catalogStand, [0, 0.5, 0], 0.04, 0.04, 1.0, materials.brass);
-    addCylinder(catalogStand, [0, 0.02, 0], 0.22, 0.22, 0.04, materials.brass, { segments: 16 });
-    addBox(catalogStand, [0, 1.05, 0], [0.55, 0.04, 0.42], materials.woodDark, { rotation: [0.35, 0, 0] });
-    addBox(catalogStand, [0, 1.08, 0], [0.48, 0.03, 0.36], materials.cream, { rotation: [0.35, 0, 0] });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 2.8, y + 0.55, z + 2.4], [0.3, 0.55, 0.3]);
   } else if (id === 'skills') {
     // =========================================================================
-    // 3. HOME OFFICE (Ground Floor Right, x = 10.75, y = 0, z = -1.5)
-    // Developer workstation, curved triple screens with live syntax highlighted code,
-    // custom PC tower with RGB, studio mic on boom arm, server rack, architecture whiteboard
+    // 3. HOME OFFICE (Lantai 1 Right, x = 10.75, y = 0.0, z = -2.0)
+    // Developer battle station: Solid wood desk facing forward (+Z), triple glowing screens,
+    // ergonomic mesh chair, custom PC tower with RGB, architecture whiteboard on back wall
     // =========================================================================
-    // Developer Desk along East wall (x = 10.75 + 3.8 = 14.55)
-    addBox(parent, [x + 3.8, y + 0.95, z], [1.6, 0.16, 4.4], materials.woodWarm);
-    addBox(parent, [x + 3.8, y + 0.48, z - 2.0], [1.4, 0.95, 0.22], materials.metalDark);
-    addBox(parent, [x + 3.8, y + 0.48, z + 2.0], [1.4, 0.95, 0.22], materials.metalDark);
-    addBox(parent, [x + 3.8, y + 1.04, z], [1.1, 0.02, 3.2], materials.ink);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.8, y + 0.55, z], [0.85, 0.55, 2.25]);
 
-    // Triple monitor curved setup (Left: Terminal, Center: VS Code, Right: CAD 3D)
-    for (const dz of [-1.15, 0, 1.15]) {
-      const angle = dz === 0 ? 0 : dz > 0 ? -0.22 : 0.22;
+    // Executive Developer Desk in warm oak facing forward (+Z)
+    addBox(parent, [x, y + 0.95, z - 1.4], [4.6, 0.16, 1.6], materials.woodWarm);
+    addBox(parent, [x - 2.1, y + 0.48, z - 1.4], [0.22, 0.95, 1.4], materials.metalDark);
+    addBox(parent, [x + 2.1, y + 0.48, z - 1.4], [0.22, 0.95, 1.4], materials.metalDark);
+    // Desk mat
+    addBox(parent, [x, y + 1.04, z - 1.3], [3.2, 0.02, 1.1], materials.ink);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.55, z - 1.4], [2.3, 0.55, 0.85]);
+
+    // Triple Curved Monitor Setup mounted on desk arms facing forward (+Z)
+    const monitorConfigs = [
+      { dx: -1.2, rotY: 0.22, mat: materials.screenTerminal },
+      { dx: 0.0, rotY: 0.0, mat: materials.screenCode },
+      { dx: 1.2, rotY: -0.22, mat: materials.screenCad },
+    ];
+
+    for (const mc of monitorConfigs) {
       const mon = new THREE.Group();
-      mon.position.set(x + 3.8, y + 1.62, z + dz);
-      mon.rotation.y = -Math.PI * 0.5 + angle;
+      mon.position.set(x + mc.dx, y + 1.62, z - 1.7);
+      mon.rotation.y = mc.rotY;
       parent.add(mon);
       addBox(mon, [0, 0, 0], [1.14, 0.74, 0.08], materials.metalDark);
-      const scrMat = dz === 0 ? materials.screenCode : dz < 0 ? materials.screenTerminal : materials.screenCad;
-      addBox(mon, [0, 0, 0.045], [1.06, 0.66, 0.02], scrMat, { shadow: false });
+      addBox(mon, [0, 0, 0.045], [1.06, 0.66, 0.02], mc.mat, { shadow: false });
       addCylinder(mon, [0, -0.44, 0], 0.05, 0.05, 0.36, materials.metalDark);
       addBox(mon, [0, -0.6, 0], [0.38, 0.04, 0.28], materials.metalDark);
     }
 
-    // Studio Near-Field Monitors flanking screens
-    for (const sz of [-1.85, 1.85]) {
-      addBox(parent, [x + 3.8, y + 1.35, z + sz], [0.32, 0.48, 0.3], materials.metalDark);
-      addCylinder(parent, [x + 3.63, y + 1.38, z + sz], 0.09, 0.09, 0.04, materials.yellowSun, { rotation: [0, 0, Math.PI * 0.5] });
-      addCylinder(parent, [x + 3.63, y + 1.22, z + sz], 0.05, 0.05, 0.04, materials.brass, { rotation: [0, 0, Math.PI * 0.5] });
-    }
-
-    // High-End Custom PC Tower with RGB on desk
+    // High-End Custom PC Tower with RGB on desk right side
     const pc = new THREE.Group();
-    pc.position.set(x + 4.1, y + 1.45, z + 1.8);
-    pc.rotation.y = -Math.PI * 0.5;
+    pc.position.set(x + 1.9, y + 1.42, z - 1.4);
     parent.add(pc);
-    addBox(pc, [0, 0, 0], [0.55, 0.65, 0.32], materials.metalDark);
-    addBox(pc, [0, 0, 0.165], [0.5, 0.58, 0.02], materials.glass);
-    addBox(pc, [0, 0, 0.1], [0.42, 0.45, 0.1], materials.screenGlow, { shadow: false });
+    addBox(pc, [0, 0, 0], [0.45, 0.72, 0.82], materials.metalDark);
+    addBox(pc, [-0.23, 0, 0], [0.02, 0.68, 0.78], materials.glass);
+    addBox(pc, [-0.05, 0.1, 0], [0.3, 0.25, 0.5], materials.screenGlow, { shadow: false });
 
-    // Studio Microphone on Scissor Boom Arm
-    addCylinder(parent, [x + 3.2, y + 1.4, z - 0.4], 0.018, 0.018, 0.55, materials.metalDark, { rotation: [0.4, 0, 0.3] });
-    addCylinder(parent, [x + 3.0, y + 1.55, z - 0.3], 0.04, 0.04, 0.16, materials.chrome);
-
-    // Mechanical keyboard with WASD highlighted keys & mouse
-    addBox(parent, [x + 3.4, y + 1.06, z], [0.38, 0.03, 0.95], materials.metalDark);
-    addBox(parent, [x + 3.42, y + 1.08, z - 0.15], [0.06, 0.02, 0.06], materials.coral); // W key
-    addBox(parent, [x + 3.36, y + 1.08, z - 0.22], [0.06, 0.02, 0.06], materials.coral); // A key
-    addBox(parent, [x + 3.36, y + 1.08, z - 0.15], [0.06, 0.02, 0.06], materials.coral); // S key
-    addBox(parent, [x + 3.36, y + 1.08, z - 0.08], [0.06, 0.02, 0.06], materials.coral); // D key
-    addBox(parent, [x + 3.4, y + 1.05, z + 0.65], [0.18, 0.03, 0.12], materials.mint); // mouse
-    // Ceramic developer coffee mug
-    addCylinder(parent, [x + 3.35, y + 1.12, z - 0.8], 0.07, 0.06, 0.12, materials.coral, { segments: 12 });
-    addCylinder(parent, [x + 3.35, y + 1.14, z - 0.8], 0.058, 0.058, 0.02, materials.woodDark, { segments: 12 });
-    // Studio over-ear headphones resting on desk edge
-    const hp = new THREE.Group();
-    hp.position.set(x + 3.35, y + 1.08, z + 1.1);
-    hp.rotation.y = 0.4;
-    parent.add(hp);
-    addCylinder(hp, [0, 0.06, 0], 0.12, 0.12, 0.04, materials.metalDark, { rotation: [0, 0, Math.PI * 0.5] });
-    addCylinder(hp, [0, 0.06, -0.12], 0.06, 0.06, 0.05, materials.ink, { rotation: [Math.PI * 0.5, 0, 0] });
-    addCylinder(hp, [0, 0.06, 0.12], 0.06, 0.06, 0.05, materials.ink, { rotation: [Math.PI * 0.5, 0, 0] });
-
-    // Ergonomic Office Chair (directly facing the desk, triple monitors, and mechanical keyboard)
+    // Ergonomic High-Back Mesh Chair in front of desk
     const chair = new THREE.Group();
-    chair.position.set(x + 2.6, y, z);
-    chair.rotation.y = 0;
+    chair.position.set(x, y, z - 0.2);
     parent.add(chair);
-    addBox(chair, [0, 0.55, 0], [0.72, 0.14, 0.72], materials.mint);
-    addBox(chair, [-0.3, 1.05, 0], [0.14, 0.88, 0.68], materials.mint);
-    addCylinder(chair, [0, 0.25, 0], 0.06, 0.06, 0.5, materials.metalDark);
-    addCylinder(chair, [0, 0.05, 0], 0.34, 0.34, 0.06, materials.metalDark, { segments: 8 });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 2.6, y + 0.55, z], [0.42, 0.55, 0.42]);
+    // Base & casters
+    addCylinder(chair, [0, 0.1, 0], 0.38, 0.38, 0.06, materials.metalDark, { segments: 16 });
+    addCylinder(chair, [0, 0.32, 0], 0.05, 0.05, 0.38, materials.brass);
+    // Seat cushion
+    addBox(chair, [0, 0.55, 0], [0.75, 0.12, 0.75], materials.metalDark);
+    // Mesh backrest
+    addBox(chair, [0, 1.15, -0.34], [0.68, 1.05, 0.08], materials.metalDark);
+    // Headrest
+    addBox(chair, [0, 1.75, -0.34], [0.42, 0.22, 0.08], materials.metalDark);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.6, z - 0.2], [0.42, 0.6, 0.42]);
 
-    // Tech bookshelf in front-right corner
-    addBox(parent, [x + 2.8, y + 1.8, z + 2.8], [2.4, 3.6, 0.45], materials.woodDark);
-    for (let shelf = 0.6; shelf <= 3.2; shelf += 0.8) {
-      addBox(parent, [x + 2.8, y + shelf, z + 2.8], [2.3, 0.06, 0.42], materials.woodWarm);
-    }
-    // Colorful technical reference books on shelves
-    for (let bx = -0.8; bx <= 0.8; bx += 0.25) {
-      addBox(parent, [x + 2.8 + bx, y + 1.6, z + 2.8], [0.18, 0.44, 0.32], materials.blueSky);
-      addBox(parent, [x + 2.8 + bx, y + 2.4, z + 2.8], [0.18, 0.44, 0.32], materials.coral);
-    }
-    // Miniature developer robot mascot figurine on bookshelf
-    addBox(parent, [x + 2.8, y + 3.32, z + 2.8], [0.18, 0.22, 0.18], materials.brass);
-    addSphere(parent, [x + 2.8, y + 3.48, z + 2.8], [0.1, 0.1, 0.1], materials.screenGlow, { shadow: false });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 2.8, y + 1.8, z + 2.8], [1.2, 1.8, 0.28]);
-
-    // Architecture Whiteboard with real diagram texture on partition wall
+    // System Architecture Whiteboard on Back Wall (z = -7.8)
     const wb = new THREE.Group();
-    wb.position.set(x - 4.2, y + 1.8, z);
-    wb.rotation.y = Math.PI * 0.5;
+    wb.position.set(x, y + 2.8, z - 5.7);
     parent.add(wb);
-    addBox(wb, [0, 0, 0], [3.2, 1.8, 0.06], materials.trim);
-    addBox(wb, [0, 0, 0.04], [3.0, 1.6, 0.02], materials.whiteboardDiagram, { shadow: false });
-    // Marker tray & dry-erase markers
-    addBox(wb, [0, -0.92, 0.08], [2.2, 0.04, 0.12], materials.metalDark);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.2, y + 1.8, z], [0.1, 0.9, 1.6]);
+    addBox(wb, [0, 0, 0], [4.4, 2.2, 0.06], materials.trim);
+    addBox(wb, [0, 0, 0.04], [4.2, 2.0, 0.02], materials.whiteboardDiagram, { shadow: false });
+    addBox(wb, [0, -1.05, 0.08], [3.2, 0.04, 0.12], materials.metalDark);
   } else if (id === 'garage') {
     // =========================================================================
-    // 4. GARASI (Ground Floor Far Right, x = 21.0, y = 0, z = -1.5)
-    // BMW M-Series sports car, painted guide lines, heavy-duty rolling tool chest,
-    // mechanic workbench with cast-iron vise, tool pegboard, tire storage rack
+    // 4. GARASI (Lantai 1 Far-Right, x = 21.0, y = 0.0, z = -2.0)
+    // BMW M-Series sports car parked inside, polished dark epoxy floor with guides,
+    // rolling red tool chest, workbench with vise, tool pegboard, wall hung sports bike
     // =========================================================================
+
     // Painted garage parking boundary guide lines
     addBox(parent, [x - 1.4, y + 0.008, z - 0.5], [0.14, 0.01, 5.2], materials.trim, { shadow: false });
     addBox(parent, [x + 1.4, y + 0.008, z - 0.5], [0.14, 0.01, 5.2], materials.trim, { shadow: false });
     addBox(parent, [x, y + 0.008, z - 3.1], [2.94, 0.01, 0.14], materials.trim, { shadow: false });
 
-    // Build Stylized BMW M-Series Sports Car (x = 21.0, z = -0.5)
+    // Stylized BMW M-Series Sports Coupe centered inside garage
     buildSportsCar(parent, x, y, z - 0.5);
     addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.75, z - 0.5], [1.15, 0.75, 2.3]);
 
-    // Heavy-duty hydraulic floor trolley jack next to BMW
-    const floorJack = new THREE.Group();
-    floorJack.position.set(x - 1.8, y + 0.12, z + 1.6);
-    floorJack.rotation.y = 0.5;
-    parent.add(floorJack);
-    addBox(floorJack, [0, 0, 0], [0.32, 0.14, 0.85], materials.coral);
-    addCylinder(floorJack, [0, 0.15, -0.2], 0.09, 0.09, 0.08, materials.metalDark);
-    addCylinder(floorJack, [0, 0.45, 0.35], 0.02, 0.02, 0.75, materials.carChrome, { rotation: [0.6, 0, 0] });
-
-    // Red Rolling Heavy-Duty Tool Chest
+    // Red Rolling Heavy-Duty Tool Chest against West partition wall
     const toolChest = new THREE.Group();
-    toolChest.position.set(x - 3.4, y + 0.65, z - 3.2);
+    toolChest.position.set(x - 3.8, y + 0.65, z - 3.8);
     parent.add(toolChest);
     addBox(toolChest, [0, 0, 0], [1.4, 1.3, 0.75], materials.coral);
     for (let d = -0.45; d <= 0.45; d += 0.22) {
       addBox(toolChest, [0, d, 0.39], [1.25, 0.16, 0.04], materials.metalDark);
       addBox(toolChest, [0, d, 0.42], [0.35, 0.04, 0.04], materials.carChrome);
     }
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.4, y + 0.65, z - 3.2], [0.72, 0.65, 0.4]);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.8, y + 0.65, z - 3.8], [0.72, 0.65, 0.4]);
 
-    // Mechanic Workbench on back wall
-    addBox(parent, [x + 0.8, y + 0.95, z - 3.6], [3.6, 0.14, 1.2], materials.metalDark);
-    addBox(parent, [x - 0.8, y + 0.45, z - 3.6], [0.2, 0.9, 1.0], materials.metalDark);
-    addBox(parent, [x + 2.4, y + 0.45, z - 3.6], [0.2, 0.9, 1.0], materials.metalDark);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 0.8, y + 0.5, z - 3.6], [1.85, 0.5, 0.6]);
+    // Mechanic Workbench on back wall (z = -7.4)
+    addBox(parent, [x, y + 0.95, z - 5.2], [3.8, 0.14, 1.2], materials.metalDark);
+    addBox(parent, [x - 1.6, y + 0.45, z - 5.2], [0.2, 0.9, 1.0], materials.metalDark);
+    addBox(parent, [x + 1.6, y + 0.45, z - 5.2], [0.2, 0.9, 1.0], materials.metalDark);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.5, z - 5.2], [1.95, 0.5, 0.6]);
 
     // Tool Pegboard on wall above bench with hanging tools & task lamp
-    addBox(parent, [x + 0.8, y + 2.2, z - 4.1], [3.6, 1.6, 0.08], materials.woodEspresso);
-    // Chrome hanging tool rail
-    addBox(parent, [x + 0.8, y + 2.5, z - 4.02], [3.2, 0.04, 0.04], materials.carChrome);
-    // Hanging chrome combination wrenches & pliers
+    addBox(parent, [x, y + 2.2, z - 5.7], [3.8, 1.6, 0.08], materials.woodEspresso);
+    addBox(parent, [x, y + 2.5, z - 5.62], [3.2, 0.04, 0.04], materials.carChrome);
     for (let wx = -1.2; wx <= 1.2; wx += 0.38) {
-      addBox(parent, [x + 0.8 + wx, y + 2.22, z - 4.02], [0.06, 0.36, 0.03], materials.carChrome);
+      addBox(parent, [x + wx, y + 2.22, z - 5.62], [0.06, 0.36, 0.03], materials.carChrome);
     }
-    // Red cordless power drill hanging on peg
-    addBox(parent, [x - 0.2, y + 1.95, z - 4.0], [0.18, 0.22, 0.12], materials.coral);
-    addCylinder(parent, [x - 0.2, y + 2.05, z - 3.9], 0.025, 0.025, 0.18, materials.metalDark, { rotation: [Math.PI * 0.5, 0, 0] });
-    // Overhead angled industrial task lamp above workbench
-    addCylinder(parent, [x + 0.8, y + 2.92, z - 3.8], 0.18, 0.26, 0.16, materials.brass, { rotation: [0.4, 0, 0] });
-    addSphere(parent, [x + 0.8, y + 2.86, z - 3.75], [0.09, 0.09, 0.09], materials.glow, { shadow: false });
-
     // Heavy metal vise on bench
-    addBox(parent, [x - 0.6, y + 1.15, z - 3.3], [0.35, 0.28, 0.35], materials.metalDark);
-    // Oil cans on bench
-    addCylinder(parent, [x + 1.8, y + 1.15, z - 3.4], 0.08, 0.08, 0.26, materials.yellowSun);
-    addCylinder(parent, [x + 2.1, y + 1.15, z - 3.4], 0.08, 0.08, 0.26, materials.carPaintBlue);
+    addBox(parent, [x - 1.2, y + 1.15, z - 4.9], [0.35, 0.28, 0.35], materials.metalDark);
 
-    // Performance Tire Storage Rack along East wall (Industrial 4-post open steel rack)
-    const rackX = x + 4.2;
-    // 4 vertical matte black steel square posts
-    for (const pz of [z - 1.6, z + 1.6]) {
-      addBox(parent, [rackX + 0.18, y + 1.35, pz], [0.08, 2.7, 0.08], materials.metalDark);
-      addBox(parent, [rackX - 0.38, y + 1.35, pz], [0.08, 2.7, 0.08], materials.metalDark);
-      addBox(parent, [rackX - 0.1, y + 2.65, pz], [0.55, 0.08, 0.08], materials.metalDark);
-    }
-    // 2 pairs of chrome tubular tire cradle rails (lower tier & upper tier)
-    for (const ry of [y + 0.35, y + 1.25]) {
-      addCylinder(parent, [rackX + 0.08, ry, z], 0.035, 0.035, 3.25, materials.carChrome, { rotation: [Math.PI * 0.5, 0, 0] });
-      addCylinder(parent, [rackX - 0.28, ry, z], 0.035, 0.035, 3.25, materials.carChrome, { rotation: [Math.PI * 0.5, 0, 0] });
-    }
-    // 6 Performance Rubber Tires with Chrome Alloy Wheels resting on the rails
-    for (let tz = -1.2; tz <= 1.2; tz += 0.8) {
-      addCylinder(parent, [rackX - 0.1, y + 0.55, z + tz], 0.42, 0.42, 0.35, materials.carRubber, { rotation: [0, 0, Math.PI * 0.5], segments: 16 });
-      addCylinder(parent, [rackX - 0.1, y + 0.55, z + tz], 0.26, 0.26, 0.37, materials.carChrome, { rotation: [0, 0, Math.PI * 0.5], segments: 14 });
-      addCylinder(parent, [rackX - 0.1, y + 1.45, z + tz], 0.42, 0.42, 0.35, materials.carRubber, { rotation: [0, 0, Math.PI * 0.5], segments: 16 });
-      addCylinder(parent, [rackX - 0.1, y + 1.45, z + tz], 0.26, 0.26, 0.37, materials.carChrome, { rotation: [0, 0, Math.PI * 0.5], segments: 14 });
-    }
-    addFurnitureCollider(world, RAPIER, staticBodies, [rackX - 0.1, y + 1.4, z], [0.38, 1.4, 1.7]);
-
-    // Overhead Industrial LED light fixtures
-    for (const lz of [-2.0, 1.0]) {
-      addBox(parent, [x, y + 4.75, z + lz], [6.0, 0.08, 0.25], materials.glow, { shadow: false });
-    }
+    // Wall-Mounted Sports Road Bicycle hung on East wall (x = 25.5)
+    const bike = new THREE.Group();
+    bike.position.set(x + 4.4, y + 2.2, z - 0.5);
+    bike.rotation.y = -Math.PI * 0.5;
+    parent.add(bike);
+    // Wheels
+    addCylinder(bike, [-0.85, 0, 0], 0.45, 0.45, 0.05, materials.carRubber, { rotation: [0, 0, Math.PI * 0.5] });
+    addCylinder(bike, [0.85, 0, 0], 0.45, 0.45, 0.05, materials.carRubber, { rotation: [0, 0, Math.PI * 0.5] });
+    // Frame tubes (cyan sport color)
+    addCylinder(bike, [0, 0.25, 0], 0.03, 0.03, 1.2, materials.blueSky, { rotation: [0, 0, 0.35] });
+    addCylinder(bike, [0, 0.1, 0], 0.03, 0.03, 1.1, materials.blueSky, { rotation: [0, 0, -0.45] });
+    // Handlebars & seat
+    addBox(bike, [0.75, 0.6, 0], [0.06, 0.1, 0.45], materials.metalDark);
+    addBox(bike, [-0.25, 0.65, 0], [0.26, 0.06, 0.14], materials.metalDark);
   } else if (id === 'bedroom') {
     // =========================================================================
-    // 5. MASTER BEDROOM (Upper Floor Left, x = -11.0, y = 5.2, z = -1.5)
-    // King-size platform bed, padded headboard, nightstands, wardrobe,
-    // balcony lounge armchair, vanity dresser with mirror
+    // 5. MASTER BEDROOM (Lantai 2 Left, x = -11.0, y = 5.2, z = -2.0)
+    // King-size platform bed centered against back wall, warm wood headboard panel with
+    // sconces, designer bedside nightstands with lamps, plush duvet, wardrobe
     // =========================================================================
-    const bed = new THREE.Group();
-    bed.position.set(x, y, z - 1.5);
-    parent.add(bed);
-    // Platform base
-    addBox(bed, [0, 0.25, 0], [3.2, 0.45, 3.4], materials.woodDark);
-    // Thick mattress
-    addBox(bed, [0, 0.65, 0.1], [2.9, 0.42, 3.0], materials.bedLinen);
-    // Padded upholstered headboard against back wall
-    addBox(bed, [0, 1.45, -1.55], [3.4, 1.8, 0.35], materials.bedLinenDark);
-    // Cozy duvet & folded throw
-    addBox(bed, [0, 0.75, 0.4], [2.95, 0.22, 2.2], materials.bedLinenDark);
-    // Pillows
-    addBox(bed, [-0.75, 0.95, -0.9], [0.95, 0.22, 0.55], materials.bedLinen);
-    addBox(bed, [0.75, 0.95, -0.9], [0.95, 0.22, 0.55], materials.bedLinen);
-    addBox(bed, [0, 0.92, -0.75], [0.55, 0.2, 0.35], materials.cushionYellow);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.6, z - 1.5], [1.65, 0.6, 1.75]);
 
-    // Bedside Nightstands with designer drum shade lamps & accessories
+    const bed = new THREE.Group();
+    bed.position.set(x, y, z - 3.4);
+    parent.add(bed);
+
+    // Warm vertical wood headboard feature wall on back wall (z = -7.7)
+    addBox(bed, [0, 2.2, -1.9], [6.2, 4.4, 0.1], materials.woodWarm);
+    // Padded upholstered backrest
+    addBox(bed, [0, 1.35, -1.75], [3.6, 1.5, 0.25], materials.bedLinenDark);
+    // Platform bed frame
+    addBox(bed, [0, 0.25, 0], [3.4, 0.45, 3.6], materials.woodDark);
+    // Thick mattress
+    addBox(bed, [0, 0.65, 0.1], [3.1, 0.42, 3.2], materials.bedLinen);
+    // Crisp white duvet & folded dark throw blanket
+    addBox(bed, [0, 0.75, 0.4], [3.15, 0.22, 2.4], materials.bedLinenDark);
+    // Fluffy pillows
+    addBox(bed, [-0.85, 0.95, -1.0], [1.0, 0.22, 0.55], materials.bedLinen);
+    addBox(bed, [0.85, 0.95, -1.0], [1.0, 0.22, 0.55], materials.bedLinen);
+    addBox(bed, [0, 0.92, -0.85], [0.65, 0.2, 0.35], materials.cushionYellow);
+
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.6, z - 3.4], [1.8, 0.6, 1.9]);
+
+    // Bedside Nightstands flanking King Bed
     for (const side of [-1, 1]) {
-      const nx = x + side * 2.2;
-      addBox(parent, [nx, y + 0.45, z - 3.0], [0.8, 0.85, 0.7], materials.woodWarm);
-      // Designer lamp
-      addCylinder(parent, [nx, y + 0.92, z - 3.0], 0.16, 0.16, 0.03, materials.brass);
-      addCylinder(parent, [nx, y + 1.12, z - 3.0], 0.02, 0.02, 0.38, materials.brass);
-      addCylinder(parent, [nx, y + 1.32, z - 3.0], 0.22, 0.26, 0.32, materials.cream, { segments: 16 });
-      addSphere(parent, [nx, y + 1.30, z - 3.0], [0.08, 0.08, 0.08], materials.glow, { shadow: false });
-      // Bedside accessories
-      if (side === -1) {
-        // Modern minimalist alarm clock
-        addBox(parent, [nx - 0.18, y + 0.94, z - 2.85], [0.16, 0.12, 0.08], materials.metalDark);
-        addBox(parent, [nx - 0.18, y + 0.94, z - 2.8], [0.14, 0.10, 0.02], materials.screenGlow, { shadow: false });
-      } else {
-        // Water carafe & glass tumbler
-        addCylinder(parent, [nx + 0.18, y + 0.98, z - 2.85], 0.05, 0.06, 0.18, materials.glass);
-        addCylinder(parent, [nx + 0.28, y + 0.94, z - 2.85], 0.04, 0.04, 0.10, materials.glass);
-      }
-      addFurnitureCollider(world, RAPIER, staticBodies, [nx, y + 0.45, z - 3.0], [0.42, 0.45, 0.38]);
+      const nx = x + side * 2.4;
+      const nz = z - 5.0;
+      addBox(parent, [nx, y + 0.45, nz], [0.85, 0.85, 0.75], materials.woodWarm);
+      // Designer bedside lamp with warm glow
+      addCylinder(parent, [nx, y + 0.92, nz], 0.16, 0.16, 0.03, materials.brass);
+      addCylinder(parent, [nx, y + 1.15, nz], 0.02, 0.02, 0.42, materials.brass);
+      addCylinder(parent, [nx, y + 1.35, nz], 0.24, 0.28, 0.35, materials.cream, { segments: 16 });
+      addSphere(parent, [nx, y + 1.32, nz], [0.08, 0.08, 0.08], materials.glow, { shadow: false });
+      addFurnitureCollider(world, RAPIER, staticBodies, [nx, y + 0.45, nz], [0.45, 0.45, 0.4]);
     }
 
-    // Bedroom Vanity Dresser with round illuminated mirror along East wall
-    const dresser = new THREE.Group();
-    dresser.position.set(x + 3.8, y, z - 0.5);
-    dresser.rotation.y = -Math.PI * 0.5;
-    parent.add(dresser);
-    addBox(dresser, [0, 0.8, 0], [2.2, 0.85, 0.65], materials.woodWarm);
-    // Large round mirror with brass frame
-    addCylinder(dresser, [0, 1.85, -0.28], 0.75, 0.75, 0.04, materials.brass, { rotation: [Math.PI * 0.5, 0, 0], segments: 24 });
-    addCylinder(dresser, [0, 1.85, -0.26], 0.7, 0.7, 0.02, materials.mirror, { rotation: [Math.PI * 0.5, 0, 0], segments: 24 });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.8, y + 0.5, z - 0.5], [0.38, 0.5, 1.15]);
+    // Wardrobe / Closet Cabinet against West wall (x = -16.0)
+    addBox(parent, [x - 4.4, y + 2.2, z - 1.5], [1.2, 4.4, 3.4], materials.woodDark);
+    addBox(parent, [x - 3.75, y + 2.2, z - 1.5], [0.08, 4.2, 3.2], materials.woodWarm);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.4, y + 2.2, z - 1.5], [0.65, 2.2, 1.75]);
 
-    // Bedroom Lounge Armchair near West Balcony door
+    // Designer lounge accent chair facing forward
     const loungeChair = new THREE.Group();
-    loungeChair.position.set(x - 3.4, y, z + 1.6);
-    loungeChair.rotation.y = 0.6;
+    loungeChair.position.set(x + 3.2, y, z + 0.5);
+    loungeChair.rotation.y = -0.4;
     parent.add(loungeChair);
-    addBox(loungeChair, [0, 0.48, 0], [1.1, 0.45, 1.1], materials.cushionBlue);
-    addBox(loungeChair, [0, 1.1, -0.45], [1.1, 0.9, 0.28], materials.cushionBlue);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.4, y + 0.55, z + 1.6], [0.65, 0.55, 0.65]);
-
-    // Framed art above bed
-    addBox(parent, [x, y + 3.2, z - 3.05], [2.4, 1.4, 0.06], materials.artLandscape, { shadow: false });
+    addBox(loungeChair, [0, 0.42, 0], [1.0, 0.42, 1.0], materials.cushionBlue);
+    addBox(loungeChair, [0, 0.95, -0.4], [1.0, 0.65, 0.22], materials.cushionBlue);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.2, y + 0.5, z + 0.5], [0.55, 0.5, 0.55]);
   } else if (id === 'bathroom') {
     // =========================================================================
-    // 6. MASTER BATHROOM (Upper Floor Center, x = 0, y = 5.2, z = -13.5)
-    // Freestanding oval bathtub, walk-in glass shower, double floating vanity,
-    // modern wall-hung toilet, heated towel rack, potted spa bamboo
+    // 6. MASTER BATHROOM (Lantai 2 Center, x = 0.0, y = 5.2, z = -2.0)
+    // Directly above Living Room! Luxurious modern spa bathroom:
+    // Freestanding oval soaking tub in center, walk-in glass shower cabin on left,
+    // double floating vanity counter with illuminated mirror on right
     // =========================================================================
-    // Freestanding modern soaking tub in center
+
+    // Centerpiece: Freestanding Modern Oval Soaking Bathtub in center (x = 0, z = -2.0)
     const tub = new THREE.Group();
-    tub.position.set(x, y + 0.45, z);
+    tub.position.set(x, y + 0.42, z - 1.8);
     parent.add(tub);
-    addBox(tub, [0, 0, 0], [2.4, 0.85, 1.4], materials.ceramic);
-    addBox(tub, [0, 0.25, 0], [2.1, 0.7, 1.1], materials.ceramic);
-    // Polished chrome freestanding floor spout
-    addCylinder(tub, [1.3, 0.4, 0], 0.04, 0.04, 0.85, materials.chrome);
-    // Wooden bath tray caddy across soaking tub with candle & washcloth
-    addBox(tub, [0, 0.62, 0], [0.45, 0.03, 1.25], materials.woodWarm);
-    addCylinder(tub, [0, 0.69, 0.2], 0.04, 0.04, 0.10, materials.cream);
-    addSphere(tub, [0, 0.75, 0.2], [0.015, 0.025, 0.015], materials.fire, { shadow: false });
-    addBox(tub, [0, 0.66, -0.25], [0.18, 0.05, 0.28], materials.cushionMint);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.45, z], [1.25, 0.45, 0.75]);
+    // Outer porcelain oval body
+    addCylinder(tub, [0, 0, 0], 1.25, 0.95, 0.84, materials.ceramic, { segments: 24 });
+    // Inner tub recess with clear spa water
+    addCylinder(tub, [0, 0.15, 0], 1.1, 0.85, 0.6, materials.ceramic, { segments: 24 });
+    addCylinder(tub, [0, 0.18, 0], 1.05, 0.8, 0.05, materials.poolWater, { segments: 24, shadow: false });
+    // Floor-mounted chrome freestanding tub filler & hand shower
+    addCylinder(parent, [x + 1.25, y + 0.55, z - 1.8], 0.03, 0.03, 1.1, materials.chrome);
+    addBox(parent, [x + 1.15, y + 1.05, z - 1.8], [0.22, 0.05, 0.05], materials.chrome);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.45, z - 1.8], [1.3, 0.45, 1.0]);
 
-    // Spa potted bamboo in corner
-    addCylinder(parent, [x + 3.8, y + 0.4, z - 3.2], 0.3, 0.22, 0.7, materials.ceramicTerracotta, { segments: 16 });
-    for (let b = -0.12; b <= 0.12; b += 0.12) {
-      addCylinder(parent, [x + 3.8 + b, y + 1.4, z - 3.2], 0.025, 0.025, 1.4, materials.foliageDark);
-      addSphere(parent, [x + 3.8 + b, y + 2.05, z - 3.2], [0.22, 0.14, 0.22], materials.foliageBright);
-    }
+    // Walk-in Glass Shower Cabin on Left (x = -3.4, z = -4.2)
+    const showerX = x - 3.4;
+    const showerZ = z - 4.2;
+    // Shower tray plinth
+    addBox(parent, [showerX, y + 0.08, showerZ], [2.2, 0.16, 2.2], materials.ceramic);
+    // Clear glass shower partition panels
+    addBox(parent, [showerX + 1.05, y + 2.1, showerZ], [0.06, 4.0, 2.2], materials.glass);
+    addBox(parent, [showerX, y + 2.1, showerZ + 1.05], [2.1, 4.0, 0.06], materials.glass);
+    // Chrome ceiling rain showerhead & mixer
+    addCylinder(parent, [showerX, y + 3.8, showerZ], 0.22, 0.22, 0.04, materials.chrome);
+    addCylinder(parent, [showerX, y + 4.0, showerZ], 0.025, 0.025, 0.4, materials.chrome);
+    addFurnitureCollider(world, RAPIER, staticBodies, [showerX, y + 2.0, showerZ], [1.15, 2.0, 1.15]);
 
-    // Walk-in glass shower enclosure in rear corner (x: [-3.5, -1.5])
-    addBox(parent, [x - 2.8, y + 1.9, z - 2.4], [1.8, 3.8, 0.08], materials.glass);
-    addBox(parent, [x - 1.9, y + 1.9, z - 3.2], [0.08, 3.8, 1.6], materials.glass);
-    addCylinder(parent, [x - 2.8, y + 3.4, z - 3.2], 0.22, 0.22, 0.05, materials.chrome);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 2.8, y + 1.9, z - 2.4], [0.9, 1.9, 0.08]);
+    // Floating Double Vanity Counter with Illuminated Mirror on Right (x = 3.2, z = -4.2)
+    const vanityX = x + 3.2;
+    const vanityZ = z - 4.2;
+    // Wood vanity cabinet
+    addBox(parent, [vanityX, y + 0.85, vanityZ], [3.2, 0.48, 1.0], materials.woodDark);
+    addBox(parent, [vanityX, y + 1.1, vanityZ], [3.3, 0.08, 1.05], materials.ceramic);
+    // Twin ceramic vessel sinks & chrome faucets
+    for (const vx of [-0.85, 0.85]) {
+      addCylinder(parent, [vanityX + vx, y + 1.22, vanityZ], 0.32, 0.26, 0.18, materials.ceramic, { segments: 16 });
+      addCylinder(parent, [vanityX + vx, y + 1.38, vanityZ - 0.32], 0.03, 0.03, 0.32, materials.chrome);
+    }
+    // Large illuminated mirror on back wall
+    addBox(parent, [vanityX, y + 2.5, vanityZ - 0.52], [3.0, 1.8, 0.06], materials.mirror);
+    addBox(parent, [vanityX, y + 2.5, vanityZ - 0.54], [3.2, 2.0, 0.02], materials.glow, { shadow: false });
+    addFurnitureCollider(world, RAPIER, staticBodies, [vanityX, y + 0.7, vanityZ], [1.65, 0.7, 0.55]);
 
-    // Double floating vanity with backlit LED mirror along East wall (x = 3.8)
-    const vanityX = x + 3.8;
-    addBox(parent, [vanityX, y + 0.85, z], [1.0, 0.48, 3.2], materials.woodDark);
-    addBox(parent, [vanityX, y + 1.1, z], [1.05, 0.08, 3.3], materials.ceramic);
-    for (const vz of [-0.75, 0.75]) {
-      addCylinder(parent, [vanityX, y + 1.2, z + vz], 0.35, 0.28, 0.16, materials.ceramic, { segments: 16 });
-      addCylinder(parent, [vanityX + 0.35, y + 1.35, z + vz], 0.03, 0.03, 0.32, materials.chrome);
-    }
-    // Double backlit mirrors
-    for (const vz of [-0.75, 0.75]) {
-      addBox(parent, [vanityX + 0.48, y + 2.3, z + vz], [0.06, 1.6, 1.1], materials.mirror);
-    }
-    addFurnitureCollider(world, RAPIER, staticBodies, [vanityX, y + 0.7, z], [0.55, 0.7, 1.65]);
-
-    // Heated towel ladder with bath towels
-    const towelRack = new THREE.Group();
-    towelRack.position.set(x - 3.8, y + 1.4, z + 1.2);
-    towelRack.rotation.y = Math.PI * 0.5;
-    parent.add(towelRack);
-    addCylinder(towelRack, [-0.4, 0, 0], 0.025, 0.025, 2.2, materials.chrome);
-    addCylinder(towelRack, [0.4, 0, 0], 0.025, 0.025, 2.2, materials.chrome);
-    for (let ty = -0.8; ty <= 0.8; ty += 0.4) {
-      addCylinder(towelRack, [0, ty, 0], 0.02, 0.02, 0.8, materials.chrome, { rotation: [0, 0, Math.PI * 0.5] });
-      addBox(towelRack, [0, ty, 0.04], [0.65, 0.25, 0.08], materials.cream);
-    }
+    // Luxury rolled bath towels in woven basket
+    addCylinder(parent, [x + 1.8, y + 0.22, z + 0.5], 0.32, 0.26, 0.42, materials.bark, { segments: 14 });
+    addSphere(parent, [x + 1.8, y + 0.45, z + 0.5], [0.26, 0.15, 0.26], materials.cream);
   } else if (id === 'experience') {
     // =========================================================================
-    // 7. LIBRARY NOOK (Upper Floor Right, x = 10.5, y = 5.2, z = -1.5)
-    // Full-height bookshelves with rolling brass library ladder, hundreds of books,
-    // wingback chair, brass floor reading lamp, antique globe, side table
+    // 7. LIBRARY NOOK (Lantai 2 Mid-Right, x = 10.75, y = 5.2, z = -2.0)
+    // Floor-to-ceiling wooden bookshelves spanning back wall packed with colorful books,
+    // cozy teal velvet reading sofa with cushions, brass arc reading lamp, side table
     // =========================================================================
-    const shelfGroup = new THREE.Group();
-    shelfGroup.position.set(x + 4.2, y, z);
-    parent.add(shelfGroup);
-    // Backing panel against East wall (+x)
-    addBox(shelfGroup, [0.22, 2.4, 0], [0.08, 4.8, 5.8], materials.woodDark);
-    // Outer casing (top, bottom, and side panels)
-    addBox(shelfGroup, [0, 0.1, 0], [0.52, 0.2, 5.8], materials.woodDark);
-    addBox(shelfGroup, [0, 4.7, 0], [0.52, 0.2, 5.8], materials.woodDark);
-    addBox(shelfGroup, [0, 2.4, -2.85], [0.52, 4.8, 0.1], materials.woodDark);
-    addBox(shelfGroup, [0, 2.4, 2.85], [0.52, 4.8, 0.1], materials.woodDark);
-    for (let sy = 0.6; sy <= 4.4; sy += 0.72) {
-      addBox(shelfGroup, [-0.02, sy, 0], [0.46, 0.06, 5.6], materials.woodWarm);
-    }
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 4.2, y + 2.4, z], [0.32, 2.4, 2.9]);
 
-    // Rich bookshelf contents facing west (-x) into the room
+    // Floor-to-ceiling Bookshelf Spanning the Back Wall (z = -7.5)
+    const shelf = new THREE.Group();
+    shelf.position.set(x, y, z - 5.4);
+    parent.add(shelf);
+
+    // Outer dark wood shelving frame
+    addBox(shelf, [0, 2.4, 0], [7.8, 4.8, 0.5], materials.woodDark);
+    for (let sy = 0.8; sy <= 4.2; sy += 0.8) {
+      addBox(shelf, [0, sy, 0.02], [7.6, 0.06, 0.48], materials.woodWarm);
+    }
+
+    // Rows of Colorful Hardcover Books
     const bookColors = [materials.coral, materials.yellowSun, materials.blueSky, materials.mint, materials.pinkRose, materials.woodDark];
     for (let row = 0; row < 5; row += 1) {
-      const by = 0.95 + row * 0.72;
-      for (let bz = -2.35; bz <= 2.35; bz += 0.32) {
-        const seed = Math.abs(Math.sin(bz * 13.7 + row * 5.3));
-        const bookH = 0.38 + seed * 0.16;
+      const by = 0.95 + row * 0.8;
+      for (let bx = -3.4; bx <= 3.4; bx += 0.32) {
+        const seed = Math.abs(Math.sin(bx * 13.7 + row * 5.3));
+        const bookH = 0.42 + seed * 0.18;
         const bookW = 0.18 + (seed % 0.1) * 0.8;
-        const isLeaning = seed > 0.82 && bz < 2.0;
         addBox(
-          shelfGroup,
-          [-0.08, by - 0.24 + bookH * 0.5, bz],
-          [0.32, bookH, bookW],
-          bookColors[Math.abs(Math.round(bz * 7 + row)) % bookColors.length],
-          isLeaning ? { rotation: [0.18, 0, 0] } : {}
+          shelf,
+          [bx, by - 0.24 + bookH * 0.5, 0.05],
+          [bookW, bookH, 0.36],
+          bookColors[Math.abs(Math.round(bx * 7 + row)) % bookColors.length]
         );
       }
-      // Brass bookends at edges
-      addBox(shelfGroup, [-0.08, by, -2.55], [0.34, 0.32, 0.05], materials.brass);
-      addBox(shelfGroup, [-0.08, by, 2.55], [0.34, 0.32, 0.05], materials.brass);
     }
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 2.4, z - 5.4], [3.9, 2.4, 0.35]);
 
-    // Potted indoor succulent on shelf 3
-    addCylinder(shelfGroup, [-0.08, 0.95 + 2 * 0.72 + 0.1, 1.8], 0.14, 0.1, 0.18, materials.ceramic, { segments: 12 });
-    addSphere(shelfGroup, [-0.08, 0.95 + 2 * 0.72 + 0.25, 1.8], [0.16, 0.12, 0.16], materials.foliageBright);
+    // Cozy Loveseat / Reading Sofa in Teal/Mint Velvet facing forward (+Z)
+    const sofa = new THREE.Group();
+    sofa.position.set(x, y, z - 0.8);
+    parent.add(sofa);
+    addBox(sofa, [0, 0.45, 0], [2.8, 0.45, 1.2], materials.mint);
+    addBox(sofa, [0, 1.0, -0.45], [2.8, 0.7, 0.3], materials.mint);
+    addBox(sofa, [-1.3, 0.68, 0], [0.25, 0.55, 1.2], materials.mint);
+    addBox(sofa, [1.3, 0.68, 0], [0.25, 0.55, 1.2], materials.mint);
+    addBox(sofa, [-0.65, 0.8, -0.2], [0.42, 0.38, 0.2], materials.cushionYellow, { rotation: [0.1, 0.15, 0] });
+    addBox(sofa, [0.65, 0.8, -0.2], [0.42, 0.38, 0.2], materials.cushionCoral, { rotation: [0.1, -0.15, 0] });
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.55, z - 0.8], [1.45, 0.55, 0.65]);
 
-    // Antique globe on shelf 4
-    addCylinder(shelfGroup, [-0.08, 0.95 + 3 * 0.72 + 0.08, -1.8], 0.16, 0.16, 0.04, materials.brass);
-    addCylinder(shelfGroup, [-0.08, 0.95 + 3 * 0.72 + 0.22, -1.8], 0.02, 0.02, 0.26, materials.brass);
-    addSphere(shelfGroup, [-0.08, 0.95 + 3 * 0.72 + 0.36, -1.8], [0.16, 0.16, 0.16], materials.bluePastel);
+    // Brass Arc Floor Lamp curving over reading sofa
+    const lamp = new THREE.Group();
+    lamp.position.set(x - 2.2, y, z - 0.8);
+    parent.add(lamp);
+    addCylinder(lamp, [0, 0.04, 0], 0.36, 0.36, 0.08, materials.brass, { segments: 16 });
+    addCylinder(lamp, [0, 1.6, 0], 0.03, 0.03, 3.2, materials.brass);
+    addCylinder(lamp, [0.55, 3.2, 0], 0.03, 0.03, 1.2, materials.brass, { rotation: [0, 0, Math.PI * 0.45] });
+    addCylinder(lamp, [1.1, 2.8, 0], 0.22, 0.28, 0.25, materials.brass, { segments: 16 });
+    addSphere(lamp, [1.1, 2.7, 0], [0.1, 0.1, 0.1], materials.glow, { shadow: false });
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 2.2, y + 0.8, z - 0.8], [0.35, 0.8, 0.35]);
 
-    // Rolling brass library ladder
-    const ladder = new THREE.Group();
-    ladder.position.set(x + 3.8, y + 2.1, z - 1.2);
-    ladder.rotation.z = -0.18;
-    parent.add(ladder);
-    addCylinder(ladder, [-0.22, 0, 0], 0.03, 0.03, 4.4, materials.brass);
-    addCylinder(ladder, [0.22, 0, 0], 0.03, 0.03, 4.4, materials.brass);
-    for (let r = -1.8; r <= 1.8; r += 0.4) {
-      addCylinder(ladder, [0, r, 0], 0.02, 0.02, 0.44, materials.brass, { rotation: [0, 0, Math.PI * 0.5] });
-    }
-
-    // Cozy Wingback Chair with soft yellow cushion & footstool
-    const chairGroup = new THREE.Group();
-    chairGroup.position.set(x - 1.8, y, z + 1.2);
-    chairGroup.rotation.y = -0.45;
-    parent.add(chairGroup);
-    addBox(chairGroup, [0, 0.52, 0], [1.05, 0.48, 1.05], materials.coral);
-    addBox(chairGroup, [0, 1.15, -0.42], [1.05, 0.95, 0.28], materials.coral);
-    addBox(chairGroup, [-0.48, 0.85, 0], [0.24, 0.65, 1.05], materials.coral);
-    addBox(chairGroup, [0.48, 0.85, 0], [0.24, 0.65, 1.05], materials.coral);
-    addBox(chairGroup, [0, 0.65, -0.1], [0.4, 0.35, 0.18], materials.cushionYellow, { rotation: [0.15, 0, 0] });
-    addBox(chairGroup, [0, 0.35, 1.2], [0.72, 0.38, 0.72], materials.cushionYellow);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 1.8, y + 0.6, z + 1.2], [0.65, 0.6, 0.65]);
-
-    // Brass floor reading lamp
-    addCylinder(parent, [x - 0.4, y + 1.6, z + 1.6], 0.03, 0.03, 3.2, materials.brass);
-    addCylinder(parent, [x - 0.4, y + 0.04, z + 1.6], 0.36, 0.36, 0.08, materials.brass, { segments: 16 });
-    addSphere(parent, [x - 0.4, y + 2.95, z + 1.6], [0.14, 0.14, 0.14], materials.glow, { shadow: false });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 0.4, y + 0.8, z + 1.6], [0.25, 0.8, 0.25]);
-
-    // Side table with teacup and antique globe
-    addCylinder(parent, [x - 1.2, y + 0.38, z - 0.5], 0.42, 0.42, 0.06, materials.woodDark, { segments: 16 });
-    addCylinder(parent, [x - 1.2, y + 0.18, z - 0.5], 0.06, 0.06, 0.36, materials.woodDark);
-    addSphere(parent, [x - 1.2, y + 0.65, z - 0.5], [0.18, 0.18, 0.18], materials.bluePastel);
-    addCylinder(parent, [x - 1.2, y + 0.46, z - 0.5], 0.22, 0.22, 0.02, materials.brass);
+    // Round oak side table with steaming coffee mug
+    addCylinder(parent, [x + 2.0, y + 0.38, z - 0.4], 0.45, 0.45, 0.06, materials.woodDark, { segments: 16 });
+    addCylinder(parent, [x + 2.0, y + 0.18, z - 0.4], 0.06, 0.06, 0.36, materials.woodDark);
+    addCylinder(parent, [x + 2.0, y + 0.48, z - 0.4], 0.08, 0.07, 0.12, materials.ceramic, { segments: 12 });
   } else if (id === 'process') {
     // =========================================================================
-    // 8. CREATIVE STUDIO (Upper Floor Far Right, x = 21.0, y = 5.2, z = -1.5)
-    // Architect drafting table, studio monitors, acoustic foam, electric guitar,
-    // music production workstation with 61-key MIDI keyboard and DAW waveform screen
+    // 8. CREATIVE STUDIO (Lantai 2 Far-Right, x = 21.0, y = 5.2, z = -2.0)
+    // Creator workstation facing forward (+Z): Dual screens, studio monitors, electric guitar
+    // on floor stand, synthesizer keyboard, acoustic foam wall panels
     // =========================================================================
-    // Tilt-top Architect Drafting Table
-    const desk = new THREE.Group();
-    desk.position.set(x - 2.8, y, z);
-    parent.add(desk);
-    addBox(desk, [0, 1.05, 0], [2.4, 0.12, 1.6], materials.woodWarm, { rotation: [-0.22, 0, 0] });
-    addBox(desk, [-1.05, 0.5, 0], [0.14, 1.0, 1.3], materials.metalDark);
-    addBox(desk, [1.05, 0.5, 0], [0.14, 1.0, 1.3], materials.metalDark);
-    addBox(desk, [0, 1.15, 0], [1.6, 0.02, 1.1], materials.trim, { rotation: [-0.22, 0, 0] });
-    addCylinder(desk, [0.85, 1.25, 0.4], 0.06, 0.06, 0.95, materials.blueSky, { rotation: [0, 0, Math.PI * 0.5] });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 2.8, y + 0.6, z], [1.25, 0.6, 0.85]);
 
-    // Music Production Station along East wall: Desk, 61-Key MIDI Keyboard, Audio Interface & DAW Monitor
-    const musicStation = new THREE.Group();
-    musicStation.position.set(x + 3.8, y, z);
-    musicStation.rotation.y = -Math.PI * 0.5;
-    parent.add(musicStation);
-    addBox(musicStation, [0, 0.95, 0], [2.8, 0.12, 1.2], materials.woodDark);
-    // 61-Key MIDI Keyboard
-    addBox(musicStation, [0, 1.05, 0.25], [1.6, 0.08, 0.4], materials.ink);
-    addBox(musicStation, [0, 1.1, 0.3], [1.5, 0.03, 0.28], materials.cream);
-    // Studio Audio Interface Box on desk with glowing knob
-    addBox(musicStation, [-0.95, 1.05, 0.1], [0.38, 0.12, 0.28], materials.coral);
-    addCylinder(musicStation, [-0.95, 1.13, 0.1], 0.04, 0.04, 0.04, materials.brass);
-    addSphere(musicStation, [-0.95, 1.14, 0.1], [0.02, 0.02, 0.02], materials.glow, { shadow: false });
-    // Studio reference headphones resting next to interface
-    addCylinder(musicStation, [-0.95, 1.04, 0.38], 0.09, 0.09, 0.05, materials.metalDark, { rotation: [0, 0, Math.PI * 0.5] });
-    // DAW Audio Waveform Screen
-    addBox(musicStation, [0, 1.65, -0.2], [1.4, 0.85, 0.06], materials.metalDark);
-    addBox(musicStation, [0, 1.65, -0.16], [1.32, 0.76, 0.02], materials.screenDAW, { shadow: false });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.8, y + 0.5, z], [0.65, 0.5, 1.45]);
+    // Creator Desk in dark walnut facing forward (+Z)
+    addBox(parent, [x, y + 0.95, z - 2.2], [3.8, 0.14, 1.5], materials.woodDark);
+    addBox(parent, [x - 1.7, y + 0.48, z - 2.2], [0.2, 0.95, 1.3], materials.metalDark);
+    addBox(parent, [x + 1.7, y + 0.48, z - 2.2], [0.2, 0.95, 1.3], materials.metalDark);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.55, z - 2.2], [1.95, 0.55, 0.8]);
 
-    // Studio Sound Acoustic Foam Wall Panels along East wall
-    for (let py = 1.2; py <= 3.8; py += 1.2) {
-      for (let pz = -2.0; pz <= 2.0; pz += 1.2) {
-        addBox(parent, [x + 4.85, y + py, z + pz], [0.08, 1.0, 1.0], materials.acousticFoam);
+    // Dual Widescreen Creative Monitors on Desk
+    for (const sx of [-0.75, 0.75]) {
+      addBox(parent, [x + sx, y + 1.62, z - 2.4], [1.2, 0.76, 0.08], materials.metalDark);
+      addBox(parent, [x + sx, y + 1.62, z - 2.35], [1.12, 0.68, 0.02], sx < 0 ? materials.screenDAW : materials.screenCad, { shadow: false });
+    }
+
+    // Studio Near-Field Audio Monitors (Speakers) on desk
+    for (const spx of [-1.55, 1.55]) {
+      addBox(parent, [x + spx, y + 1.35, z - 2.2], [0.32, 0.48, 0.32], materials.metalDark);
+      addCylinder(parent, [x + spx, y + 1.38, z - 2.02], 0.09, 0.09, 0.04, materials.yellowSun, { rotation: [Math.PI * 0.5, 0, 0] });
+    }
+
+    // 49-Key Synthesizer Keyboard on pull-out desk shelf
+    addBox(parent, [x, y + 0.88, z - 1.6], [2.2, 0.08, 0.45], materials.ink);
+    addBox(parent, [x, y + 0.94, z - 1.55], [2.1, 0.03, 0.32], materials.cream);
+
+    // Electric Guitar on Floor Stand on right side of desk (x = 23.4)
+    const guitarGroup = new THREE.Group();
+    guitarGroup.position.set(x + 2.5, y, z - 1.2);
+    guitarGroup.rotation.y = -0.35;
+    parent.add(guitarGroup);
+    // Guitar stand
+    addCylinder(guitarGroup, [0, 0.04, 0], 0.28, 0.28, 0.08, materials.metalDark, { segments: 12 });
+    addCylinder(guitarGroup, [0, 0.55, 0], 0.025, 0.025, 1.1, materials.metalDark);
+    // Guitar solid contoured body (Cherry Red)
+    addBox(guitarGroup, [0, 0.6, 0.08], [0.55, 0.75, 0.1], materials.coral);
+    addBox(guitarGroup, [0, 0.88, 0.08], [0.42, 0.35, 0.08], materials.coral);
+    // Maple neck & headstock with chrome tuning pegs
+    addBox(guitarGroup, [0, 1.35, 0.08], [0.12, 0.95, 0.06], materials.woodLight);
+    addBox(guitarGroup, [0, 1.88, 0.08], [0.16, 0.24, 0.05], materials.woodDark);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x + 2.5, y + 0.7, z - 1.2], [0.4, 0.7, 0.4]);
+
+    // Studio Ergonomic Mesh Chair
+    addBox(parent, [x, y + 0.52, z - 0.9], [0.72, 0.12, 0.72], materials.metalDark);
+    addBox(parent, [x, y + 1.1, z - 1.22], [0.65, 1.0, 0.08], materials.metalDark);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.6, z - 0.9], [0.4, 0.6, 0.4]);
+
+    // Acoustic Foam Wall Panels on Back Wall (z = -7.7)
+    for (let ax = -2.4; ax <= 2.4; ax += 1.2) {
+      for (let ay = 2.0; ay <= 4.0; ay += 1.0) {
+        addBox(parent, [x + ax, y + ay, z - 5.7], [0.95, 0.85, 0.08], materials.acousticFoam);
       }
     }
-
-    // Electric Guitar on stand in corner
-    const guitar = new THREE.Group();
-    guitar.position.set(x + 3.8, y, z + 2.4);
-    guitar.rotation.set(0.15, -0.4, 0);
-    parent.add(guitar);
-    addCylinder(guitar, [0, 0.45, 0], 0.03, 0.03, 0.9, materials.metalDark);
-    addBox(guitar, [0, 0.55, 0.08], [0.45, 0.65, 0.1], materials.coral);
-    addBox(guitar, [0, 1.25, 0.08], [0.1, 0.8, 0.06], materials.woodWarm);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.8, y + 0.7, z + 2.4], [0.35, 0.7, 0.35]);
   } else if (id === 'contact') {
-    // =========================================================================
-    // 9. GARDEN TERRACE (Ground Floor Rear, x = 0.0, y = 0, z = -22.5)
-    // Outdoor teak sofa, coffee table, terrace pergola with wisteria pods,
-    // modern stainless BBQ grill, terracotta planters
-    // =========================================================================
-    // Modern Luxury Teak Outdoor Sofa
-    const teakSofa = new THREE.Group();
-    teakSofa.position.set(x + 3.8, y, z);
-    teakSofa.rotation.y = -Math.PI * 0.5;
-    parent.add(teakSofa);
-    addBox(teakSofa, [0, 0.42, 0], [3.2, 0.38, 1.1], materials.woodWarm);
-    addBox(teakSofa, [0, 0.9, -0.42], [3.2, 0.65, 0.24], materials.woodWarm);
-    addBox(teakSofa, [0, 0.55, 0], [3.0, 0.15, 0.95], materials.cushionMint);
-    addBox(teakSofa, [-1.55, 0.65, 0], [0.18, 0.55, 1.1], materials.woodWarm);
-    addBox(teakSofa, [1.55, 0.65, 0], [0.18, 0.55, 1.1], materials.woodWarm);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.8, y + 0.5, z], [0.6, 0.5, 1.65]);
-
-    // Low Teak Coffee Table
-    addBox(parent, [x + 2.2, y + 0.42, z], [1.1, 0.38, 1.8], materials.woodWarm);
-    addCylinder(parent, [x + 2.2, y + 0.65, z - 0.3], 0.14, 0.14, 0.32, materials.glass);
-    addCylinder(parent, [x + 2.2, y + 0.55, z + 0.3], 0.08, 0.07, 0.16, materials.ceramicTeal);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 2.2, y + 0.25, z], [0.55, 0.25, 0.9]);
-
-    // Stainless Steel Modern Outdoor BBQ Grill Station with Granite Prep Counter
-    const grill = new THREE.Group();
-    grill.position.set(x - 3.8, y + 0.65, z - 1.2);
-    grill.rotation.y = Math.PI * 0.5;
-    parent.add(grill);
-    addBox(grill, [0, 0, 0], [1.5, 0.9, 0.75], materials.carChrome);
-    addBox(grill, [0, 0.65, -0.05], [1.46, 0.42, 0.7], materials.metalDark);
-    addCylinder(grill, [0, 0.75, 0.3], 0.025, 0.025, 0.95, materials.carChrome, { rotation: [0, 0, Math.PI * 0.5] });
-    // Granite food prep counter next to grill
-    addBox(parent, [x - 3.8, y + 0.52, z + 0.8], [0.85, 0.94, 1.8], materials.wainscot);
-    addBox(parent, [x - 3.8, y + 1.02, z + 0.8], [0.95, 0.08, 1.9], materials.stone);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.8, y + 0.65, z - 1.2], [0.45, 0.65, 0.85]);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.8, y + 0.55, z + 0.8], [0.5, 0.55, 1.0]);
-
-    // Pergola overhead with ambient hanging lanterns
-    const perg = new THREE.Group();
-    perg.position.set(x + 3.8, y, z);
-    parent.add(perg);
-    addCylinder(perg, [-1.3, 2.4, -1.8], 0.12, 0.14, 4.8, materials.woodDark);
-    addCylinder(perg, [1.3, 2.4, -1.8], 0.12, 0.14, 4.8, materials.woodDark);
-    addCylinder(perg, [-1.3, 2.4, 1.8], 0.12, 0.14, 4.8, materials.woodDark);
-    addCylinder(perg, [1.3, 2.4, 1.8], 0.12, 0.14, 4.8, materials.woodDark);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.8 - 1.3, y + 2.4, z - 1.8], [0.15, 2.4, 0.15]);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.8 + 1.3, y + 2.4, z - 1.8], [0.15, 2.4, 0.15]);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.8 - 1.3, y + 2.4, z + 1.8], [0.15, 2.4, 0.15]);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.8 + 1.3, y + 2.4, z + 1.8], [0.15, 2.4, 0.15]);
-    for (let rz = -1.8; rz <= 1.8; rz += 0.9) {
-      addBox(perg, [0, 4.75, rz], [3.2, 0.18, 0.14], materials.woodWarm);
-    }
-    // Ambient hanging lantern under pergola
-    addCylinder(perg, [0, 4.2, 0], 0.02, 0.02, 0.9, materials.brass);
-    addBox(perg, [0, 3.65, 0], [0.28, 0.38, 0.28], materials.metalDark);
-    addSphere(perg, [0, 3.65, 0], [0.12, 0.12, 0.12], materials.glow, { shadow: false });
-
-    // Terracotta planters flanking the French doors to terrace
-    for (const px of [-2.8, 2.8]) {
-      addCylinder(parent, [x + px, y + 0.35, -18.8], 0.32, 0.24, 0.65, materials.terracotta, { segments: 16 });
-      addSphere(parent, [x + px, y + 0.85, -18.8], [0.45, 0.45, 0.45], materials.foliageBright);
-      addSphere(parent, [x + px + 0.1, y + 0.95, -18.75], [0.1, 0.1, 0.1], materials.coral);
-    }
+    // Rear Terrace Patio Furniture (y = 0.0, z = -11.8)
+    addBox(parent, [x, y + 0.38, z], [3.2, 0.4, 1.4], materials.woodWarm);
+    addBox(parent, [x - 1.8, y + 0.45, z], [1.0, 0.42, 1.0], materials.cushionMint);
+    addBox(parent, [x + 1.8, y + 0.45, z], [1.0, 0.42, 1.0], materials.cushionMint);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.45, z], [2.4, 0.45, 0.8]);
   }
 }
 
-/**
- * Builds stylized BMW M-Series Sports Car in the garage bay
- */
-function buildSportsCar(parent, x, y, z) {
+function buildSportsCar(parent, cx, cy, cz) {
   const car = new THREE.Group();
-  car.position.set(x, y, z);
+  car.position.set(cx, cy, cz);
   parent.add(car);
 
-  // 1. Lower chassis / aerodynamic side skirts
-  addBox(car, [0, 0.22, 0], [2.15, 0.2, 4.4], materials.metalDark);
+  // Main aerodynamic body lower chassis (Alpine White)
+  addBox(car, [0, 0.42, 0], [2.1, 0.42, 4.4], materials.carPaintWhite, { shadow: true });
+  // Aggressive front bumper splitter & lower air intake
+  addBox(car, [0, 0.22, 2.15], [2.05, 0.24, 0.32], materials.metalDark);
+  addBox(car, [0, 0.16, 2.28], [2.12, 0.08, 0.18], materials.carChrome);
+  // Iconic BMW M Kidney Grille (twin black/chrome grilles)
+  addBox(car, [-0.34, 0.46, 2.22], [0.38, 0.26, 0.04], materials.metalDark);
+  addBox(car, [0.34, 0.46, 2.22], [0.38, 0.26, 0.04], materials.metalDark);
+  addBox(car, [-0.34, 0.46, 2.23], [0.42, 0.28, 0.02], materials.carChrome);
+  addBox(car, [0.34, 0.46, 2.23], [0.42, 0.28, 0.02], materials.carChrome);
 
-  // 2. Main White Aerodynamic Bodywork
-  addBox(car, [0, 0.52, 0], [2.05, 0.42, 4.3], materials.carPaintWhite);
-  // Sloping aggressive hood
-  addBox(car, [0, 0.62, 1.1], [1.95, 0.24, 1.8], materials.carPaintWhite, { rotation: [0.06, 0, 0] });
-
-  // 3. Iconic BMW Kidney Grilles (twin kidneys with chrome bezel & black vertical slats)
-  for (const side of [-1, 1]) {
-    const gx = side * 0.32;
-    addBox(car, [gx, 0.52, 2.18], [0.26, 0.24, 0.06], materials.carChrome);
-    addBox(car, [gx, 0.52, 2.2], [0.22, 0.2, 0.04], materials.ink);
+  // Angular LED Headlights with iconic angel-eye rings
+  for (const hx of [-0.82, 0.82]) {
+    addBox(car, [hx, 0.52, 2.18], [0.45, 0.16, 0.08], materials.glass);
+    addSphere(car, [hx, 0.52, 2.19], [0.12, 0.05, 0.02], materials.glow, { shadow: false });
   }
 
-  // 4. Aggressive LED Headlights with Angel-Eye Halo Glow
-  for (const side of [-1, 1]) {
-    const hx = side * 0.78;
-    addBox(car, [hx, 0.58, 2.12], [0.38, 0.14, 0.08], materials.carChrome);
-    addSphere(car, [hx, 0.58, 2.15], [0.16, 0.06, 0.04], materials.glow, { shadow: false });
+  // Sloped Hood with M power bulge
+  addBox(car, [0, 0.65, 1.1], [1.9, 0.18, 2.0], materials.carPaintWhite);
+  addBox(car, [0, 0.74, 1.0], [0.65, 0.08, 1.6], materials.carPaintWhite);
+
+  // Sleek Aerodynamic Greenhouse Cabin with Tinted Glass & Panoramic Roof
+  addBox(car, [0, 1.08, -0.3], [1.72, 0.65, 2.4], materials.carGlass);
+  addBox(car, [0, 1.38, -0.3], [1.65, 0.08, 1.9], materials.carPaintWhite);
+
+  // Rear Trunk Deck & M Sport Carbon Spoiler
+  addBox(car, [0, 0.72, -1.85], [1.85, 0.22, 0.95], materials.carPaintWhite);
+  addBox(car, [0, 0.88, -2.22], [1.92, 0.06, 0.22], materials.metalDark);
+  // Rear diffuser & Quad M Chrome Exhaust Pipes
+  addBox(car, [0, 0.24, -2.22], [1.98, 0.24, 0.16], materials.metalDark);
+  for (const ex of [-0.65, -0.45, 0.45, 0.65]) {
+    addCylinder(car, [ex, 0.22, -2.32], 0.06, 0.06, 0.18, materials.carChrome, { rotation: [Math.PI * 0.5, 0, 0], segments: 14 });
   }
 
-  // 5. Sleek Aerodynamic Greenhouse & Sport Interior Cockpit
-  // Dark interior cockpit tub
-  addBox(car, [0, 0.78, -0.2], [1.45, 0.22, 1.8], materials.ink);
-  // Dual coral leather sports bucket seats
-  for (const sx of [-0.38, 0.38]) {
-    addBox(car, [sx, 0.88, -0.25], [0.4, 0.18, 0.45], materials.coral);
-    addBox(car, [sx, 1.08, -0.46], [0.38, 0.34, 0.1], materials.coral);
-    addBox(car, [sx, 1.28, -0.46], [0.22, 0.14, 0.08], materials.metalDark);
-  }
-  // M-Sport steering wheel & dashboard
-  addBox(car, [0, 0.86, 0.48], [1.35, 0.22, 0.35], materials.metalDark);
-  addCylinder(car, [0.38, 0.98, 0.38], 0.14, 0.14, 0.03, materials.metalDark, { rotation: [0.55, 0, 0] });
-
-  // Aerodynamic Carbon Fiber Roof
-  addBox(car, [0, 1.28, -0.2], [1.52, 0.06, 2.05], materials.metalDark);
-
-  // Front Windshield (thin tinted glass flush between hood and roof)
-  addBox(car, [0, 1.02, 0.54], [1.46, 0.03, 0.78], materials.carGlass, { rotation: [0.72, 0, 0] });
-  // A-Pillars flanking windshield
-  for (const side of [-1, 1]) {
-    addBox(car, [side * 0.74, 1.02, 0.54], [0.06, 0.05, 0.82], materials.carPaintWhite, { rotation: [0.72, 0, 0] });
-  }
-
-  // Rear Windshield (sloping fastback rake)
-  addBox(car, [0, 1.02, -1.02], [1.46, 0.03, 0.78], materials.carGlass, { rotation: [-0.68, 0, 0] });
-  // C-Pillars flanking rear windshield
-  for (const side of [-1, 1]) {
-    addBox(car, [side * 0.74, 1.02, -1.02], [0.06, 0.05, 0.82], materials.carPaintWhite, { rotation: [-0.68, 0, 0] });
-  }
-
-  // Side Windows
-  for (const side of [-1, 1]) {
-    addBox(car, [side * 0.78, 1.02, -0.2], [0.03, 0.42, 1.45], materials.carGlass);
-    // B-Pillar divider
-    addBox(car, [side * 0.79, 1.02, -0.15], [0.035, 0.44, 0.06], materials.metalDark);
-  }
-
-  // Dual aerodynamic side mirrors in gloss black
-  for (const side of [-1, 1]) {
-    addBox(car, [side * 1.05, 0.92, 0.58], [0.2, 0.1, 0.16], materials.metalDark);
-  }
-
-  // 6. Rear M-Series Quad Exhaust Pipes & Tail Lights
-  for (const side of [-1, 1]) {
-    addBox(car, [side * 0.78, 0.68, -2.16], [0.38, 0.12, 0.06], materials.coral);
-    for (const ex of [-0.08, 0.08]) {
-      addCylinder(car, [side * 0.52 + ex, 0.22, -2.2], 0.055, 0.055, 0.18, materials.carChrome, { rotation: [Math.PI * 0.5, 0, 0], segments: 12 });
+  // 4 M-Performance Chrome Alloy Wheels with Wide Rubber Tires
+  const wheelZ = [-1.35, 1.35];
+  const wheelX = [-1.08, 1.08];
+  for (const wz of wheelZ) {
+    for (const wx of wheelX) {
+      // Rubber tire
+      addCylinder(car, [wx, 0.38, wz], 0.38, 0.38, 0.28, materials.carRubber, { rotation: [0, 0, Math.PI * 0.5], segments: 20 });
+      // Chrome alloy spoke wheel
+      addCylinder(car, [wx + (wx > 0 ? 0.03 : -0.03), 0.38, wz], 0.25, 0.25, 0.28, materials.carChrome, { rotation: [0, 0, Math.PI * 0.5], segments: 16 });
+      // Blue M-Sport brake caliper inside wheel
+      addBox(car, [wx, 0.46, wz], [0.12, 0.12, 0.18], materials.carPaintBlue);
     }
   }
 
-  // 7. Wheels & M-Sport Alloy Rims with Blue Calipers
-  const wheelPositions = [
-    [-1.02, 0.36, 1.35],
-    [1.02, 0.36, 1.35],
-    [-1.02, 0.36, -1.35],
-    [1.02, 0.36, -1.35],
-  ];
-  for (const [wx, wy, wz] of wheelPositions) {
-    const wheel = new THREE.Group();
-    wheel.position.set(wx, wy, wz);
-    car.add(wheel);
-    addCylinder(wheel, [0, 0, 0], 0.36, 0.36, 0.28, materials.carRubber, { rotation: [0, 0, Math.PI * 0.5], segments: 20 });
-    addCylinder(wheel, [wx < 0 ? -0.02 : 0.02, 0, 0], 0.25, 0.25, 0.26, materials.carChrome, { rotation: [0, 0, Math.PI * 0.5], segments: 16 });
-    addBox(wheel, [0, 0.11, 0], [0.07, 0.15, 0.11], materials.blueSky);
+  // Aerodynamic side mirrors
+  for (const mx of [-1.02, 1.02]) {
+    addBox(car, [mx, 0.92, 0.6], [0.22, 0.12, 0.18], materials.carPaintWhite);
+    addBox(car, [mx, 0.92, 0.58], [0.18, 0.09, 0.02], materials.mirror);
   }
-
-  return car;
 }
