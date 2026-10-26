@@ -48,6 +48,11 @@
             aria-hidden="true">↗</span></button>
       </div>
     </header>
+    <div class="map-status-pill" id="map-status-pill" role="status" aria-live="polite">
+      <span class="map-pill-badge"><span class="badge-dot"></span> WORLD MAP ACTIVE</span>
+      <span class="map-pill-hint">Click any marker to fast-travel · Press <span class="keycap">M</span>, <span class="keycap">Esc</span> or move to return</span>
+      <button id="map-close-btn" class="map-pill-close" type="button" aria-label="Hide World Map">✕ Hide Map [M]</button>
+    </div>
     <section class="welcome-card" id="welcome" aria-labelledby="welcome-title">
       <button id="welcome-close" class="welcome-close" type="button" aria-label="Dismiss welcome card" title="Dismiss">
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -117,7 +122,8 @@
     <div class="controls-note" id="controls-note"><span class="keycap">W A S D</span> move <span
         class="note-divider"></span><span class="keycap">DRAG</span> look <span class="note-divider"></span><span
         class="keycap">E</span> interact <span class="note-divider"></span><span class="keycap">C</span> sit <span
-        class="note-divider"></span><span class="keycap">F</span> inspect</div>
+        class="note-divider"></span><span class="keycap">F</span> inspect <span class="note-divider"></span><span
+        class="keycap">M</span> map</div>
     <div class="interaction-prompt" id="interaction-prompt" role="status" aria-live="polite"><span class="keycap"
         id="interact-key">E</span><span id="prompt-label">Explore this spot</span></div>
     <div class="touch-controls" id="touch-controls" aria-label="Touch movement controls">
@@ -142,7 +148,7 @@
       <button id="settings-close" class="panel-close" type="button"
         aria-label="Close graphics settings"><span></span><span></span></button>
       <p class="panel-eyebrow">Keep things smooth</p>
-      <h2 id="settings-title">Graphics</h2>
+      <h2 id="settings-title">Graphics & Controls</h2>
       <label class="select-label" for="quality-select">Quality preset</label>
       <select id="quality-select">
         <option value="auto">Auto</option>
@@ -155,6 +161,7 @@
         responsive.</p>
       <label class="toggle-row" for="adaptive-toggle"><span><strong>Adaptive quality</strong><small>Ease resolution down
             under sustained load</small></span><input id="adaptive-toggle" type="checkbox" checked /></label>
+      <label class="toggle-row" for="worldmap-setting-toggle"><span><strong>World Map Overview</strong><small>Aerial overview & zone fast-travel markers [M]</small></span><input id="worldmap-setting-toggle" type="checkbox" /></label>
     </section>
     <div class="tour-toast" id="tour-toast" role="status" aria-live="polite">
       <div class="tour-toast-header">

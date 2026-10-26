@@ -51,6 +51,8 @@ const ui = {
   tourExploreBtn: $('tour-explore-btn'),
   tourNextBtn: $('tour-next-btn'),
   mapBtn: $('map-button'),
+  mapPill: $('map-status-pill'),
+  mapCloseBtn: $('map-close-btn'),
   markersContainer: $('world-markers'),
 };
 
@@ -806,6 +808,7 @@ if (typeof window !== 'undefined') {
 function initWorldMarkers() {
   if (!ui.markersContainer) return;
   ui.markersContainer.innerHTML = '';
+  ui.markersContainer.style.display = 'none';
   markerElements = WORLD_MARKERS.map((m) => {
     const el = document.createElement('div');
     el.className = 'world-marker';
@@ -868,7 +871,8 @@ function teleportToZone(x, y, z, facing = 0) {
 
 function updateWorldMarkers() {
   if (!markerElements.length || !camera || !ui.markersContainer) return;
-  const showMarkers = overviewMode || cameraDistance > 18;
+  // World map markers only display when World Map is explicitly toggled active
+  const showMarkers = overviewMode;
   if (!showMarkers) {
     if (ui.markersContainer.style.display !== 'none') {
       ui.markersContainer.style.display = 'none';
@@ -908,6 +912,18 @@ function toggleOverviewMode(force) {
   overviewMode = typeof force === 'boolean' ? force : !overviewMode;
   if (ui.mapBtn) {
     ui.mapBtn.classList.toggle('is-active', overviewMode);
+    ui.mapBtn.setAttribute('title', overviewMode ? 'Hide World Map [M]' : 'World Map Overview [M]');
+    ui.mapBtn.setAttribute('aria-label', overviewMode ? 'Hide World Map [M]' : 'World Map Overview [M]');
+  }
+  if (ui.mapPill) {
+    ui.mapPill.classList.toggle('is-visible', overviewMode);
+  }
+  const settingToggle = $('worldmap-setting-toggle');
+  if (settingToggle && settingToggle.checked !== overviewMode) {
+    settingToggle.checked = overviewMode;
+  }
+  if (!overviewMode && ui.markersContainer) {
+    ui.markersContainer.style.display = 'none';
   }
   if (roofGroup) {
     roofGroup.visible = true;
@@ -1725,6 +1741,10 @@ function bindEvents() {
   $('welcome-tour-button')?.addEventListener('click', beginTour);
   $('tour-button').addEventListener('click', beginTour);
   ui.mapBtn?.addEventListener('click', () => toggleOverviewMode());
+  ui.mapCloseBtn?.addEventListener('click', () => toggleOverviewMode(false));
+  $('worldmap-setting-toggle')?.addEventListener('change', (event) => {
+    toggleOverviewMode(event.currentTarget.checked);
+  });
   $('tour-stop')?.addEventListener('click', () => endTour());
   ui.tourExploreBtn?.addEventListener('click', () => {
     if (tourActive) {
@@ -1800,6 +1820,10 @@ function bindEvents() {
       }
       if (worldInteractions && worldInteractions.cancelAny()) {
         findInteraction();
+        return;
+      }
+      if (overviewMode) {
+        toggleOverviewMode(false);
         return;
       }
       if (!renderer) {

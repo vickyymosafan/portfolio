@@ -15,6 +15,60 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
     return body;
   };
 
+  /**
+   * Builds an architectural floor-to-ceiling glass curtain wall with frames, mullions & physics collider
+   * Ensures the facade is completely enclosed and cannot be walked through.
+   */
+  const addGlassFacade = (x1, x2, yBottom, yTop, panels = 4, opts = {}) => {
+    const width = Math.abs(x2 - x1);
+    const height = yTop - yBottom;
+    const centerX = (x1 + x2) * 0.5;
+    const centerY = (yBottom + yTop) * 0.5;
+    const z = 3.8;
+    const frameMat = materials.windowFrame || materials.metalDark;
+    const glassMat = opts.glassMat || materials.glass;
+
+    // 1. Base sill/curb & top header beam
+    const frameDepth = 0.16;
+    const frameThick = 0.10;
+    archBatch.addBox([centerX, yBottom + frameThick * 0.5, z], [width, frameThick, frameDepth], frameMat);
+    archBatch.addBox([centerX, yTop - frameThick * 0.5, z], [width, frameThick, frameDepth], frameMat);
+
+    // 2. Left & Right vertical jamb posts
+    archBatch.addBox([x1 + frameThick * 0.5, centerY, z], [frameThick, height - frameThick * 2, frameDepth], frameMat);
+    archBatch.addBox([x2 - frameThick * 0.5, centerY, z], [frameThick, height - frameThick * 2, frameDepth], frameMat);
+
+    // 3. Intermediate vertical mullions
+    const step = width / panels;
+    const mullionThick = 0.08;
+    for (let p = 1; p < panels; p += 1) {
+      const mx = x1 + p * step;
+      archBatch.addBox([mx, centerY, z], [mullionThick, height - frameThick * 2, frameDepth * 0.88], frameMat);
+    }
+
+    // 4. Horizontal transom bars (give modern floor-to-ceiling architectural proportions)
+    const transomHeights = opts.transoms ?? [
+      yBottom + height * 0.26,
+      yBottom + height * 0.74,
+    ];
+    for (const ty of transomHeights) {
+      if (ty > yBottom + 0.35 && ty < yTop - 0.35) {
+        archBatch.addBox([centerX, ty, z], [width - frameThick * 2, 0.06, frameDepth * 0.82], frameMat);
+      }
+    }
+
+    // 5. Crystal clear luxury glass panels
+    const innerH = height - frameThick * 2;
+    for (let p = 0; p < panels; p += 1) {
+      const px = x1 + (p + 0.5) * step;
+      const pw = step - mullionThick * 0.85;
+      addBox(building, [px, centerY, z], [pw, innerH, 0.04], glassMat, { shadow: false });
+    }
+
+    // 6. Solid impenetrable Rapier static collider from floor to ceiling (cannot be penetrated)
+    addColliderBox([centerX, centerY, z], [width * 0.5, height * 0.5, 0.25]);
+  };
+
   // =========================================================================
   // 1. FOUNDATION & GROUND FLOOR SLABS
   // Footprint: x: [-16.5, 26.0] (42.5m wide), z: [3.8, -8.2] (12.0m deep)
@@ -202,6 +256,32 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   archBatch.addBox([25.6, 2.2, 3.8], [0.65, 4.4, 0.45], materials.woodDark);
 
   // =========================================================================
+  // 3B. FRONT ARCHITECTURAL GLASS FACADE (Ground Floor / Lantai 1, y: [0.06, 4.75])
+  // Modern floor-to-ceiling panoramic glass walls with dark architectural frames
+  // Fully enclosed with solid physical Rapier colliders (cannot be penetrated)
+  // =========================================================================
+
+  // Bay 1: Project Gallery Front Glass (x: [-16.15, -5.85])
+  addGlassFacade(-16.15, -5.85, 0.06, 4.75, 4);
+
+  // Bay 2: Living Room Entrance Flanking Glass Walls
+  // West flank (x: [-5.15, -1.8])
+  addGlassFacade(-5.15, -1.8, 0.06, 4.75, 2);
+  // East flank (x: [1.8, 5.15])
+  addGlassFacade(1.8, 5.15, 0.06, 4.75, 2);
+  // Transom window above the main double door (y: [3.65, 4.75], x: [-1.75, 1.75])
+  addGlassFacade(-1.75, 1.75, 3.65, 4.75, 2, { transoms: [] });
+
+  // Bay 3: Home Office Front Glass (x: [5.85, 15.65])
+  addGlassFacade(5.85, 15.65, 0.06, 4.75, 4);
+
+  // Bay 4: Garage Showroom Tinted Glass Curtain Wall (x: [16.8, 25.2], y: [0.06, 4.15])
+  addGlassFacade(16.8, 25.2, 0.06, 4.15, 4, {
+    glassMat: materials.garageGlass,
+    transoms: [1.05, 2.05, 3.05],
+  });
+
+  // =========================================================================
   // 4. INTERIOR PARTITION WALLS & ARCHWAYS (Ground Floor, y: [0, 5.2])
   // Dividing Project Gallery, Living Room, Home Office, Garasi
   // =========================================================================
@@ -289,30 +369,23 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   archBatch.addBox([4.75, 5.06, 3.85], [42.8, 0.32, 0.35], materials.woodWarm);
   archBatch.addBox([4.75, 5.22, 3.87], [43.0, 0.08, 0.38], materials.trim);
 
-  // Modern low architectural safety glass balustrades along front cutaway edge of Lantai 2 (y: [5.2, 5.9])
-  // Master Bedroom front balustrade
-  addBox(building, [-11.0, 5.55, 3.8], [10.2, 0.7, 0.06], materials.glass);
-  archBatch.addBox([-11.0, 5.92, 3.8], [10.2, 0.06, 0.1], materials.woodWarm);
-  addColliderBox([-11.0, 5.55, 3.8], [5.1, 0.35, 0.06]);
+  // =========================================================================
+  // 5B. FRONT ARCHITECTURAL GLASS FACADE (Upper Floor / Lantai 2, y: [5.25, 9.85])
+  // Full-height panoramic floor-to-ceiling glass walls across all upper rooms
+  // Solid physical Rapier colliders preventing any fall-out or penetration
+  // =========================================================================
 
-  // Bathroom front balustrades on West & East sides
-  addBox(building, [-3.7, 5.55, 3.8], [3.4, 0.7, 0.06], materials.glass);
-  archBatch.addBox([-3.7, 5.92, 3.8], [3.4, 0.06, 0.1], materials.woodWarm);
-  addColliderBox([-3.7, 5.55, 3.8], [1.7, 0.35, 0.06]);
+  // Bay 1: Master Bedroom Front Glass (x: [-16.15, -5.85])
+  addGlassFacade(-16.15, -5.85, 5.25, 9.85, 4);
 
-  addBox(building, [3.7, 5.55, 3.8], [3.4, 0.7, 0.06], materials.glass);
-  archBatch.addBox([3.7, 5.92, 3.8], [3.4, 0.06, 0.1], materials.woodWarm);
-  addColliderBox([3.7, 5.55, 3.8], [1.7, 0.35, 0.06]);
+  // Bay 2: Bathroom & Central Atrium Front Glass (x: [-5.15, 5.15])
+  addGlassFacade(-5.15, 5.15, 5.25, 9.85, 4);
 
-  // Library Nook front balustrade
-  addBox(building, [10.75, 5.55, 3.8], [9.7, 0.7, 0.06], materials.glass);
-  archBatch.addBox([10.75, 5.92, 3.8], [9.7, 0.06, 0.1], materials.woodWarm);
-  addColliderBox([10.75, 5.55, 3.8], [4.85, 0.35, 0.06]);
+  // Bay 3: Library Nook Front Glass (x: [5.85, 15.65])
+  addGlassFacade(5.85, 15.65, 5.25, 9.85, 4);
 
-  // Creative Studio front balustrade
-  addBox(building, [21.0, 5.55, 3.8], [9.2, 0.7, 0.06], materials.glass);
-  archBatch.addBox([21.0, 5.92, 3.8], [9.2, 0.06, 0.1], materials.woodWarm);
-  addColliderBox([21.0, 5.55, 3.8], [4.6, 0.35, 0.06]);
+  // Bay 4: Creative Studio Front Glass (x: [16.35, 25.65])
+  addGlassFacade(16.35, 25.65, 5.25, 9.85, 4);
 
   // =========================================================================
   // 6. SECOND FLOOR INTERIOR PARTITIONS (y: [5.2, 10.4])

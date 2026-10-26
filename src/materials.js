@@ -125,6 +125,16 @@ export const materials = {
     clearcoatRoughness: 0.06,
     depthWrite: false,
   }),
+  garageGlass: new THREE.MeshPhysicalMaterial({
+    color: 0x90bbb2,
+    transparent: true,
+    opacity: 0.40,
+    roughness: 0.12,
+    metalness: 0.10,
+    clearcoat: 0.85,
+    depthWrite: false,
+  }),
+  windowFrame: std(0x23312b, 0.35, { metalness: 0.55 }),
   brass: std(palette.goldBrass, 0.22, { metalness: 0.85 }),
   metalDark: std(palette.inkDark, 0.38, { metalness: 0.65 }),
 
