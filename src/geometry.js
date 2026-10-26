@@ -3,13 +3,13 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const sharedGeometries = {
-  box: new RoundedBoxGeometry(1, 1, 1, 2, 0.08),
+  box: new RoundedBoxGeometry(1, 1, 1, 1, 0.04),
   flatBox: new THREE.BoxGeometry(1, 1, 1),
-  sphere: new THREE.SphereGeometry(1, 16, 12),
-  lowSphere: new THREE.SphereGeometry(1, 12, 10),
-  cylinder: new THREE.CylinderGeometry(1, 1, 1, 12),
-  smoothCylinder: new THREE.CylinderGeometry(1, 1, 1, 20),
-  cone: new THREE.ConeGeometry(1, 1, 12),
+  sphere: new THREE.SphereGeometry(1, 14, 10),
+  lowSphere: new THREE.SphereGeometry(1, 10, 8),
+  cylinder: new THREE.CylinderGeometry(1, 1, 1, 10),
+  smoothCylinder: new THREE.CylinderGeometry(1, 1, 1, 16),
+  cone: new THREE.ConeGeometry(1, 1, 10),
 };
 
 export function addBox(parent, position, size, surface, options = {}) {
@@ -17,7 +17,9 @@ export function addBox(parent, position, size, surface, options = {}) {
   const mesh = new THREE.Mesh(geo, surface);
   mesh.position.set(...position);
   mesh.scale.set(...size);
-  mesh.castShadow = options.shadow ?? true;
+  const vol = size[0] * size[1] * size[2];
+  // Cast shadows only for volumetric structures or when explicitly enabled
+  mesh.castShadow = options.shadow !== undefined ? options.shadow : (vol > 0.04);
   mesh.receiveShadow = options.receive ?? true;
   if (options.rotation) {
     mesh.rotation.set(...options.rotation);
@@ -31,7 +33,8 @@ export function addSphere(parent, position, size, surface, options = {}) {
   const mesh = new THREE.Mesh(geo, surface);
   mesh.position.set(...position);
   mesh.scale.set(...size);
-  mesh.castShadow = options.shadow ?? true;
+  const vol = size[0] * size[1] * size[2];
+  mesh.castShadow = options.shadow !== undefined ? options.shadow : (vol > 0.04);
   mesh.receiveShadow = options.receive ?? true;
   if (options.rotation) {
     mesh.rotation.set(...options.rotation);
@@ -41,13 +44,14 @@ export function addSphere(parent, position, size, surface, options = {}) {
 }
 
 export function addCylinder(parent, position, radiusTop, radiusBottom, height, surface, options = {}) {
-  const segments = options.segments ?? 12;
-  const geo = segments === 12 ? sharedGeometries.cylinder : new THREE.CylinderGeometry(1, 1, 1, segments);
+  const segments = options.segments ?? 10;
+  const geo = segments === 10 ? sharedGeometries.cylinder : new THREE.CylinderGeometry(1, 1, 1, segments);
   const mesh = new THREE.Mesh(geo, surface);
   const avgRadius = (radiusTop + radiusBottom) * 0.5;
   mesh.position.set(...position);
   mesh.scale.set(avgRadius, height, avgRadius);
-  mesh.castShadow = options.shadow ?? true;
+  const vol = Math.PI * avgRadius * avgRadius * height;
+  mesh.castShadow = options.shadow !== undefined ? options.shadow : (vol > 0.04);
   mesh.receiveShadow = options.receive ?? true;
   if (options.rotation) {
     mesh.rotation.set(...options.rotation);
@@ -64,7 +68,8 @@ export class BatchCollector {
   }
 
   addBox(position, size, material, options = {}) {
-    const baseGeo = options.sharp ? sharedGeometries.flatBox : sharedGeometries.box;
+    // Default batched structural boxes to crisp flatBox for peak 60 FPS performance
+    const baseGeo = options.rounded ? sharedGeometries.box : sharedGeometries.flatBox;
     let geo = baseGeo.clone();
     if (geo.index !== null) geo = geo.toNonIndexed();
     const matrix = new THREE.Matrix4().compose(

@@ -168,11 +168,11 @@ function createRenderer() {
   renderer = new THREE.WebGLRenderer({ antialias: !mobile, powerPreference: 'high-performance' });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.12;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.4));
+  renderer.toneMappingExposure = 1.08;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = !mobile;
-  renderer.shadowMap.type = THREE.PCFShadowMap; // Clean filtered shadows in Three.js r186
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Stylized soft penumbra shadows
   renderer.domElement.tabIndex = 0;
   renderer.domElement.setAttribute('aria-label', '3D cartoon portfolio world. Use WASD to walk, mouse to look, and E to explore.');
   sceneHost.appendChild(renderer.domElement);
@@ -188,25 +188,31 @@ function createScene() {
   scene.fog = new THREE.Fog(0xbfe0d5, 80, 240);
 
   // Soft warm ambient hemisphere light for vibrant natural cartoon fill
-  const hemi = new THREE.HemisphereLight(0xfffaee, 0x72a56e, 2.1);
+  const hemi = new THREE.HemisphereLight(0xfffaee, 0x78ab70, 1.95);
   scene.add(hemi);
 
   // Warm golden directional sunlight with soft contact penumbra
-  const sun = new THREE.DirectionalLight(0xfff9e6, 2.6);
+  const sun = new THREE.DirectionalLight(0xfff9e6, 2.5);
   sun.position.set(-18, 26, 20);
   sun.castShadow = !mobile;
-  sun.shadow.mapSize.set(mobile ? 512 : 1536, mobile ? 512 : 1536);
+  sun.shadow.mapSize.set(mobile ? 512 : 2048, mobile ? 512 : 2048);
   sun.shadow.camera.left = -26;
   sun.shadow.camera.right = 26;
   sun.shadow.camera.top = 28;
   sun.shadow.camera.bottom = -28;
   sun.shadow.camera.near = 1;
   sun.shadow.camera.far = 68;
-  sun.shadow.bias = -0.00015;
-  sun.shadow.normalBias = 0.025;
-  sun.shadow.radius = 2.8;
+  sun.shadow.bias = -0.0001;
+  sun.shadow.normalBias = 0.035;
+  sun.shadow.radius = 3.2;
   scene.add(sun);
   scene.userData.sun = sun;
+
+  // Pixar-style subtle sky rim / kicker light from high rear-angle to sculpt silhouettes
+  const rimLight = new THREE.DirectionalLight(0xc6e4ff, 0.75);
+  rimLight.position.set(18, 24, -22);
+  rimLight.castShadow = false;
+  scene.add(rimLight);
 
   // Strategic warm interior point lights centered in wide room bays with high ceiling fixtures
   const interiorLights = [
@@ -1686,22 +1692,23 @@ function updateRoomFromPosition() {
 }
 
 function updatePerformance(dt, timestamp, activeScene) {
-  frameAverage += (dt * 1000 - frameAverage) * (1 - Math.exp(-dt * 1.7));
+  frameAverage += (dt * 1000 - frameAverage) * (1 - Math.exp(-dt * 2.2));
   qualityCooldown -= dt;
   if (adaptive && quality === 'auto' && qualityCooldown <= 0) {
-    if (frameAverage > (mobile ? 35 : 23) && renderScale > 0.52) {
-      renderScale = Math.max(0.52, renderScale - 0.08);
-      qualityCooldown = 2.8;
+    if (frameAverage > (mobile ? 34 : 20.0) && renderScale > 0.65) {
+      renderScale = Math.max(0.65, renderScale - 0.05);
+      qualityCooldown = 3.0;
       applyQuality(activeScene, 'auto', false);
-    } else if (frameAverage < (mobile ? 21 : 14.8) && renderScale < 1) {
-      renderScale = Math.min(1, renderScale + 0.06);
-      qualityCooldown = 4.5;
+    } else if (frameAverage < (mobile ? 22 : 16.8) && renderScale < 1) {
+      renderScale = Math.min(1, renderScale + 0.05);
+      qualityCooldown = 3.5;
       applyQuality(activeScene, 'auto', false);
     }
   }
-  if (timestamp - lastHudUpdate > 800) {
+  if (timestamp - lastHudUpdate > 500) {
     lastHudUpdate = timestamp;
-    const fps = Math.round(1000 / Math.max(1, frameAverage));
+    const rawFps = Math.round(1000 / Math.max(16.66, frameAverage));
+    const fps = Math.min(60, rawFps);
     ui.perfText.textContent = `${fps} FPS`;
     ui.drawText.textContent = `${renderer.info.render.calls} draws`;
     $('perf-pill').title = `Smoothed frame time: ${frameAverage.toFixed(1)} ms · Render resolution scale: ${renderScale.toFixed(2)}`;

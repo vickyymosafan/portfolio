@@ -102,31 +102,31 @@ export const materials = {
   wall: std(palette.wallIvory, 0.82, { map: textures.plaster }),
   wallAccent: std(palette.wallPeach, 0.82, { map: textures.plaster }),
   wainscot: std(palette.terracotta, 0.78, { map: textures.plaster }),
-  trim: std(palette.trimCream, 0.65),
-  column: std(0xfbf6ee, 0.58),
-  foundation: std(palette.foundationStone, 0.85, { map: textures.stone }),
-  roof: std(palette.roofSlate, 0.72, { map: textures.shingles }),
-  roofTrim: std(palette.roofRidge, 0.65),
-  wood: std(palette.woodWarm, 0.68, { map: textures.wood }),
-  woodLight: std(palette.woodLight, 0.65, { map: textures.wood }),
-  woodDark: std(palette.woodDark, 0.7, { map: textures.wood }),
-  woodFloor: std(palette.woodWarm, 0.58, { map: textures.wood }),
-  stone: std(palette.stoneCream, 0.84, { map: textures.stone }),
-  terraceTiles: std(palette.terracotta, 0.74, { map: textures.tiles }),
+  trim: std(palette.trimCream, 0.60),
+  column: std(0xfbf6ee, 0.52),
+  foundation: std(palette.foundationStone, 0.82, { map: textures.stone }),
+  roof: std(palette.roofSlate, 0.65, { map: textures.shingles, metalness: 0.06 }),
+  roofTrim: std(palette.roofRidge, 0.58),
+  wood: std(palette.woodWarm, 0.54, { map: textures.wood, metalness: 0.04 }),
+  woodLight: std(palette.woodLight, 0.52, { map: textures.wood, metalness: 0.04 }),
+  woodDark: std(palette.woodDark, 0.56, { map: textures.wood, metalness: 0.05 }),
+  woodFloor: std(palette.woodWarm, 0.44, { map: textures.wood, metalness: 0.04 }),
+  stone: std(palette.stoneCream, 0.80, { map: textures.stone }),
+  terraceTiles: std(palette.terracotta, 0.68, { map: textures.tiles }),
 
-  // Glass & Metal
+  // Glass & Metal with stylized Pixar/Ghibli lighting highlights
   glass: new THREE.MeshPhysicalMaterial({
-    color: 0xb5e2dc,
+    color: 0xc6eeea,
     transparent: true,
-    opacity: 0.38,
-    roughness: 0.12,
-    metalness: 0.05,
-    clearcoat: 0.8,
-    clearcoatRoughness: 0.1,
+    opacity: 0.35,
+    roughness: 0.08,
+    metalness: 0.04,
+    clearcoat: 0.95,
+    clearcoatRoughness: 0.06,
     depthWrite: false,
   }),
-  brass: std(palette.goldBrass, 0.32, { metalness: 0.7 }),
-  metalDark: std(palette.inkDark, 0.45, { metalness: 0.4 }),
+  brass: std(palette.goldBrass, 0.22, { metalness: 0.85 }),
+  metalDark: std(palette.inkDark, 0.38, { metalness: 0.65 }),
 
   // Landscape
   grass: std(palette.grassMid, 0.88, { map: textures.plaster }),
@@ -207,12 +207,12 @@ export const materials = {
   cushionYellow: std(palette.yellowSun, 0.68, { map: textures.fabric }),
   cushionBlue: std(palette.bluePastel, 0.68, { map: textures.fabric }),
 
-  // Luxury Mansion Interiors
-  epoxyFloor: std(0x282c30, 0.28, { metalness: 0.15 }),
-  bathroomTile: std(0xf2f8f9, 0.22, { map: textures.bathroomTiles, roughness: 0.25 }),
-  bedLinen: std(0xfbf8f2, 0.75, { map: textures.fabric }),
-  bedLinenDark: std(0x2d3a44, 0.72, { map: textures.fabric }),
-  acousticFoam: std(0x222629, 0.92, { roughness: 0.95 }),
+  // Luxury Mansion Interiors with refined physical specular response
+  epoxyFloor: std(0x282c30, 0.22, { metalness: 0.22 }),
+  bathroomTile: std(0xf2f8f9, 0.16, { map: textures.bathroomTiles, roughness: 0.18, metalness: 0.04 }),
+  bedLinen: std(0xfbf8f2, 0.72, { map: textures.fabric }),
+  bedLinenDark: std(0x2d3a44, 0.70, { map: textures.fabric }),
+  acousticFoam: std(0x222629, 0.90, { roughness: 0.92 }),
 
   // Automotive & Luxury Garage Materials (BMW M-Series)
   carPaintWhite: new THREE.MeshPhysicalMaterial({

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { materials, palette } from './materials.js';
-import { addBox, addSphere, addCylinder } from './geometry.js';
+import { addBox, addSphere, addCylinder, BatchCollector } from './geometry.js';
 import { createSignTexture } from './textures.js';
 import { portfolio } from './portfolio.js';
 
@@ -508,22 +508,23 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
       addBox(shelf, [0, sy, 0.02], [7.6, 0.06, 0.48], materials.woodWarm);
     }
 
-    // Rows of Colorful Hardcover Books
+    // Rows of Colorful Hardcover Books (batched into single draw call per color, no shadow overhead)
     const bookColors = [materials.coral, materials.yellowSun, materials.blueSky, materials.mint, materials.pinkRose, materials.woodDark];
+    const bookBatch = new BatchCollector();
     for (let row = 0; row < 5; row += 1) {
       const by = 0.95 + row * 0.8;
       for (let bx = -3.4; bx <= 3.4; bx += 0.32) {
         const seed = Math.abs(Math.sin(bx * 13.7 + row * 5.3));
         const bookH = 0.42 + seed * 0.18;
         const bookW = 0.18 + (seed % 0.1) * 0.8;
-        addBox(
-          shelf,
+        bookBatch.addBox(
           [bx, by - 0.24 + bookH * 0.5, 0.05],
           [bookW, bookH, 0.36],
           bookColors[Math.abs(Math.round(bx * 7 + row)) % bookColors.length]
         );
       }
     }
+    bookBatch.build(shelf, false);
     addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 2.4, z - 5.4], [3.9, 2.4, 0.35]);
 
     // Cozy Loveseat / Reading Sofa in Teal/Mint Velvet facing forward (+Z)
