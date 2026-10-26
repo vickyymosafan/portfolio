@@ -1238,12 +1238,12 @@ function planTourWaypoints(startX, startZ, targetStop) {
 
   // Handle cross-floor traversal between Ground Floor and Second Floor
   if (!startIsUpper && targetIsUpper) {
-    // Ground to Upper: Navigate to foot of Grand Staircase, then ascend
+    // Ground to Upper: Navigate to foot of Grand Staircase (z = 1.6), then ascend smoothly to mezzanine landing (z = -5.5)
     if (isOutdoor) {
       points.push([0, 1.12, 3.8]);
     }
-    points.push([0, 1.12, -1.8]); // Foot of grand staircase
-    points.push([0, 6.32, -7.8]); // Top mezzanine landing
+    points.push([0, 1.12, 1.6]); // Foot of grand central staircase
+    points.push([0, 6.32, -5.5]); // Top mezzanine landing
     if (Math.abs(targetArchX) > 0.5) points.push([targetArchX, 6.32, targetZ]);
     points.push([targetX, targetY, targetZ]);
     return points;
@@ -1251,8 +1251,8 @@ function planTourWaypoints(startX, startZ, targetStop) {
 
   if (startIsUpper && !targetIsUpper) {
     // Upper to Ground: Walk to staircase top landing, descend to ground
-    points.push([0, 6.32, -7.8]); // Top of staircase
-    points.push([0, 1.12, -1.8]); // Foot of staircase on ground floor
+    points.push([0, 6.32, -5.5]); // Top of staircase
+    points.push([0, 1.12, 1.6]); // Foot of staircase on ground floor
     if (targetIsOutdoor) {
       if (targetZ > 4.2) {
         points.push([0, 1.12, 3.8]);
@@ -1270,7 +1270,7 @@ function planTourWaypoints(startX, startZ, targetStop) {
 
   if (startIsUpper && targetIsUpper) {
     // Upper floor room to room
-    points.push([0, 6.32, -7.8]);
+    points.push([0, 6.32, -5.5]);
     if (Math.abs(targetArchX) > 0.5) points.push([targetArchX, 6.32, targetZ]);
     points.push([targetX, targetY, targetZ]);
     return points;
@@ -2129,6 +2129,29 @@ async function init() {
     window.renderer = renderer;
     window.camera = camera;
     window.__toggleOverviewMode = toggleOverviewMode;
+    window.__playerBody = playerBody;
+    window.__characterRig = characterRig;
+    window.__characterController = characterController;
+    window.__setPlayerPos = (x, y, z) => {
+      physX = x;
+      physY = y;
+      physZ = z;
+      if (playerBody) {
+        playerBody.setTranslation({ x, y, z }, true);
+        if (playerBody.setNextKinematicTranslation) {
+          playerBody.setNextKinematicTranslation({ x, y, z });
+        }
+      }
+      if (characterRig?.character) {
+        characterRig.character.position.set(x, y, z);
+      }
+    };
+    window.__getPlayerPos = () => ({ x: physX, y: physY, z: physZ });
+    window.__setRoom = setRoom;
+    window.__startExperience = startExperience;
+    window.__dispatchInteraction = dispatchInteraction;
+    window.__interactionPoints = interactionPoints;
+    window.__findInteraction = findInteraction;
     window.__SCENE_READY__ = true;
 
     document.documentElement.classList.add('webgl-ready');

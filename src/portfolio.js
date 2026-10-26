@@ -104,14 +104,14 @@ export const portfolio = {
       count: '07 / 10',
       eyebrow: 'Relax & Refresh',
       title: 'Master Bath & Spa',
-      position: [0.0, 6.32, -1.0],
+      position: [0.0, 6.32, -5.5],
       facing: 0.0,
       yaw: 0.0,
       pitch: 0.22,
       cameraShot: {
-        pos: [1.8, 7.08, 1.5],
-        target: [-0.8, 6.8, -3.0],
-        charFacing: -0.2,
+        pos: [1.8, 7.08, -3.2],
+        target: [-2.2, 6.8, -4.8],
+        charFacing: -0.25,
       },
     },
     {
