@@ -46,8 +46,8 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
       const rugD = 6.4;
       addBox(building, [spec.x, spec.y + 0.005, spec.z], [rugW, 0.02, rugD], spec.rugMat, { receive: true, shadow: false });
     } else if (spec.id === 'about') {
-      // Grand central designer area rug in Living Room, leaving clear promenade to front and rear
-      addBox(building, [0.0, spec.y + 0.005, -2.4], [5.6, 0.02, 4.6], spec.rugMat, { receive: true, shadow: false });
+      // Grand central designer area rug defining the About Me Pavilion space
+      addBox(building, [-1.4, spec.y + 0.005, 1.7], [6.2, 0.02, 4.4], spec.rugMat, { receive: true, shadow: false });
     }
 
     // Presentation Display Board Mounted on back wall of room (leaving center clear)
@@ -59,8 +59,9 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
     buildRoomFurniture(building, spec, world, RAPIER, staticBodies);
 
     // Interactive glowing floor beacon placed conveniently in front/center of each room
-    const beaconX = spec.x;
-    const beaconZ = spec.id === 'contact' ? -11.8 : (spec.id === 'bathroom' ? -5.5 : -1.5);
+    const isAbout = spec.id === 'about';
+    const beaconX = isAbout ? -1.4 : spec.x;
+    const beaconZ = spec.id === 'contact' ? -11.8 : (spec.id === 'bathroom' ? -5.5 : (isAbout ? 1.7 : -1.5));
     createFloorBeacon(building, beaconX, spec.y, beaconZ, spec.accent);
 
     // Register interaction point covering the full room bay
@@ -105,13 +106,12 @@ function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
   const { x, y, id, title, subtitle, accent } = room;
 
   // Mount seamlessly on a solid structural wall
-  // For 'about' (Living Room), mount on the solid West gallery wall at x = -5.35, z = 2.2
-  // facing East into the entrance foyer and living lounge.
-  // This keeps the rear terrace glass sliding doors (x: [-2.4, 2.4], z = -8.2) 100% open and unobstructed!
+  // For 'about' (About Me Room), mount on the dedicated solid West feature wall at x = -5.35, z = 1.7
+  // facing East into the spacious About Me pavilion salon.
   const isAbout = id === 'about';
   const bx = isAbout ? -5.35 : x;
   const by = y;
-  const bz = id === 'contact' ? -15.2 : (isAbout ? 2.2 : -7.8);
+  const bz = id === 'contact' ? -15.2 : (isAbout ? 1.7 : -7.8);
   const rotY = isAbout ? Math.PI * 0.5 : 0;
 
   const display = new THREE.Group();
@@ -119,9 +119,26 @@ function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
   display.rotation.y = rotY;
   parent.add(display);
 
-  // Wall mounted plaque frame (width 2.8m, height 1.7m for 'about' to fit cleanly on the 3.2m solid wall)
-  const boardW = isAbout ? 2.8 : 3.6;
-  const boardH = isAbout ? 1.7 : 2.0;
+  // Architectural fluted acoustic timber slats & brass frame behind "About Me" board
+  if (isAbout) {
+    // Acoustic dark wood panel (width 4.0m, height 3.8m)
+    addBox(display, [0, 2.5, -0.02], [4.0, 3.8, 0.04], materials.woodDark);
+    // Fluted decorative wooden slats on flanking sides
+    for (let s = -1.9; s <= 1.9; s += 0.2) {
+      if (Math.abs(s) > 1.55) {
+        addBox(display, [s, 2.5, 0.02], [0.08, 3.8, 0.04], materials.woodLight);
+      }
+    }
+    // Brushed brass framing perimeter
+    addBox(display, [0, 4.42, 0.01], [4.06, 0.06, 0.06], materials.brass);
+    addBox(display, [0, 0.58, 0.01], [4.06, 0.06, 0.06], materials.brass);
+    addBox(display, [-2.02, 2.5, 0.01], [0.06, 3.8, 0.06], materials.brass);
+    addBox(display, [2.02, 2.5, 0.01], [0.06, 3.8, 0.06], materials.brass);
+  }
+
+  // Wall mounted plaque frame
+  const boardW = isAbout ? 3.0 : 3.6;
+  const boardH = isAbout ? 1.8 : 2.0;
   addBox(display, [0, 2.7, 0.08], [boardW, boardH, 0.1], materials.woodDark);
 
   // Canvas sign texture
@@ -133,9 +150,11 @@ function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
   signMesh.position.set(0, 2.7, 0.14);
   display.add(signMesh);
 
-  // Brass picture lamp over board
-  addBox(display, [0, 2.7 + boardH * 0.5 + 0.1, 0.25], [boardW * 0.55, 0.08, 0.16], materials.brass);
-  addSphere(display, [0, 2.7 + boardH * 0.5 + 0.02, 0.25], [0.16, 0.06, 0.16], materials.glow, { shadow: false });
+  // Twin brass picture lamps over board
+  for (const lx of isAbout ? [-0.65, 0.65] : [0]) {
+    addBox(display, [lx, 2.7 + boardH * 0.5 + 0.12, 0.25], [isAbout ? 0.9 : boardW * 0.55, 0.06, 0.16], materials.brass);
+    addSphere(display, [lx, 2.7 + boardH * 0.5 + 0.04, 0.25], [0.14, 0.05, 0.14], materials.glow, { shadow: false });
+  }
 }
 
 function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
@@ -143,80 +162,111 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
 
   if (id === 'about') {
     // =========================================================================
-    // 1. GRAND LIVING ROOM (Lantai 1 Center, x = 0.0, y = 0.0, z = -2.0)
-    // Curving contemporary sectional sofa, round coffee table, media wall with OLED TV,
-    // fireplace, brass ring chandelier, potted palms, open to front porch
+    // 1. CHAPTER 01: ABOUT ME — EXECUTIVE BIOGRAPHICAL PAVILION & ATRIUM
+    // Dedicated architectural room with monumental feature wall, career milestone
+    // pedestals, interactive paradigm crystal, and airy luxury seating
     // =========================================================================
 
-    // Modern Sculptural Ring Chandelier (y = 4.6)
+    // Multi-tier Sculptural Ring Chandelier centered in About Me Pavilion (y = 4.6)
     const chandelier = new THREE.Group();
-    chandelier.position.set(x, y + 4.6, z);
+    chandelier.position.set(x - 1.4, y + 4.6, 1.7);
     parent.add(chandelier);
     addCylinder(chandelier, [0, 0, 0], 1.6, 1.6, 0.1, materials.brass, { segments: 24 });
     addCylinder(chandelier, [0, -0.04, 0], 1.5, 1.5, 0.06, materials.glow, { segments: 24, shadow: false });
+    addCylinder(chandelier, [0, 0.35, 0], 0.9, 0.9, 0.08, materials.brass, { segments: 20 });
+    addCylinder(chandelier, [0, 0.31, 0], 0.82, 0.82, 0.05, materials.glow, { segments: 20, shadow: false });
     for (let c = 0; c < 3; c += 1) {
       const angle = (c / 3) * Math.PI * 2;
-      addCylinder(chandelier, [Math.cos(angle) * 1.5, 0.35, Math.sin(angle) * 1.5], 0.015, 0.015, 0.7, materials.brass);
+      addCylinder(chandelier, [Math.cos(angle) * 1.5, 0.45, Math.sin(angle) * 1.5], 0.015, 0.015, 0.9, materials.brass);
     }
 
-    // --- GRAND CENTRAL ARCHITECTURAL LOUNGE ---
-    // Curved Contemporary Sectional Sofa on West side facing East towards coffee table
-    const sofaWest = new THREE.Group();
-    sofaWest.position.set(x - 1.5, y, z - 0.4);
-    parent.add(sofaWest);
-    addBox(sofaWest, [0, 0.42, 0], [1.5, 0.45, 2.2], materials.coral);
-    addBox(sofaWest, [-0.62, 0.95, 0], [0.30, 0.65, 2.2], materials.coral);
-    addBox(sofaWest, [0, 0.42, 0.9], [1.6, 0.45, 0.8], materials.coral);
-    addBox(sofaWest, [0, 0.95, 1.15], [1.6, 0.65, 0.3], materials.coral);
-    // Decorative throw cushions
-    addBox(sofaWest, [-0.35, 0.8, -0.45], [0.42, 0.42, 0.2], materials.cushionYellow, { rotation: [0.1, 0.2, 0] });
-    addBox(sofaWest, [-0.35, 0.8, 0.35], [0.42, 0.42, 0.2], materials.cushionMint, { rotation: [0.1, -0.2, 0] });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 1.5, y + 0.5, z - 0.4], [0.9, 0.5, 1.3]);
+    // --- FEATURE WALL EXHIBITION CONSOLE (Below "About Me" Display Board at x = -5.15, z = 1.7) ---
+    // Floating Walnut Credenza with Polished Italian Marble Top
+    addBox(parent, [x - 5.15, y + 0.45, 1.7], [0.44, 0.52, 3.2], materials.woodDark);
+    addBox(parent, [x - 5.14, y + 0.72, 1.7], [0.46, 0.04, 3.25], materials.stone);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 5.15, y + 0.45, 1.7], [0.25, 0.45, 1.65]);
 
-    // Low Round Solid Oak & Marble Coffee Table in center of lounge
-    addCylinder(parent, [x - 0.1, y + 0.36, z - 0.4], 0.65, 0.65, 0.08, materials.woodDark, { segments: 20 });
-    addCylinder(parent, [x - 0.1, y + 0.18, z - 0.4], 0.18, 0.24, 0.34, materials.brass, { segments: 14 });
-    addSphere(parent, [x, y + 0.48, z - 0.4], [0.1, 0.1, 0.1], materials.ceramicTeal);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 0.1, y + 0.25, z - 0.4], [0.65, 0.25, 0.65]);
+    // Exhibition items on the console:
+    // 1. Executive Bio Plaque
+    addBox(parent, [x - 5.08, y + 0.88, 1.7], [0.06, 0.28, 0.85], materials.woodLight);
+    addBox(parent, [x - 5.04, y + 0.88, 1.7], [0.02, 0.24, 0.80], materials.brass);
+    // 2. Innovation Milestone Award in Gold
+    addCylinder(parent, [x - 5.08, y + 0.82, 2.5], 0.08, 0.10, 0.16, materials.brass, { segments: 14 });
+    addSphere(parent, [x - 5.08, y + 0.96, 2.5], [0.07, 0.07, 0.07], materials.gold);
+    // 3. Minimalist Ceramic Vase with Flora
+    addCylinder(parent, [x - 5.08, y + 0.84, 0.9], 0.09, 0.06, 0.20, materials.ceramicTeal, { segments: 14 });
+    addSphere(parent, [x - 5.08, y + 1.02, 0.9], [0.12, 0.16, 0.12], materials.foliageBright);
 
-    // Pair of Contemporary Accent Armchairs on East side facing West towards sofa
-    for (const cz of [-1.1, 0.3]) {
+    // --- 4 ARCHITECTURAL PILLARS OF VICKY'S CRAFT ---
+    // 4 Sleek Low Gallery Plinths framing the About Me pavilion space (x = -3.2, z = [2.9, 2.1, 1.3, 0.5])
+    const pillars = [
+      { z: 2.9, mat: materials.blue },
+      { z: 2.1, mat: materials.mint },
+      { z: 1.3, mat: materials.coral },
+      { z: 0.5, mat: materials.gold },
+    ];
+    for (const p of pillars) {
+      // Fluted pedestal base
+      addBox(parent, [x - 3.2, y + 0.38, p.z], [0.38, 0.76, 0.38], materials.woodWarm);
+      addBox(parent, [x - 3.2, y + 0.77, p.z], [0.42, 0.03, 0.42], materials.brass);
+      // Floating glowing discipline crystal prism
+      addSphere(parent, [x - 3.2, y + 0.95, p.z], [0.09, 0.09, 0.09], p.mat);
+      addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.2, y + 0.45, p.z], [0.22, 0.45, 0.22]);
+    }
+
+    // --- CENTRAL PARADIGM PEDESTAL & INTERACTIVE BEACON ---
+    // In the center of the About Me zone (x = -1.4, z = 1.7)
+    addCylinder(parent, [x - 1.4, y + 0.42, 1.7], 0.38, 0.42, 0.84, materials.stone, { segments: 18 });
+    addCylinder(parent, [x - 1.4, y + 0.85, 1.7], 0.44, 0.44, 0.04, materials.brass, { segments: 18 });
+    // Floating rotating crystal
+    addSphere(parent, [x - 1.4, y + 1.10, 1.7], [0.14, 0.18, 0.14], materials.glow, { shadow: false });
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 1.4, y + 0.45, 1.7], [0.42, 0.45, 0.42]);
+
+    // --- AIRY EXECUTIVE LOUNGE SEATING (Oriented towards About Me Showcase) ---
+    // Pair of Bauhaus/Barcelona style armchairs on East side of rug facing West towards the About Me wall
+    for (const cz of [-0.65, 0.65]) {
       const arm = new THREE.Group();
-      arm.position.set(x + 1.5, y, z - 0.4 + cz);
-      arm.rotation.y = Math.PI; // Face West towards sofa and table
+      arm.position.set(x + 1.6, y, 1.7 + cz);
+      arm.rotation.y = Math.PI; // Face West towards About Me feature wall
       parent.add(arm);
-      addBox(arm, [0, 0.42, 0], [0.85, 0.42, 0.8], materials.woodLight);
-      addBox(arm, [0.38, 0.85, 0], [0.14, 0.55, 0.8], materials.coral);
-      addBox(arm, [0, 0.85, -0.35], [0.8, 0.55, 0.14], materials.coral);
-      addFurnitureCollider(world, RAPIER, staticBodies, [x + 1.5, y + 0.5, z - 0.4 + cz], [0.5, 0.5, 0.5]);
+      // Sleek low cantilevered chrome frame
+      addBox(arm, [0, 0.16, 0], [0.85, 0.04, 0.75], materials.carChrome);
+      // Deep leather seat cushion
+      addBox(arm, [0, 0.38, 0.02], [0.82, 0.38, 0.72], materials.terracotta);
+      // Angled backrest
+      addBox(arm, [0.34, 0.75, 0.02], [0.12, 0.52, 0.72], materials.terracotta, { rotation: [0, 0, -0.15] });
+      // Throw cushion
+      addBox(arm, [0.22, 0.65, 0.02], [0.12, 0.32, 0.38], cz > 0 ? materials.cushionYellow : materials.cushionMint);
+      addFurnitureCollider(world, RAPIER, staticBodies, [x + 1.6, y + 0.45, 1.7 + cz], [0.45, 0.45, 0.42]);
     }
-    // Small drinks table between armchairs
-    addCylinder(parent, [x + 1.5, y + 0.4, z - 0.8], 0.30, 0.30, 0.06, materials.woodDark, { segments: 14 });
-    addCylinder(parent, [x + 1.5, y + 0.2, z - 0.8], 0.04, 0.04, 0.38, materials.brass);
 
-    // Wall-Mounted OLED Art Screen on Solid West Wall Section (z = -6.8, partWestG2)
-    // Completely clearing the 4-meter wide gallery archway (z: [-1.4, -5.4]) so walkway is 100% open
+    // Low Sculpted Walnut & Glass Cocktail Table between lounge chairs and central beacon
+    addCylinder(parent, [x + 0.7, y + 0.28, 1.7], 0.48, 0.48, 0.06, materials.woodDark, { segments: 18 });
+    addCylinder(parent, [x + 0.7, y + 0.14, 1.7], 0.12, 0.16, 0.26, materials.brass, { segments: 14 });
+    addSphere(parent, [x + 0.7, y + 0.36, 1.7], [0.08, 0.08, 0.08], materials.ceramicTeal);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x + 0.7, y + 0.20, 1.7], [0.48, 0.20, 0.48]);
+
+    // Architectural Fig Palm Tree in Corner (x = -4.8, z = 3.3)
+    addCylinder(parent, [x - 4.8, y + 0.45, 3.3], 0.38, 0.28, 0.9, materials.ceramicTerracotta, { segments: 16 });
+    for (let i = 0; i < 7; i += 1) {
+      const angle = (i / 7) * Math.PI * 2;
+      addSphere(parent, [x - 4.8 + Math.cos(angle) * 0.38, y + 1.35 + (i % 2) * 0.18, 3.3 + Math.sin(angle) * 0.38], [0.36, 0.22, 0.36], materials.foliageBright);
+    }
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.8, y + 0.55, 3.3], [0.4, 0.55, 0.4]);
+
+    // --- REAR LOUNGE & MEDIA ATRIUM ZONE (z = -6.0, Near Garden Veranda Doors) ---
+    // Wall-Mounted 85" OLED TV and credenza on the rear solid wall (x - 5.35, z = -6.0)
     const mediaWall = new THREE.Group();
-    mediaWall.position.set(x - 5.35, y + 2.2, -6.8);
+    mediaWall.position.set(x - 5.35, y + 2.2, -6.0);
     mediaWall.rotation.y = Math.PI * 0.5;
     parent.add(mediaWall);
-    addBox(mediaWall, [0, 0, 0], [2.4, 1.4, 0.06], materials.metalDark);
-    addBox(mediaWall, [0, 0, 0.04], [2.28, 1.28, 0.02], materials.artLandscape, { shadow: false });
+    addBox(mediaWall, [0, 0, 0], [2.6, 1.5, 0.06], materials.metalDark);
+    addBox(mediaWall, [0, 0, 0.04], [2.48, 1.38, 0.02], materials.artLandscape, { shadow: false });
 
-    // Matching floating walnut media credenza against solid wall below TV
-    addBox(parent, [x - 5.15, y + 0.42, -6.8], [0.42, 0.42, 2.2], materials.woodDark);
-    addBox(parent, [x - 5.14, y + 0.64, -6.8], [0.40, 0.02, 2.1], materials.stone);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 5.15, y + 0.45, -6.8], [0.22, 0.45, 1.1]);
-
-    // Flanking Potted Fiddle-leaf Fig Palms in foyer & corner
-    for (const px of [-4.6, 1.8]) {
-      addCylinder(parent, [x + px, y + 0.45, z + 3.2], 0.4, 0.3, 0.9, materials.ceramicTerracotta, { segments: 16 });
-      for (let i = 0; i < 6; i += 1) {
-        const angle = (i / 6) * Math.PI * 2;
-        addSphere(parent, [x + px + Math.cos(angle) * 0.35, y + 1.35 + (i % 2) * 0.15, z + 3.2 + Math.sin(angle) * 0.35], [0.35, 0.2, 0.35], materials.foliageBright);
-      }
-      addFurnitureCollider(world, RAPIER, staticBodies, [x + px, y + 0.55, z + 3.2], [0.4, 0.55, 0.4]);
-    }
+    // Floating walnut media credenza
+    addBox(parent, [x - 5.15, y + 0.42, -6.0], [0.42, 0.42, 2.4], materials.woodDark);
+    addBox(parent, [x - 5.14, y + 0.64, -6.0], [0.40, 0.02, 2.3], materials.stone);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 5.15, y + 0.45, -6.0], [0.25, 0.45, 1.25]);
   } else if (id === 'projects') {
     // =========================================================================
     // 2. PROJECT GALLERY (Lantai 1 Left, x = -11.0, y = 0.0, z = -2.0)
@@ -638,323 +688,335 @@ function buildSportsCar(parent, cx, cy, cz) {
   parent.add(car);
 
   // =========================================================================
-  // 1. LOWER CHASSIS & WIDEBODY AERODYNAMIC BODYWORK (BMW M4 G82 CSL)
+  // 1. CHASSIS & SCULPTED WIDEBODY (BMW M4 G82 CSL PROPORTIONS)
   // =========================================================================
-  // Main aerodynamic body tub (Mineral White / Brooklyn Grey Metallic)
-  addBox(car, [0, 0.38, -0.05], [1.82, 0.38, 4.35], materials.m4Paint, { shadow: true });
+  // Main lower aerodynamic tub
+  addBox(car, [0, 0.30, -0.05], [1.78, 0.28, 4.30], materials.m4Paint, { shadow: true });
 
-  // Flared Widebody Front Wheel Arches (Muscular M Fenders)
+  // Sculpted Door Waist & Rocker Panels (Between front & rear wheels, z: -0.65 to +0.65)
+  for (const sx of [-0.94, 0.94]) {
+    // Upper door panel tucked in for muscular waist
+    addBox(car, [sx, 0.46, 0.02], [0.12, 0.30, 1.45], materials.m4Paint);
+    // Lower carbon fiber side skirt
+    addBox(car, [sx * 1.04, 0.13, 0.02], [0.12, 0.04, 1.55], materials.m4Carbon);
+    // Aerodynamic winglet fin ahead of rear wheel arch
+    addBox(car, [sx * 1.10, 0.22, -0.62], [0.04, 0.16, 0.22], materials.m4Carbon);
+  }
+
+  // Muscular Front Widebody Fenders (Arching over front wheels at z = 1.38)
   for (const fx of [-0.98, 0.98]) {
-    addBox(car, [fx, 0.44, 1.38], [0.26, 0.36, 1.25], materials.m4Paint);
-    addBox(car, [fx * 0.96, 0.60, 1.38], [0.22, 0.10, 1.05], materials.m4Paint);
-    // Front fender flare bevels
-    addBox(car, [fx * 1.02, 0.36, 1.38], [0.12, 0.26, 0.95], materials.m4Paint);
+    // Front fender top ridge
+    addBox(car, [fx, 0.56, 1.38], [0.22, 0.14, 1.25], materials.m4Paint);
+    // Front fender forward flare (ahead of front wheel)
+    addBox(car, [fx, 0.36, 1.88], [0.24, 0.36, 0.45], materials.m4Paint);
+    // Front fender rear flare (behind front wheel, with M gill pocket)
+    addBox(car, [fx, 0.38, 0.88], [0.22, 0.38, 0.42], materials.m4Paint);
+    // M Fender Side Gills (gloss black air vent with chrome M4 bar)
+    addBox(car, [fx * 1.025, 0.52, 0.78], [0.02, 0.18, 0.10], materials.m4GlossBlack);
+    addBox(car, [fx * 1.032, 0.54, 0.78], [0.012, 0.03, 0.07], materials.carChrome);
   }
 
-  // Pinched Door Waist & Muscular Rear Widebody Haunches
+  // Muscular Rear Widebody Haunches (Arching over rear wheels at z = -1.35)
   for (const rx of [-1.02, 1.02]) {
-    // Sculpted door waist panel
-    addBox(car, [rx * 0.88, 0.46, 0.05], [0.12, 0.32, 1.45], materials.m4Paint);
-    // Muscular rear haunches over rear axle
-    addBox(car, [rx, 0.46, -1.32], [0.28, 0.38, 1.35], materials.m4Paint);
-    addBox(car, [rx * 0.96, 0.62, -1.32], [0.24, 0.12, 1.15], materials.m4Paint);
-    addBox(car, [rx * 1.03, 0.36, -1.32], [0.12, 0.28, 1.05], materials.m4Paint);
-  }
-
-  // Carbon Fiber Lower Side Rocker Skirts with Aero Winglets ahead of rear wheels
-  for (const sx of [-0.99, 0.99]) {
-    // Full-length carbon rocker skirt
-    addBox(car, [sx, 0.14, -0.05], [0.16, 0.05, 3.4], materials.m4Carbon);
-    // Upward aerodynamic winglet flick ahead of rear arch
-    addBox(car, [sx * 1.08, 0.22, -0.62], [0.05, 0.15, 0.24], materials.m4Carbon);
+    // Rear fender top muscular shoulder
+    addBox(car, [rx, 0.58, -1.35], [0.26, 0.16, 1.35], materials.m4Paint);
+    // Rear fender forward flare (ahead of rear wheel)
+    addBox(car, [rx, 0.38, -0.85], [0.25, 0.38, 0.45], materials.m4Paint);
+    // Rear quarter rear flare (behind rear wheel into bumper)
+    addBox(car, [rx, 0.38, -1.85], [0.24, 0.38, 0.55], materials.m4Paint);
   }
 
   // =========================================================================
-  // 2. FRONT FASCIA: MASSIVE VERTICAL TWIN KIDNEY GRILLES & M FRONT BUMPER
+  // 2. SLOPED HOOD & FRONT NOSE (DYNAMIC FORWARD WEDGE)
   // =========================================================================
-  // Vertical Twin Kidney Grilles (Frameless G82 signature spanning from hood to splitter)
-  const kidneyWidth = 0.34;
-  const kidneyHeight = 0.54;
+  // Sloped hood base: drops smoothly from windshield base (y = 0.70, z = 0.85) to nose (y = 0.54, z = 2.15)
+  addBox(car, [0, 0.62, 1.48], [1.70, 0.12, 1.35], materials.m4Paint, {
+    rotation: [-0.11, 0, 0],
+  });
+
+  // CSL Carbon Hood Center Panel with Red/Black Racing Stripes
+  addBox(car, [0, 0.685, 1.48], [1.36, 0.015, 1.32], materials.m4HoodStripes, {
+    rotation: [-0.11, 0, 0],
+  });
+
+  // Muscular Hood Power Bulge Ridges flanking the central channel
+  for (const bx of [-0.36, 0.36]) {
+    addBox(car, [bx, 0.698, 1.48], [0.05, 0.025, 1.30], materials.m4Paint, {
+      rotation: [-0.11, 0, 0],
+    });
+  }
+
+  // Front Nose Beak (directly above grilles where BMW Roundel sits)
+  addBox(car, [0, 0.56, 2.18], [0.72, 0.10, 0.16], materials.m4Paint, {
+    rotation: [-0.15, 0, 0],
+  });
+  // BMW Roundel Emblem on the sloped nose beak
+  addCylinder(car, [0, 0.625, 2.18], 0.052, 0.052, 0.012, materials.m4BmwEmblem, {
+    rotation: [0.38, 0, 0],
+    segments: 18,
+  });
+
+  // =========================================================================
+  // 3. FRONT FASCIA: MASSIVE VERTICAL TWIN KIDNEY GRILLES & GERMAN PLATE
+  // =========================================================================
+  const kidneyWidth = 0.32;
+  const kidneyHeight = 0.50;
   const kidneyZ = 2.22;
 
-  // Left & Right Kidney Octagonal Surround Frames
-  addBox(car, [-0.22, 0.50, kidneyZ], [kidneyWidth, kidneyHeight, 0.05], materials.m4GlossBlack);
-  addBox(car, [0.22, 0.50, kidneyZ], [kidneyWidth, kidneyHeight, 0.05], materials.m4GlossBlack);
+  // Left & Right Kidney Octagonal Frames (dropping down from nose to lower splitter)
+  addBox(car, [-0.20, 0.36, kidneyZ], [kidneyWidth, kidneyHeight, 0.05], materials.m4GlossBlack);
+  addBox(car, [0.20, 0.36, kidneyZ], [kidneyWidth, kidneyHeight, 0.05], materials.m4GlossBlack);
 
-  // Recessed radiator air mesh behind kidneys
-  addBox(car, [-0.22, 0.50, kidneyZ - 0.02], [kidneyWidth - 0.04, kidneyHeight - 0.04, 0.04], materials.metalDark);
-  addBox(car, [0.22, 0.50, kidneyZ - 0.02], [kidneyWidth - 0.04, kidneyHeight - 0.04, 0.04], materials.metalDark);
+  // Recessed Radiator Dark Mesh inside kidneys
+  addBox(car, [-0.20, 0.36, kidneyZ - 0.02], [kidneyWidth - 0.04, kidneyHeight - 0.04, 0.04], materials.metalDark);
+  addBox(car, [0.20, 0.36, kidneyZ - 0.02], [kidneyWidth - 0.04, kidneyHeight - 0.04, 0.04], materials.metalDark);
 
-  // Body-colored center nose bridge between twin kidneys
-  addBox(car, [0, 0.50, kidneyZ + 0.005], [0.07, kidneyHeight + 0.02, 0.05], materials.m4Paint);
+  // Body-Colored Center Vertical Bridge between kidneys
+  addBox(car, [0, 0.36, kidneyZ + 0.005], [0.06, kidneyHeight + 0.02, 0.04], materials.m4Paint);
 
-  // Horizontal Twin Double Slats inside each kidney grille (gloss black aero bars)
-  const slatYLevels = [0.30, 0.41, 0.53, 0.65];
-  for (const kx of [-0.22, 0.22]) {
-    for (const sy of slatYLevels) {
-      addBox(car, [kx, sy, kidneyZ + 0.025], [kidneyWidth - 0.04, 0.022, 0.03], materials.m4GlossBlack);
+  // Body-Colored Sculpted Bumper Panels flanking the kidneys
+  for (const bx of [-0.44, 0.44]) {
+    addBox(car, [bx, 0.38, 2.19], [0.18, 0.36, 0.10], materials.m4Paint);
+  }
+
+  // Horizontal Twin Double Slats inside each kidney
+  const slatY = [0.19, 0.29, 0.40, 0.51];
+  for (const kx of [-0.20, 0.20]) {
+    for (const sy of slatY) {
+      addBox(car, [kx, sy, kidneyZ + 0.024], [kidneyWidth - 0.04, 0.02, 0.03], materials.m4GlossBlack);
     }
   }
 
   // M4 Competition Grille Emblem on upper right kidney with M tricolor stripe
-  addBox(car, [0.24, 0.65, kidneyZ + 0.042], [0.08, 0.028, 0.012], materials.m4GlossBlack);
-  addBox(car, [0.21, 0.65, kidneyZ + 0.045], [0.016, 0.024, 0.01], materials.m4LaserBlue); // M Light Blue
-  addBox(car, [0.226, 0.65, kidneyZ + 0.045], [0.016, 0.024, 0.01], materials.blueNavy); // M Dark Blue
-  addBox(car, [0.242, 0.65, kidneyZ + 0.045], [0.016, 0.024, 0.01], materials.coralDark); // M Red
+  addBox(car, [0.21, 0.51, kidneyZ + 0.042], [0.075, 0.025, 0.012], materials.m4GlossBlack);
+  addBox(car, [0.185, 0.51, kidneyZ + 0.045], [0.014, 0.022, 0.01], materials.m4LaserBlue);
+  addBox(car, [0.199, 0.51, kidneyZ + 0.045], [0.014, 0.022, 0.01], materials.blueNavy);
+  addBox(car, [0.213, 0.51, kidneyZ + 0.045], [0.014, 0.022, 0.01], materials.coralDark);
 
-  // German DIN License Plate `M DI 4015` mounted across middle of grilles
-  addBox(car, [0, 0.44, kidneyZ + 0.035], [0.84, 0.185, 0.015], materials.m4GlossBlack); // Plate bracket
-  addBox(car, [0, 0.44, kidneyZ + 0.044], [0.80, 0.165, 0.006], materials.m4PlateFront); // Front plate
+  // German DIN License Plate `M DI 4015` across middle of kidneys
+  addBox(car, [0, 0.32, kidneyZ + 0.035], [0.82, 0.175, 0.015], materials.m4GlossBlack);
+  addBox(car, [0, 0.32, kidneyZ + 0.044], [0.78, 0.155, 0.006], materials.m4PlateFront);
 
-  // BMW Roundel Emblem on the nose beak directly above the kidneys
-  addCylinder(car, [0, 0.765, 2.18], 0.055, 0.055, 0.012, materials.m4BmwEmblem, {
-    rotation: [0.32, 0, 0],
-    segments: 18,
-  });
-
-  // Carbon Fiber Front Splitter & Corner Aero Winglets
-  addBox(car, [0, 0.12, 2.28], [1.98, 0.04, 0.34], materials.m4Carbon);
-  for (const wx of [-1.00, 1.00]) {
-    // Upward aerodynamic endplate winglet on splitter edges
-    addBox(car, [wx, 0.18, 2.26], [0.05, 0.14, 0.26], materials.m4Carbon);
+  // Carbon Front Splitter & Corner Winglets (Ultra-low stance)
+  addBox(car, [0, 0.10, 2.26], [1.96, 0.035, 0.30], materials.m4Carbon);
+  for (const wx of [-0.98, 0.98]) {
+    addBox(car, [wx, 0.16, 2.24], [0.045, 0.13, 0.24], materials.m4Carbon);
   }
 
-  // Corner Air Curtain Intakes (triangular brake cooling vents with gloss black aero fangs)
-  for (const cx of [-0.85, 0.85]) {
-    addBox(car, [cx, 0.36, 2.18], [0.28, 0.32, 0.14], materials.m4GlossBlack);
-    addBox(car, [cx, 0.36, 2.19], [0.24, 0.28, 0.12], materials.metalDark);
-    // Vertical aero flick blade
-    addBox(car, [cx + (cx > 0 ? 0.12 : -0.12), 0.36, 2.22], [0.03, 0.30, 0.12], materials.m4GlossBlack);
+  // Triangular Corner Air Curtain Intakes (Brake cooling ducts with aero fangs)
+  for (const cx of [-0.78, 0.78]) {
+    addBox(car, [cx, 0.26, 2.16], [0.26, 0.26, 0.14], materials.m4GlossBlack);
+    addBox(car, [cx, 0.26, 2.17], [0.22, 0.22, 0.12], materials.metalDark);
+    addBox(car, [cx + (cx > 0 ? 0.11 : -0.11), 0.26, 2.20], [0.025, 0.24, 0.10], materials.m4GlossBlack);
   }
-  // Center lower cooling intake duct
-  addBox(car, [0, 0.18, 2.23], [1.32, 0.09, 0.14], materials.metalDark);
 
   // =========================================================================
-  // 3. M LASER HEADLIGHTS (Swept-back angular housings + DRL glowing arrows)
+  // 4. M LASER HEADLIGHTS (SWEPT-BACK, SHARP & HIGHLY PROMINENT)
   // =========================================================================
-  for (const hx of [-0.68, 0.68]) {
-    const rotY = hx > 0 ? -0.20 : 0.20;
-    // Outer glass cover with swept aerodynamic angle
-    addBox(car, [hx, 0.62, 2.14], [0.46, 0.15, 0.12], materials.glass, { rotation: [0, rotY, 0] });
-    // Inner dark projector bucket
-    addBox(car, [hx, 0.62, 2.13], [0.42, 0.13, 0.08], materials.m4GlossBlack, { rotation: [0, rotY, 0] });
+  for (const hx of [-0.64, 0.64]) {
+    const rotY = hx > 0 ? -0.24 : 0.24;
+    // Dark inner projector bucket
+    addBox(car, [hx, 0.50, 2.14], [0.44, 0.13, 0.06], materials.m4GlossBlack, { rotation: [-0.08, rotY, 0] });
 
-    // Dual glowing inverted-L DRL arrows (outer arrow + inner arrow)
-    const arrowOffsets = [-0.10, 0.10];
-    for (const aOff of arrowOffsets) {
-      const ax = hx + aOff * Math.cos(rotY);
-      const az = 2.145 + aOff * Math.sin(-rotY);
-      // Horizontal bottom leg of DRL arrow
-      addBox(car, [ax, 0.58, az], [0.09, 0.02, 0.02], materials.m4DRLGlow, { rotation: [0, rotY, 0], shadow: false });
-      // Vertical / angled leg of DRL arrow
-      addBox(car, [ax + (hx > 0 ? -0.035 : 0.035), 0.63, az], [0.02, 0.08, 0.02], materials.m4DRLGlow, { rotation: [0, rotY, 0], shadow: false });
+    // Dual Inverted-L DRL Glowing Arrows (placed proud in front of bucket)
+    const dOffs = [-0.10, 0.09];
+    for (const doff of dOffs) {
+      const ax = hx + doff * Math.cos(rotY);
+      const az = 2.18 + doff * Math.sin(-rotY);
+      // Horizontal lower wing of arrow
+      addBox(car, [ax, 0.46, az], [0.09, 0.024, 0.02], materials.m4DRLGlow, { rotation: [-0.08, rotY, 0], shadow: false });
+      // Angled upper hook of arrow
+      addBox(car, [ax + (hx > 0 ? -0.03 : 0.03), 0.51, az], [0.024, 0.08, 0.02], materials.m4DRLGlow, { rotation: [-0.08, rotY, 0], shadow: false });
     }
 
-    // Cyan Laser Accent strip along top brow of headlights
-    addBox(car, [hx * 0.94, 0.68, 2.15], [0.22, 0.022, 0.03], materials.m4LaserBlue, { rotation: [0, rotY, 0], shadow: false });
+    // Cyan Laser Accent Strip along upper brow of headlight
+    addBox(car, [hx * 0.94, 0.555, 2.185], [0.22, 0.024, 0.02], materials.m4LaserBlue, { rotation: [-0.08, rotY, 0], shadow: false });
+
+    // Outer clear aerodynamic protective lens
+    addBox(car, [hx, 0.50, 2.18], [0.46, 0.14, 0.03], materials.glass, { rotation: [-0.08, rotY, 0] });
   }
 
   // =========================================================================
-  // 4. SCULPTED HOOD WITH TWIN POWER CHANNELS & CSL RACING STRIPES
+  // 5. COUPE GREENHOUSE, M CARBON DOUBLE-BUBBLE ROOF & INTERIOR
   // =========================================================================
-  // Sloped hood base
-  addBox(car, [0, 0.69, 1.25], [1.74, 0.15, 1.88], materials.m4Paint);
+  // Windshield Cowl Transverse Base Bar
+  addBox(car, [0, 0.69, 0.88], [1.46, 0.06, 0.10], materials.m4Paint);
+  // Roof Front Transverse Header Bar
+  addBox(car, [0, 1.25, 0.08], [1.38, 0.06, 0.10], materials.m4Paint);
 
-  // CSL Carbon Hood Center Panel with twin stripes & red pinstripe borders
-  addBox(car, [0, 0.772, 1.25], [1.38, 0.016, 1.84], materials.m4HoodStripes);
-
-  // Sculpted Twin Power Bulge Ridges flanking the hood indentations
-  for (const bx of [-0.38, 0.38]) {
-    addBox(car, [bx, 0.785, 1.25], [0.06, 0.028, 1.82], materials.m4Paint);
-  }
-  // Outer hood muscular shoulder lines
-  for (const hx of [-0.78, 0.78]) {
-    addBox(car, [hx, 0.73, 1.25], [0.08, 0.05, 1.85], materials.m4Paint);
-  }
-
-  // =========================================================================
-  // 5. CABIN, M CARBON DOUBLE-BUBBLE ROOF & INTERIOR DETAILS
-  // =========================================================================
-  // Sleek Aerodynamic Greenhouse Cabin with Tinted Glass
-  addBox(car, [0, 1.06, -0.22], [1.60, 0.58, 2.38], materials.carGlass);
-
-  // Raked A-Pillars framing windshield
-  for (const ax of [-0.73, 0.73]) {
-    addBox(car, [ax, 1.06, 0.58], [0.08, 0.52, 0.12], materials.m4Paint, {
-      rotation: [0.46, 0, ax > 0 ? -0.14 : 0.14],
+  // Front Raked Windshield: Angled smooth dark glass from cowl to roof
+  addBox(car, [0, 0.97, 0.48], [1.44, 0.04, 0.94], materials.carGlass, {
+    rotation: [0.60, 0, 0],
+  });
+  // Slender A-Pillars framing windshield sides seamlessly
+  for (const ax of [-0.71, 0.71]) {
+    addBox(car, [ax, 0.97, 0.48], [0.06, 0.05, 0.94], materials.m4Paint, {
+      rotation: [0.60, 0, ax > 0 ? -0.06 : 0.06],
     });
   }
+
+  // Roof Rear Transverse Header Bar
+  addBox(car, [0, 1.25, -0.78], [1.38, 0.06, 0.10], materials.m4Paint);
+  // Trunk Forward Transverse Deck Transition Bar
+  addBox(car, [0, 0.70, -1.55], [1.46, 0.06, 0.10], materials.m4Paint);
+
+  // Fastback Rear Windshield: Sloping from roof to trunk deck
+  addBox(car, [0, 0.975, -1.16], [1.42, 0.04, 0.94], materials.carGlass, {
+    rotation: [-0.43, 0, 0],
+  });
   // Muscular C-Pillars with iconic BMW Hofmeister Kink
-  for (const cx of [-0.76, 0.76]) {
-    addBox(car, [cx, 1.05, -1.02], [0.10, 0.48, 0.32], materials.m4Paint, {
-      rotation: [-0.40, 0, cx > 0 ? -0.12 : 0.12],
+  for (const cx of [-0.72, 0.72]) {
+    addBox(car, [cx, 0.975, -1.16], [0.07, 0.06, 0.94], materials.m4Paint, {
+      rotation: [-0.43, 0, cx > 0 ? -0.06 : 0.06],
     });
   }
 
-  // M Carbon Fiber Double-Bubble Roof (twin roof mounds + center aero channel)
-  // Left roof bubble
-  addBox(car, [-0.42, 1.35, -0.22], [0.66, 0.055, 1.88], materials.m4Carbon);
-  // Right roof bubble
-  addBox(car, [0.42, 1.35, -0.22], [0.66, 0.055, 1.88], materials.m4Carbon);
-  // Recessed aerodynamic center depression channel
-  addBox(car, [0, 1.33, -0.22], [0.26, 0.035, 1.88], materials.m4Carbon);
+  // Side Tinted Coupe Windows & Gloss Black B-Pillar
+  for (const wx of [-0.73, 0.73]) {
+    addBox(car, [wx, 0.97, -0.35], [0.03, 0.36, 0.88], materials.carGlass);
+    addBox(car, [wx * 1.01, 0.97, -0.35], [0.02, 0.36, 0.06], materials.m4GlossBlack); // B-pillar
+  }
 
-  // Gloss Black Roof Shark Fin Antenna
-  addBox(car, [0, 1.39, -0.96], [0.045, 0.075, 0.18], materials.m4GlossBlack);
 
-  // Interior: BMW Curved Display, M Sport Steering Wheel & M Carbon Bucket Seats
-  // Dashboard & Curved Display Screens
-  addBox(car, [0, 0.82, 0.40], [1.36, 0.12, 0.28], materials.m4InteriorLeather);
-  addBox(car, [-0.12, 0.89, 0.36], [0.74, 0.08, 0.02], materials.screenCode);
+  // M Carbon Fiber Double-Bubble Roof
+  // Left bubble
+  addBox(car, [-0.38, 1.24, -0.35], [0.62, 0.04, 1.05], materials.m4Carbon);
+  // Right bubble
+  addBox(car, [0.38, 1.24, -0.35], [0.62, 0.04, 1.05], materials.m4Carbon);
+  // Center recessed aerodynamic depression channel
+  addBox(car, [0, 1.22, -0.35], [0.22, 0.025, 1.05], materials.m4Carbon);
+  // Roof Shark Fin Antenna
+  addBox(car, [0, 1.28, -0.76], [0.04, 0.065, 0.16], materials.m4GlossBlack);
+
+  // Interior: BMW Curved Dual Displays & M Sport Steering Wheel
+  addBox(car, [0, 0.72, 0.45], [1.32, 0.10, 0.26], materials.m4InteriorLeather);
+  addBox(car, [-0.10, 0.78, 0.40], [0.70, 0.075, 0.02], materials.screenCode);
 
   // M Sport Steering Wheel with Red 12 o'clock stripe
-  addCylinder(car, [-0.38, 0.88, 0.20], 0.14, 0.14, 0.03, materials.m4GlossBlack, {
-    rotation: [Math.PI * 0.42, 0, 0],
+  addCylinder(car, [-0.36, 0.76, 0.24], 0.13, 0.13, 0.025, materials.m4GlossBlack, {
+    rotation: [Math.PI * 0.40, 0, 0],
     segments: 16,
   });
-  addBox(car, [-0.38, 0.99, 0.16], [0.03, 0.02, 0.03], materials.coralDark); // Red 12 o'clock center stripe
+  addBox(car, [-0.36, 0.86, 0.20], [0.025, 0.02, 0.025], materials.coralDark);
 
   // 2x M Carbon Bucket Seats (Driver & Passenger)
-  for (const sx of [-0.38, 0.38]) {
-    // Seat base
-    addBox(car, [sx, 0.54, -0.22], [0.46, 0.14, 0.48], materials.m4InteriorLeather);
-    // Sculpted backrest with carbon shell
-    addBox(car, [sx, 0.82, -0.42], [0.44, 0.46, 0.10], materials.m4Carbon, { rotation: [-0.18, 0, 0] });
-    // Bright contrast bucket cushion insert (Kyalami Orange / Gold)
-    addBox(car, [sx, 0.82, -0.38], [0.28, 0.40, 0.04], materials.m4BucketAccent, { rotation: [-0.18, 0, 0] });
-    // Integrated headrest with harness passthroughs
-    addBox(car, [sx, 1.10, -0.48], [0.26, 0.16, 0.08], materials.m4InteriorLeather, { rotation: [-0.18, 0, 0] });
-    addBox(car, [sx, 1.05, -0.47], [0.14, 0.04, 0.09], materials.m4Carbon, { rotation: [-0.18, 0, 0] });
+  for (const sx of [-0.36, 0.36]) {
+    addBox(car, [sx, 0.44, -0.22], [0.42, 0.12, 0.44], materials.m4InteriorLeather);
+    addBox(car, [sx, 0.70, -0.42], [0.40, 0.42, 0.08], materials.m4Carbon, { rotation: [-0.18, 0, 0] });
+    addBox(car, [sx, 0.70, -0.38], [0.26, 0.36, 0.03], materials.m4BucketAccent, { rotation: [-0.18, 0, 0] });
+    addBox(car, [sx, 0.96, -0.48], [0.24, 0.14, 0.07], materials.m4InteriorLeather, { rotation: [-0.18, 0, 0] });
   }
 
   // =========================================================================
-  // 6. M AERODYNAMIC TWIN-STALK SIDE MIRRORS & FRONT FENDER GILLS
+  // 6. M CARBON TWIN-STALK SIDE MIRRORS
   // =========================================================================
-  for (const mx of [-0.98, 0.98]) {
-    // Mirror lower mount stalk
-    addBox(car, [mx * 0.94, 0.89, 0.58], [0.10, 0.03, 0.06], materials.m4GlossBlack);
-    // Main aerodynamic carbon mirror cap
-    addBox(car, [mx * 1.05, 0.93, 0.58], [0.18, 0.10, 0.14], materials.m4Carbon);
-    // Iconic M upper aerodynamic horn / fang pointing inwards
-    addBox(car, [mx * 0.98, 0.98, 0.56], [0.08, 0.035, 0.06], materials.m4Carbon);
-    // Reflective mirror glass facing rear
-    addBox(car, [mx * 1.04, 0.93, 0.51], [0.15, 0.08, 0.012], materials.mirror);
-
-    // M Fender Side Gills (Gloss Black vent on front fenders behind wheels)
-    addBox(car, [mx * 1.02, 0.58, 0.72], [0.02, 0.18, 0.09], materials.m4GlossBlack);
-    addBox(car, [mx * 1.025, 0.60, 0.72], [0.012, 0.03, 0.06], materials.carChrome); // Chrome M4 script bar
+  for (const mx of [-0.94, 0.94]) {
+    addBox(car, [mx * 0.92, 0.78, 0.54], [0.08, 0.025, 0.05], materials.m4GlossBlack);
+    addBox(car, [mx * 1.04, 0.81, 0.54], [0.16, 0.09, 0.13], materials.m4Carbon);
+    addBox(car, [mx * 0.97, 0.86, 0.52], [0.07, 0.03, 0.05], materials.m4Carbon); // M upper fang
+    addBox(car, [mx * 1.03, 0.81, 0.48], [0.14, 0.075, 0.01], materials.mirror);
   }
 
   // =========================================================================
-  // 7. REAR FASCIA: CSL DUCKTAIL SPOILER, 3D OLED TAILLIGHTS, DIFFUSER & QUAD EXHAUSTS
+  // 7. REAR FASCIA: CSL DUCKTAIL SPOILER, 3D OLED TAILLIGHTS & QUAD EXHAUSTS
   // =========================================================================
-  // Sloped rear trunk deck
-  addBox(car, [0, 0.74, -1.82], [1.70, 0.16, 0.96], materials.m4Paint);
+  // Sloped Trunk Deck
+  addBox(car, [0, 0.64, -1.85], [1.65, 0.14, 0.85], materials.m4Paint);
 
-  // CSL Integrated Carbon Ducktail Spoiler (curls up aggressively from trunk lid)
-  addBox(car, [0, 0.88, -2.25], [1.66, 0.08, 0.22], materials.m4Carbon, { rotation: [-0.22, 0, 0] });
-  // Center high-downforce peak
-  addBox(car, [0, 0.92, -2.28], [0.58, 0.045, 0.14], materials.m4Carbon, { rotation: [-0.22, 0, 0] });
+  // CSL Integrated Carbon Ducktail Spoiler (sweeping up from trunk lid)
+  addBox(car, [0, 0.77, -2.25], [1.62, 0.07, 0.20], materials.m4Carbon, { rotation: [-0.24, 0, 0] });
+  addBox(car, [0, 0.81, -2.28], [0.55, 0.04, 0.12], materials.m4Carbon, { rotation: [-0.24, 0, 0] });
 
-  // Rear BMW Roundel Emblem on trunk lid below spoiler
-  addCylinder(car, [0, 0.73, -2.26], 0.046, 0.046, 0.01, materials.m4BmwEmblem, {
+  // Rear BMW Roundel Emblem & Chrome M4 Badge
+  addCylinder(car, [0, 0.63, -2.26], 0.044, 0.044, 0.01, materials.m4BmwEmblem, {
     rotation: [Math.PI * 0.5, 0, 0],
     segments: 18,
   });
+  addBox(car, [0.44, 0.61, -2.26], [0.14, 0.03, 0.01], materials.carChrome);
 
-  // Chrome ///M4 Competition Trunk Badge
-  addBox(car, [0.46, 0.71, -2.26], [0.15, 0.035, 0.01], materials.carChrome);
+  // Rear German DIN License Plate `M DI 4015`
+  addBox(car, [0, 0.44, -2.25], [0.72, 0.165, 0.015], materials.m4GlossBlack);
+  addBox(car, [0, 0.44, -2.258], [0.68, 0.145, 0.005], materials.m4PlateRear);
 
-  // Rear German DIN License Plate `M DI 4015` in recessed trunk bay
-  addBox(car, [0, 0.52, -2.25], [0.72, 0.165, 0.015], materials.m4GlossBlack);
-  addBox(car, [0, 0.52, -2.258], [0.68, 0.145, 0.005], materials.m4PlateRear);
-
-  // 3D Slim OLED Taillights (Flowing L-shaped red light bars)
-  for (const tx of [-0.68, 0.68]) {
-    // Glowing red OLED light bar
-    addBox(car, [tx, 0.66, -2.24], [0.48, 0.09, 0.05], materials.m4TaillightOLED, { shadow: false });
-    // Smoked outer protective glass lens
-    addBox(car, [tx, 0.66, -2.25], [0.52, 0.11, 0.03], materials.carGlass);
-    // Inner L-shaped turn flick
-    addBox(car, [tx + (tx > 0 ? 0.20 : -0.20), 0.63, -2.24], [0.08, 0.05, 0.04], materials.m4TaillightOLED, { shadow: false });
+  // 3D Slim OLED Taillights (L-shaped red light bars)
+  for (const tx of [-0.64, 0.64]) {
+    addBox(car, [tx, 0.58, -2.24], [0.46, 0.08, 0.05], materials.m4TaillightOLED, { shadow: false });
+    addBox(car, [tx, 0.58, -2.248], [0.50, 0.10, 0.03], materials.carGlass);
+    addBox(car, [tx + (tx > 0 ? 0.18 : -0.18), 0.55, -2.24], [0.07, 0.05, 0.04], materials.m4TaillightOLED, { shadow: false });
   }
 
-  // Massive Carbon Fiber Rear Diffuser with 4 Aerodynamic Strakes
-  addBox(car, [0, 0.22, -2.22], [1.86, 0.22, 0.26], materials.m4Carbon);
-  // 4 Vertical Diffuser Strakes (aero fins channeling underbody airflow)
-  const strakeX = [-0.36, -0.12, 0.12, 0.36];
-  for (const stX of strakeX) {
-    addBox(car, [stX, 0.20, -2.26], [0.03, 0.17, 0.22], materials.m4Carbon);
+  // Carbon Rear Diffuser with 4 Vertical Strakes
+  addBox(car, [0, 0.18, -2.22], [1.82, 0.18, 0.24], materials.m4Carbon);
+  for (const stX of [-0.34, -0.11, 0.11, 0.34]) {
+    addBox(car, [stX, 0.17, -2.25], [0.03, 0.15, 0.20], materials.m4Carbon);
   }
-  // Center F1-Style Rain Light / Reflector
-  addBox(car, [0, 0.15, -2.28], [0.11, 0.045, 0.02], materials.m4TaillightOLED, { shadow: false });
+  // Center F1 Rain Light
+  addBox(car, [0, 0.13, -2.27], [0.10, 0.04, 0.02], materials.m4TaillightOLED, { shadow: false });
 
-  // Quad M Chrome Exhaust Pipes (Dual tips on left, Dual tips on right)
-  const exhaustX = [-0.64, -0.46, 0.46, 0.64];
-  for (const ex of exhaustX) {
-    // Polished chrome exhaust tip sleeve
-    addCylinder(car, [ex, 0.22, -2.31], 0.065, 0.065, 0.16, materials.carChrome, {
+  // Quad M Chrome Exhaust Pipes
+  for (const ex of [-0.62, -0.45, 0.45, 0.62]) {
+    addCylinder(car, [ex, 0.19, -2.31], 0.062, 0.062, 0.15, materials.carChrome, {
       rotation: [Math.PI * 0.5, 0, 0],
       segments: 16,
     });
-    // Inner dark hollow exhaust bore
-    addCylinder(car, [ex, 0.22, -2.38], 0.052, 0.052, 0.025, materials.m4GlossBlack, {
+    addCylinder(car, [ex, 0.19, -2.375], 0.050, 0.050, 0.025, materials.m4GlossBlack, {
       rotation: [Math.PI * 0.5, 0, 0],
       segments: 14,
     });
   }
 
   // =========================================================================
-  // 8. 4x M FORGED MULTI-SPOKE ALLOY WHEELS & CARBON CERAMIC BRAKES
+  // 8. 4x M FORGED MULTI-SPOKE WHEELS WITH DRILLED CERAMIC ROTORS & GOLD CALIPERS
   // =========================================================================
-  const wheelZPositions = [1.38, -1.35]; // Front axle and rear axle
-  const wheelXPositions = [-1.04, 1.04]; // Left and right wheel tracks
+  const wheelZPositions = [1.38, -1.35]; // Front & Rear axles
+  const wheelXPositions = [-1.02, 1.02]; // Left & Right wheel track
 
   for (const wz of wheelZPositions) {
     for (const wx of wheelXPositions) {
       const isRight = wx > 0;
       const xDir = isRight ? 1 : -1;
 
-      // High-performance Michelin rubber tire
-      addCylinder(car, [wx, 0.36, wz], 0.36, 0.36, 0.28, materials.carRubber, {
+      // High-Performance Michelin Rubber Tire (Width = 0.26, radius = 0.34)
+      addCylinder(car, [wx, 0.34, wz], 0.34, 0.34, 0.26, materials.carRubber, {
         rotation: [0, 0, Math.PI * 0.5],
         segments: 24,
       });
 
-      // M Forged Wheel Face (Satin black concave hub)
-      addCylinder(car, [wx + xDir * 0.03, 0.36, wz], 0.27, 0.27, 0.25, materials.m4WheelRim, {
-        rotation: [0, 0, Math.PI * 0.5],
-        segments: 18,
-      });
-
-      // Diamond-Cut Polished Rim Outer Lip
-      addCylinder(car, [wx + xDir * 0.07, 0.36, wz], 0.265, 0.265, 0.03, materials.m4WheelLip, {
-        rotation: [0, 0, Math.PI * 0.5],
-        segments: 18,
-      });
-
-      // Cross-Drilled Carbon Ceramic Brake Rotor Disc
-      addCylinder(car, [wx - xDir * 0.04, 0.36, wz], 0.22, 0.22, 0.04, materials.m4RotorBrake, {
+      // Recessed Cross-Drilled Carbon Ceramic Brake Rotor
+      addCylinder(car, [wx + xDir * 0.04, 0.34, wz], 0.23, 0.23, 0.03, materials.m4RotorBrake, {
         rotation: [0, 0, Math.PI * 0.5],
         segments: 18,
       });
 
       // Gold 6-Piston M Carbon Ceramic Brake Caliper
-      const caliperZ = wz + (wz > 0 ? 0.08 : -0.08);
-      addBox(car, [wx - xDir * 0.03, 0.46, caliperZ], [0.10, 0.13, 0.16], materials.m4CaliperGold);
+      const calZ = wz + (wz > 0 ? 0.09 : -0.09);
+      addBox(car, [wx + xDir * 0.05, 0.43, calZ], [0.08, 0.12, 0.15], materials.m4CaliperGold);
+
+      // Satin Black Concave Wheel Hub Face (Placed on the outer plane of the tire)
+      const outerX = wx + xDir * 0.132;
+      addCylinder(car, [outerX, 0.34, wz], 0.265, 0.265, 0.015, materials.m4WheelRim, {
+        rotation: [0, 0, Math.PI * 0.5],
+        segments: 20,
+      });
+
+      // Diamond-Cut Polished Rim Outer Ring
+      addCylinder(car, [outerX + xDir * 0.005, 0.34, wz], 0.260, 0.260, 0.012, materials.m4WheelLip, {
+        rotation: [0, 0, Math.PI * 0.5],
+        segments: 20,
+      });
 
       // Floating BMW Roundel Center Hub Cap
-      addCylinder(car, [wx + xDir * 0.086, 0.36, wz], 0.045, 0.045, 0.02, materials.m4BmwEmblem, {
+      addCylinder(car, [outerX + xDir * 0.012, 0.34, wz], 0.045, 0.045, 0.015, materials.m4BmwEmblem, {
         rotation: [0, 0, Math.PI * 0.5],
         segments: 16,
       });
 
-      // 5 Y-Spoke Wheel Face Details (Radial pairs of spokes)
+      // 5 M Forged Y-Spoke Pairs on Wheel Face
       for (let s = 0; s < 5; s += 1) {
         const spokeAngle = (s / 5) * Math.PI * 2;
-        const spY = 0.36 + Math.sin(spokeAngle) * 0.14;
-        const spZ = wz + Math.cos(spokeAngle) * 0.14;
-        addBox(car, [wx + xDir * 0.075, spY, spZ], [0.02, 0.03, 0.18], materials.m4WheelRim, {
+        const spY = 0.34 + Math.sin(spokeAngle) * 0.13;
+        const spZ = wz + Math.cos(spokeAngle) * 0.13;
+        addBox(car, [outerX + xDir * 0.008, spY, spZ], [0.014, 0.024, 0.16], materials.m4WheelRim, {
           rotation: [spokeAngle, 0, 0],
         });
       }

@@ -297,18 +297,28 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   // Dividing Project Gallery, Living Room, Home Office, Garasi
   // =========================================================================
 
-  // Partition Gallery / Living Room at x = -5.5 (z: [3.8, -8.2])
-  // Front section
-  const partWestG1 = addBox(building, [-5.5, 2.6, 2.2], [0.45, 5.2, 3.2], materials.wall, { shadow: true });
+  // Partition Gallery / About Me Room at x = -5.5 (z: [3.8, -8.2])
+  // 1. Front Dedicated About Me Feature Wall Section (z: [3.8, -0.4], depth 4.2m, center z = 1.7)
+  const partWestG1 = addBox(building, [-5.5, 2.6, 1.7], [0.45, 5.2, 4.2], materials.wall, { shadow: true });
   cameraBlockers.push(partWestG1);
-  addColliderBox([-5.5, 2.6, 2.2], [0.225, 2.6, 1.6]);
-  // Grand arched walkthrough portal (4.0m wide, z: [-1.4, -5.4])
-  archBatch.addBox([-5.5, 4.5, -3.4], [0.48, 1.4, 4.0], materials.wall);
-  archBatch.addBox([-5.5, 3.75, -3.4], [0.52, 0.16, 4.0], materials.woodWarm);
-  // Rear section
-  const partWestG2 = addBox(building, [-5.5, 2.6, -6.8], [0.45, 5.2, 2.8], materials.wall, { shadow: true });
+  addColliderBox([-5.5, 2.6, 1.7], [0.225, 2.6, 2.1]);
+  // Architectural wainscoting and top crown molding
+  archBatch.addBox([-5.45, 0.65, 1.7], [0.48, 1.1, 4.2], materials.wainscot);
+  archBatch.addBox([-5.45, 5.05, 1.7], [0.50, 0.18, 4.2], materials.trim);
+
+  // 2. Grand Arched Walkthrough Portal into Project Gallery (3.4m wide, z: [-0.4, -3.8], center z = -2.1)
+  archBatch.addBox([-5.5, 4.35, -2.1], [0.48, 1.7, 3.4], materials.wall);
+  archBatch.addBox([-5.5, 3.45, -2.1], [0.52, 0.16, 3.4], materials.woodWarm);
+  // Architectural fluted pilasters framing the gallery entrance portal
+  archBatch.addBox([-5.5, 2.6, -0.45], [0.52, 5.2, 0.22], materials.woodLight);
+  archBatch.addBox([-5.5, 2.6, -3.75], [0.52, 5.2, 0.22], materials.woodLight);
+
+  // 3. Rear Solid Wall Section (z: [-3.8, -8.2], depth 4.4m, center z = -6.0)
+  const partWestG2 = addBox(building, [-5.5, 2.6, -6.0], [0.45, 5.2, 4.4], materials.wall, { shadow: true });
   cameraBlockers.push(partWestG2);
-  addColliderBox([-5.5, 2.6, -6.8], [0.225, 2.6, 1.4]);
+  addColliderBox([-5.5, 2.6, -6.0], [0.225, 2.6, 2.2]);
+  archBatch.addBox([-5.45, 0.65, -6.0], [0.48, 1.1, 4.4], materials.wainscot);
+  archBatch.addBox([-5.45, 5.05, -6.0], [0.50, 0.18, 4.4], materials.trim);
 
   // Partition Living Room / Home Office at x = 5.5 (z: [3.8, -8.2])
   // Front entrance portal from foyer into Home Office (width 2.2m, z: [0.9, 3.1])

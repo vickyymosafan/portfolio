@@ -20,18 +20,18 @@ export const portfolio = {
     },
     {
       id: 'about',
-      label: 'Living room',
+      label: 'About Me Suite',
       count: '02 / 10',
       eyebrow: 'Chapter 01: The Paradigm',
       title: 'Beyond the Code',
-      position: [0.0, 1.12, 0.5],
+      position: [-1.4, 1.12, 1.7],
       facing: 0.0,
       yaw: 0.0,
       pitch: 0.22,
       cameraShot: {
-        pos: [1.8, 1.95, 3.1],
-        target: [-1.2, 1.9, -2.5],
-        charFacing: -0.3,
+        pos: [1.8, 1.85, 3.2],
+        target: [-3.8, 1.85, 1.7],
+        charFacing: -0.4,
       },
     },
     {
