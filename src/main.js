@@ -2217,6 +2217,11 @@ async function init() {
     window.scene = scene;
     window.renderer = renderer;
     window.camera = camera;
+    window.__camera = camera;
+    window.__setCameraOverride = (cam, target) => {
+      teleportCameraOverride = cam && target ? { cam, target } : null;
+    };
+    window.__teleport = (x, y, z, facing = 0) => teleportToZone(x, y, z, facing);
     window.__toggleOverviewMode = toggleOverviewMode;
     window.__playerBody = playerBody;
     window.__characterRig = characterRig;

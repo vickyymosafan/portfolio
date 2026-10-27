@@ -5,6 +5,7 @@ import { addBox, addCylinder, addSphere, BatchCollector } from './geometry.js';
 /**
  * Creates Zone I: Perimeter Wall, Main Security Checkpoint,
  * Monument Wall, Guardhouse & External Public Highway
+ * Faithfully matches "Vicky's Developer Life World Map.png"
  * Spans x: [-48.0, 48.0], z: [23.0, 42.0]
  */
 export function createSecurityArea(scene, world, RAPIER, staticBodies) {
@@ -14,7 +15,7 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
   const animatedGuards = [];
 
   // =========================================================================
-  // 1. External Public Highway & Sidewalk (z: [26.0, 42.0])
+  // 1. External Public Highway, Sidewalk & Curb (z: [25.0, 42.0])
   // =========================================================================
   // Raised concrete sidewalk in front of estate wall (z: [25.0, 29.5], x: [-48.0, 48.0])
   batch.addBox([0, 0.1, 27.25], [96.0, 0.2, 4.5], materials.curbConcrete);
@@ -24,10 +25,9 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
   // Main 2-lane asphalt public highway (z: [29.6, 41.5], x: [-52.0, 52.0])
   batch.addBox([0, 0.02, 35.5], [104.0, 0.04, 11.8], materials.asphaltRoad);
 
-  // Painted road markings: Center double dashed yellow lines
+  // Center double dashed yellow lines
   for (let x = -50.0; x <= 50.0; x += 4.5) {
-    // Leave gap for pedestrian crosswalk (x: [-4.0, 4.0])
-    if (x > -5.0 && x < 5.0) continue;
+    if (x > -5.0 && x < 5.0) continue; // Gap for crosswalk
     batch.addBox([x, 0.045, 35.35], [2.6, 0.008, 0.18], materials.asphaltMarkingYellow);
     batch.addBox([x, 0.045, 35.65], [2.6, 0.008, 0.18], materials.asphaltMarkingYellow);
   }
@@ -44,25 +44,18 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
   // Roadway Street Light Poles (Modern curved LED cobra-head poles at z = 29.0)
   const streetLightXs = [-42.0, -26.0, -10.0, 10.0, 26.0, 42.0];
   for (const lx of streetLightXs) {
-    // Base pedestal
     batch.addBox([lx, 0.25, 29.0], [0.6, 0.5, 0.6], materials.metalDark);
-    // Vertical mast
     batch.addCylinder([lx, 3.2, 29.0], 0.1, 0.16, 5.8, materials.metalDark);
-    // Overhanging curved arm extending toward roadway (z = 31.5)
     batch.addBox([lx, 5.9, 30.2], [0.12, 0.12, 2.5], materials.metalDark, { rotation: [0.18, 0, 0] });
-    // Cobra-head luminaire fixture
     batch.addBox([lx, 5.75, 31.4], [0.38, 0.14, 0.95], materials.metalDark);
-    // Glowing LED emitter lens
     batch.addBox([lx, 5.68, 31.4], [0.28, 0.04, 0.75], materials.glow, { shadow: false });
 
-    // Roadway spotlight
     const roadLight = new THREE.SpotLight(0xfff4db, 1.8, 18.0, Math.PI * 0.28, 0.45);
     roadLight.position.set(lx, 5.6, 31.4);
     roadLight.target.position.set(lx, 0, 35.5);
     securityGroup.add(roadLight);
     securityGroup.add(roadLight.target);
 
-    // Pole physics collider
     const poleBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(lx, 3.0, 29.0));
     world.createCollider(RAPIER.ColliderDesc.cylinder(3.0, 0.3), poleBody);
     staticBodies.push(poleBody);
@@ -73,36 +66,25 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
   // =========================================================================
   const suvX = -18.0;
   const suvZ = 33.2;
-  const suvRot = 0; // facing east along highway
   const suvGroup = new THREE.Group();
   suvGroup.position.set(suvX, 0, suvZ);
   securityGroup.add(suvGroup);
 
   const suvBatch = new BatchCollector();
-  // Chassis lower skirt
   suvBatch.addBox([0, 0.35, 0], [4.8, 0.32, 2.1], materials.carRubber);
-  // Lower bodywork
   suvBatch.addBox([0, 0.65, 0], [4.6, 0.45, 2.05], materials.carSuvWhite);
-  // Hood and front fascia
   suvBatch.addBox([1.4, 0.85, 0], [1.6, 0.35, 1.95], materials.carSuvWhite);
-  // Chrome front grille
   suvBatch.addBox([2.22, 0.75, 0], [0.08, 0.38, 1.4], materials.chrome);
-  // LED Headlight strips
   suvBatch.addBox([2.18, 0.82, 0.72], [0.1, 0.14, 0.38], materials.glow, { shadow: false });
   suvBatch.addBox([2.18, 0.82, -0.72], [0.1, 0.14, 0.38], materials.glow, { shadow: false });
-  // Cabin greenhouse & roof
   suvBatch.addBox([-0.4, 1.35, 0], [2.6, 0.72, 1.75], materials.carGlass);
   suvBatch.addBox([-0.4, 1.75, 0], [2.5, 0.08, 1.72], materials.carSuvWhite);
-  // Roof rack rails
   suvBatch.addBox([-0.4, 1.83, 0.75], [2.2, 0.06, 0.06], materials.metalDark);
   suvBatch.addBox([-0.4, 1.83, -0.75], [2.2, 0.06, 0.06], materials.metalDark);
-  // Rear tailgate and bumper
   suvBatch.addBox([-2.25, 0.68, 0], [0.18, 0.48, 1.98], materials.carSuvWhite);
-  // Red LED taillights
   suvBatch.addBox([-2.32, 0.88, 0.72], [0.08, 0.15, 0.36], materials.fireEmber, { shadow: false });
   suvBatch.addBox([-2.32, 0.88, -0.72], [0.08, 0.15, 0.36], materials.fireEmber, { shadow: false });
 
-  // 4 Alloy Wheels with rubber tires
   const wheelOffsets = [
     [1.4, 0.42, 1.05],
     [1.4, 0.42, -1.05],
@@ -121,152 +103,393 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
   }
   suvBatch.build(suvGroup, true);
 
-  // SUV physics collider
   const suvBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(suvX, 0.9, suvZ));
   world.createCollider(RAPIER.ColliderDesc.cuboid(2.4, 0.9, 1.1), suvBody);
   staticBodies.push(suvBody);
 
   // =========================================================================
-  // 3. Grand Monument Entrance Wall & Welcome Wall (z = 24.5)
+  // 3. Helper: Luxury Estate Wall Pillar with Carriage Lantern
   // =========================================================================
-  // Main Entrance Monument: "VICKY'S WORLD" (x: [2.5, 10.5], z = 24.5)
-  const monX = 6.5;
+  function addPerimeterPillar(px, pz, addLight = false) {
+    // Tiered foundation base plinth
+    batch.addBox([px, 0.24, pz], [1.08, 0.48, 1.08], materials.foundation);
+    // Square architectural pillar shaft
+    batch.addBox([px, 1.6, pz], [0.88, 2.24, 0.88], materials.perimeterPillar);
+    // Recessed inset panels on 4 faces
+    batch.addBox([px, 1.6, pz + 0.44], [0.68, 1.84, 0.02], materials.perimeterPanel);
+    batch.addBox([px, 1.6, pz - 0.44], [0.68, 1.84, 0.02], materials.perimeterPanel);
+    batch.addBox([px + 0.44, 1.6, pz], [0.02, 1.84, 0.68], materials.perimeterPanel);
+    batch.addBox([px - 0.44, 1.6, pz], [0.02, 1.84, 0.68], materials.perimeterPanel);
+    // Tiered cornice neck & capital
+    batch.addBox([px, 2.76, pz], [0.96, 0.08, 0.96], materials.perimeterCap);
+    batch.addBox([px, 2.88, pz], [1.14, 0.16, 1.14], materials.perimeterCap);
+
+    // --- Classic Luxury Carriage Lantern on top of Pillar ---
+    // Lantern base mount
+    batch.addBox([px, 3.02, pz], [0.36, 0.12, 0.36], materials.carriageLanternMetal);
+    batch.addCylinder([px, 3.12, pz], 0.08, 0.12, 0.08, materials.carriageLanternMetal);
+    // 4 Corner bronze struts
+    for (const [cx, cz] of [[0.14, 0.14], [-0.14, 0.14], [0.14, -0.14], [-0.14, -0.14]]) {
+      batch.addBox([px + cx, 3.42, pz + cz], [0.035, 0.52, 0.035], materials.carriageLanternMetal);
+    }
+    // Luminous glass lantern core
+    batch.addBox([px, 3.42, pz], [0.26, 0.46, 0.26], materials.carriageLanternGlass);
+    batch.addSphere([px, 3.42, pz], [0.11, 0.16, 0.11], materials.glow, { shadow: false });
+    // Pyramidal lantern roof cap with brass peak
+    batch.addCylinder([px, 3.74, pz], 0.02, 0.4, 0.18, materials.carriageLanternMetal, {
+      segments: 4,
+      rotation: [0, Math.PI * 0.25, 0],
+    });
+    batch.addSphere([px, 3.86, pz], [0.05, 0.05, 0.05], materials.estateGateGold);
+
+    // Warm lantern light
+    if (addLight) {
+      const pLight = new THREE.PointLight(0xffe299, 1.1, 7.5, 1.8);
+      pLight.position.set(px, 3.45, pz);
+      securityGroup.add(pLight);
+    }
+
+    // Physics collider
+    const pBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(px, 1.5, pz));
+    world.createCollider(RAPIER.ColliderDesc.cuboid(0.5, 1.5, 0.5), pBody);
+    staticBodies.push(pBody);
+  }
+
+  // =========================================================================
+  // 4. Helper: Modular Luxury Estate Wall Panel with Sidewalk Planter Bed
+  // =========================================================================
+  function addPerimeterWallSection(startX, endX, z = 24.5) {
+    const width = Math.abs(endX - startX);
+    const midX = (startX + endX) * 0.5;
+
+    // Foundation plinth
+    batch.addBox([midX, 0.24, z], [width, 0.48, 0.65], materials.foundation);
+    // Main cream wall body
+    batch.addBox([midX, 1.42, z], [width, 1.88, 0.44], materials.perimeterPillar);
+    // Architectural recessed molding panel on front (facing road) and rear
+    batch.addBox([midX, 1.42, z + 0.23], [width - 0.25, 1.5, 0.02], materials.perimeterPanel);
+    batch.addBox([midX, 1.42, z - 0.23], [width - 0.25, 1.5, 0.02], materials.perimeterPanel);
+    // Beveled molded top coping rail
+    batch.addBox([midX, 2.42, z], [width + 0.06, 0.12, 0.62], materials.perimeterCap);
+
+    // --- Lush Planter Bed along Sidewalk (Front of Wall) ---
+    const planterZ = z + 0.95;
+    // Raised stone planter border
+    batch.addBox([midX, 0.25, planterZ], [width, 0.42, 0.72], materials.stoneWarm);
+    // Nutrient soil fill
+    batch.addBox([midX, 0.46, planterZ], [width - 0.1, 0.06, 0.58], materials.soil);
+
+    // Continuous manicured green hedges and vibrant cartoon flower clusters
+    const step = 0.95;
+    for (let fx = startX + 0.5; fx <= endX - 0.4; fx += step) {
+      // Rounded green hedge shrub
+      batch.addSphere([fx, 0.62, planterZ], [0.36, 0.26, 0.32], materials.hedgeGreen);
+      // Flower blossoms
+      const flowerMat = (Math.abs(fx * 3.7) % 3 < 1)
+        ? materials.flowerYellow
+        : (Math.abs(fx * 3.7) % 3 < 2 ? materials.flowerCoral : materials.flowerWhite);
+      batch.addSphere([fx, 0.76, planterZ], [0.14, 0.14, 0.14], flowerMat);
+      batch.addSphere([fx + 0.18, 0.72, planterZ + 0.08], [0.1, 0.1, 0.1], materials.flowerYellow);
+    }
+
+    // Mini ground uplight spotlighting wall panel at night
+    if (width >= 3.0) {
+      batch.addCylinder([midX, 0.55, planterZ + 0.15], 0.04, 0.05, 0.12, materials.carriageLanternMetal);
+      batch.addSphere([midX, 0.62, planterZ + 0.15], [0.05, 0.05, 0.05], materials.glow, { shadow: false });
+      const uplight = new THREE.SpotLight(0xffdfa8, 1.2, 5.0, Math.PI * 0.3, 0.6);
+      uplight.position.set(midX, 0.65, planterZ + 0.15);
+      uplight.target.position.set(midX, 1.8, z);
+      securityGroup.add(uplight);
+      securityGroup.add(uplight.target);
+    }
+
+    // Physics collider
+    const wBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(midX, 1.2, z));
+    world.createCollider(RAPIER.ColliderDesc.cuboid(width * 0.5, 1.2, 0.35), wBody);
+    staticBodies.push(wBody);
+  }
+
+  // =========================================================================
+  // 5. Central Grand Monument Wall ("VICKY'S WORLD") (x: [1.6, 8.4], z = 24.5)
+  // =========================================================================
+  const monMidX = 5.0;
   const monZ = 24.5;
-  // Tiered stone foundation plinth
-  batch.addBox([monX, 0.25, monZ], [8.4, 0.5, 1.4], materials.foundation);
-  // Main stone pylon wall
-  batch.addBox([monX, 1.7, monZ], [8.0, 2.4, 0.95], materials.monumentWall);
-  // Overhanging classical cornice cap
-  batch.addBox([monX, 2.98, monZ], [8.5, 0.18, 1.25], materials.trim);
+  // Flanking monumental stone columns with carriage lanterns
+  addPerimeterPillar(1.6, monZ, true);
+  addPerimeterPillar(8.4, monZ, true);
 
-  // Inset bronze plaque with texture: VICKY'S WORLD - DEVELOPER • CREATOR • EXPLORER
-  // South-facing plaque (facing outward to road)
-  batch.addBox([monX, 1.75, monZ + 0.5], [6.8, 1.8, 0.06], materials.monumentSignMain);
+  // Deep stone tiered base foundation
+  batch.addBox([monMidX, 0.3, monZ], [6.2, 0.6, 1.15], materials.foundation);
+  // Main architectural monument pylon
+  batch.addBox([monMidX, 1.75, monZ], [5.9, 2.3, 0.85], materials.perimeterPillar);
+  // Recessed bronze display frame backing
+  batch.addBox([monMidX, 1.75, monZ + 0.38], [5.4, 1.9, 0.14], materials.metalDark);
+  // Tiered pediment & classical cornice cap
+  batch.addBox([monMidX, 2.96, monZ], [6.3, 0.14, 1.15], materials.perimeterCap);
+  batch.addBox([monMidX, 3.1, monZ], [5.8, 0.14, 1.05], materials.perimeterCap);
 
-  // Tiered planter boxes with colorful flowers in front of monument
-  batch.addBox([monX, 0.35, monZ + 1.15], [7.8, 0.45, 0.65], materials.stoneWarm);
-  batch.addBox([monX, 0.58, monZ + 1.15], [7.5, 0.08, 0.5], materials.soil);
-  for (let f = -3.4; f <= 3.4; f += 0.85) {
-    batch.addSphere([monX + f, 0.72, monZ + 1.15], [0.28, 0.2, 0.28], (Math.abs(f) % 1.7 < 0.5) ? materials.yellowSun : materials.coral);
+  // High-resolution illuminated South-facing display plaque
+  batch.addBox([monMidX, 1.75, monZ + 0.46], [5.2, 1.75, 0.05], materials.monumentSignMain);
+
+  // Raised curved stone planter bed in front of monument
+  const monPlanterZ = monZ + 1.1;
+  batch.addBox([monMidX, 0.3, monPlanterZ], [6.0, 0.5, 0.78], materials.stoneWarm);
+  batch.addBox([monMidX, 0.54, monPlanterZ], [5.8, 0.06, 0.64], materials.soil);
+  // Colorful flower spheres & lush rounded hedges
+  for (let fx = -2.4; fx <= 2.4; fx += 0.8) {
+    batch.addSphere([monMidX + fx, 0.68, monPlanterZ], [0.32, 0.24, 0.28], materials.hedgeGreen);
+    const flColor = (Math.abs(fx) < 0.9) ? materials.flowerYellow : materials.flowerCoral;
+    batch.addSphere([monMidX + fx, 0.82, monPlanterZ], [0.16, 0.16, 0.16], flColor);
   }
 
-  // Monument twin decorative stone columns with brass carriage lanterns
-  for (const sx of [-4.1, 4.1]) {
-    batch.addBox([monX + sx, 1.8, monZ], [0.85, 2.8, 1.1], materials.foundation);
-    batch.addBox([monX + sx, 3.25, monZ], [0.95, 0.15, 1.15], materials.trim);
-    // Lantern
-    batch.addBox([monX + sx, 3.65, monZ], [0.34, 0.5, 0.34], materials.glass);
-    batch.addSphere([monX + sx, 3.65, monZ], [0.1, 0.14, 0.1], materials.glow, { shadow: false });
-    batch.addCylinder([monX + sx, 3.98, monZ], 0.02, 0.38, 0.16, materials.brass, { segments: 4, rotation: [0, Math.PI * 0.25, 0] });
-
-    const mLight = new THREE.PointLight(0xffdfa0, 1.2, 8.0, 2.0);
-    mLight.position.set(monX + sx, 3.65, monZ);
-    securityGroup.add(mLight);
+  // Twin brass ground floodlights washing up at VICKY'S WORLD sign
+  for (const lx of [-1.8, 1.8]) {
+    batch.addBox([monMidX + lx, 0.45, monPlanterZ + 0.28], [0.18, 0.14, 0.18], materials.brass);
+    batch.addSphere([monMidX + lx, 0.52, monPlanterZ + 0.28], [0.08, 0.08, 0.08], materials.glow, { shadow: false });
+    const signLight = new THREE.SpotLight(0xffeaad, 1.8, 6.0, Math.PI * 0.32, 0.5);
+    signLight.position.set(monMidX + lx, 0.55, monPlanterZ + 0.28);
+    signLight.target.position.set(monMidX + lx * 0.5, 1.8, monZ + 0.45);
+    securityGroup.add(signLight);
+    securityGroup.add(signLight.target);
   }
 
-  // Monument wall physics collider
-  const monBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(monX, 1.5, monZ));
-  world.createCollider(RAPIER.ColliderDesc.cuboid(4.3, 1.5, 0.7), monBody);
+  // Monument physics collider
+  const monBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(monMidX, 1.5, monZ));
+  world.createCollider(RAPIER.ColliderDesc.cuboid(3.1, 1.5, 0.65), monBody);
   staticBodies.push(monBody);
 
-  // East Welcome Wing Wall: "Welcome to VICKY MOSAFAN" (x: [18.0, 28.5], z = 24.5)
-  const welX = 23.2;
-  batch.addBox([welX, 0.22, monZ], [10.5, 0.44, 1.1], materials.foundation);
-  batch.addBox([welX, 1.5, monZ], [10.0, 2.1, 0.75], materials.monumentWall);
-  batch.addBox([welX, 2.62, monZ], [10.4, 0.14, 0.95], materials.trim);
-  // Inset welcome plaque
-  batch.addBox([welX, 1.55, monZ + 0.4], [7.2, 1.6, 0.06], materials.monumentSignWelcome);
+  // Wall segment between monument & welcome wall (x: [8.85, 17.05])
+  addPerimeterWallSection(8.85, 17.05, monZ);
+  addPerimeterPillar(13.0, monZ, true);
 
-  const welBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(welX, 1.3, monZ));
-  world.createCollider(RAPIER.ColliderDesc.cuboid(5.2, 1.3, 0.5), welBody);
+  // =========================================================================
+  // 6. Right Welcome Wall ("Welcome to VICKY MOSAFAN") (x: [17.5, 27.5], z = 24.5)
+  // =========================================================================
+  const welMidX = 22.5;
+  addPerimeterPillar(17.5, monZ, true);
+  addPerimeterPillar(27.5, monZ, true);
+
+  batch.addBox([welMidX, 0.28, monZ], [9.2, 0.55, 1.05], materials.foundation);
+  batch.addBox([welMidX, 1.65, monZ], [8.8, 2.2, 0.78], materials.perimeterPillar);
+  batch.addBox([welMidX, 1.65, monZ + 0.35], [8.0, 1.8, 0.12], materials.metalDark);
+  batch.addBox([welMidX, 2.82, monZ], [9.2, 0.14, 0.95], materials.perimeterCap);
+
+  // High-resolution welcome plaque with V icon
+  batch.addBox([welMidX, 1.65, monZ + 0.42], [7.8, 1.65, 0.05], materials.monumentSignWelcome);
+
+  // Planter bed in front of welcome wall
+  const welPlanterZ = monZ + 1.0;
+  batch.addBox([welMidX, 0.28, welPlanterZ], [8.8, 0.45, 0.7], materials.stoneWarm);
+  batch.addBox([welMidX, 0.5, welPlanterZ], [8.6, 0.06, 0.56], materials.soil);
+  for (let fx = -3.2; fx <= 3.2; fx += 1.1) {
+    batch.addSphere([welMidX + fx, 0.64, welPlanterZ], [0.34, 0.24, 0.3], materials.hedgeGreen);
+    batch.addSphere([welMidX + fx, 0.78, welPlanterZ], [0.15, 0.15, 0.15], materials.flowerYellow);
+  }
+
+  const welBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(welMidX, 1.4, monZ));
+  world.createCollider(RAPIER.ColliderDesc.cuboid(4.4, 1.4, 0.55), welBody);
   staticBodies.push(welBody);
 
   // =========================================================================
-  // 4. Main Entrance Gate Piers & Black Wrought Iron Gates (x: [-4.2, 4.2], z = 24.5)
+  // 7. East Perimeter Wall Segments (x: [28.0, 48.0], z = 24.5)
   // =========================================================================
-  // Twin monumental gate piers flanking driveway entry
-  const gatePierXs = [-4.8, 1.8]; // left of driveway, right of driveway (driveway connects at x: [-4.0, 1.0])
-  for (const gpx of gatePierXs) {
-    batch.addBox([gpx, 0.3, monZ], [1.1, 0.6, 1.1], materials.foundation);
-    batch.addBox([gpx, 2.1, monZ], [0.95, 3.0, 0.95], materials.column);
-    batch.addBox([gpx, 3.65, monZ], [1.15, 0.16, 1.15], materials.trim);
-    // Grand spherical brass finial with carriage lantern
-    batch.addSphere([gpx, 3.9, monZ], [0.22, 0.22, 0.22], materials.brass);
-    batch.addBox([gpx, 4.25, monZ], [0.38, 0.52, 0.38], materials.glass);
-    batch.addSphere([gpx, 4.25, monZ], [0.12, 0.16, 0.12], materials.glow, { shadow: false });
-    batch.addCylinder([gpx, 4.58, monZ], 0.02, 0.42, 0.15, materials.metalDark, { segments: 4, rotation: [0, Math.PI * 0.25, 0] });
+  const eastPillarXs = [32.5, 37.5, 42.5, 48.0];
+  let curEastX = 27.95;
+  for (const px of eastPillarXs) {
+    addPerimeterWallSection(curEastX, px - 0.45, monZ);
+    addPerimeterPillar(px, monZ, true);
+    curEastX = px + 0.45;
+  }
 
-    const pierLight = new THREE.PointLight(0xffe6a3, 1.5, 9.0, 1.8);
-    pierLight.position.set(gpx, 4.25, monZ);
+  // =========================================================================
+  // 8. Main Entrance Gate & Pillars (x: [-7.6, 0.6], z = 24.5)
+  // =========================================================================
+  const gateLeftPierX = -7.6;
+  const gateRightPierX = 0.6;
+  // Grand monumental entrance gate piers flanking driveway
+  for (const gpx of [gateLeftPierX, gateRightPierX]) {
+    // Grand tiered pedestal base
+    batch.addBox([gpx, 0.32, monZ], [1.32, 0.64, 1.32], materials.foundation);
+    batch.addBox([gpx, 2.05, monZ], [1.12, 2.82, 1.12], materials.perimeterPillar);
+    // Recessed panel details
+    batch.addBox([gpx, 2.05, monZ + 0.56], [0.85, 2.4, 0.04], materials.perimeterPanel);
+    batch.addBox([gpx, 2.05, monZ - 0.56], [0.85, 2.4, 0.04], materials.perimeterPanel);
+    // Classical capital with dental molding
+    batch.addBox([gpx, 3.52, monZ], [1.25, 0.12, 1.25], materials.perimeterCap);
+    batch.addBox([gpx, 3.65, monZ], [1.42, 0.14, 1.42], materials.perimeterCap);
+    // Polished gold brass spherical finial
+    batch.addSphere([gpx, 3.92, monZ], [0.24, 0.24, 0.24], materials.estateGateGold);
+    // Grand Carriage Lantern
+    batch.addBox([gpx, 4.3, monZ], [0.46, 0.6, 0.46], materials.carriageLanternGlass);
+    batch.addSphere([gpx, 4.3, monZ], [0.16, 0.2, 0.16], materials.glow, { shadow: false });
+    batch.addCylinder([gpx, 4.7, monZ], 0.03, 0.52, 0.22, materials.carriageLanternMetal, {
+      segments: 4,
+      rotation: [0, Math.PI * 0.25, 0],
+    });
+
+    const pierLight = new THREE.PointLight(0xffe6a3, 1.6, 9.5, 1.8);
+    pierLight.position.set(gpx, 4.3, monZ);
     securityGroup.add(pierLight);
 
     const pierBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(gpx, 2.0, monZ));
-    world.createCollider(RAPIER.ColliderDesc.cuboid(0.55, 2.0, 0.55), pierBody);
+    world.createCollider(RAPIER.ColliderDesc.cuboid(0.66, 2.0, 0.66), pierBody);
     staticBodies.push(pierBody);
   }
 
-  // Grand open wrought-iron gate leaves swinging inward (clear opening 5.5m)
-  // Left gate leaf swung open at angle
-  batch.addBox([-4.2, 1.6, 23.2], [0.08, 2.6, 2.2], materials.metalDark);
-  // Gate decorative vertical iron bars
-  for (let bz = 22.2; bz <= 24.2; bz += 0.3) {
-    batch.addCylinder([-4.2, 1.6, bz], 0.025, 0.025, 2.5, materials.metalDark);
-    batch.addSphere([-4.2, 2.9, bz], [0.04, 0.06, 0.04], materials.brass);
+  // --- Grand Luxury Charcoal & Gold Estate Gate Leaves ---
+  // Beautiful folding / swung open leaves flanking entrance (clear opening 6.6m!)
+  // Left Gate Leaf (swung open inward against wall at x = -7.0, z = 23.2)
+  batch.addBox([-7.0, 1.6, 23.2], [0.12, 2.7, 2.5], materials.estateGateDark);
+  // Gold horizontal trims
+  batch.addBox([-7.0, 0.55, 23.2], [0.14, 0.08, 2.45], materials.estateGateGold);
+  batch.addBox([-7.0, 1.6, 23.2], [0.14, 0.08, 2.45], materials.estateGateGold);
+  batch.addBox([-7.0, 2.7, 23.2], [0.14, 0.1, 2.45], materials.estateGateGold);
+  // Vertical security pickets with brass finials
+  for (let gz = 22.1; gz <= 24.3; gz += 0.28) {
+    batch.addCylinder([-7.0, 1.6, gz], 0.024, 0.024, 2.65, materials.estateGateDark);
+    batch.addSphere([-7.0, 2.96, gz], [0.045, 0.07, 0.045], materials.estateGateGold);
   }
-  // Right gate leaf swung open at angle
-  batch.addBox([1.2, 1.6, 23.2], [0.08, 2.6, 2.2], materials.metalDark);
-  for (let bz = 22.2; bz <= 24.2; bz += 0.3) {
-    batch.addCylinder([1.2, 1.6, bz], 0.025, 0.025, 2.5, materials.metalDark);
-    batch.addSphere([1.2, 2.9, bz], [0.04, 0.06, 0.04], materials.brass);
+
+  // Right Gate Leaf (swung open inward against wall at x = 0.0, z = 23.2)
+  batch.addBox([0.0, 1.6, 23.2], [0.12, 2.7, 2.5], materials.estateGateDark);
+  batch.addBox([0.0, 0.55, 23.2], [0.14, 0.08, 2.45], materials.estateGateGold);
+  batch.addBox([0.0, 1.6, 23.2], [0.14, 0.08, 2.45], materials.estateGateGold);
+  batch.addBox([0.0, 2.7, 23.2], [0.14, 0.1, 2.45], materials.estateGateGold);
+  for (let gz = 22.1; gz <= 24.3; gz += 0.28) {
+    batch.addCylinder([0.0, 1.6, gz], 0.024, 0.024, 2.65, materials.estateGateDark);
+    batch.addSphere([0.0, 2.96, gz], [0.045, 0.07, 0.045], materials.estateGateGold);
+  }
+
+  // Driveway paved stone apron crossing from street through gate (x: [-6.8, -0.2], z: [24.0, 29.5])
+  batch.addBox([-3.5, 0.11, 26.75], [6.6, 0.22, 5.5], materials.drivewayStone);
+
+  // =========================================================================
+  // 9. Automated Security Boom Barrier (Palang Pintu Otomatis)
+  // =========================================================================
+  // Control pedestal near the security booth (x = -6.4, z = 24.8)
+  const barPedX = -6.4;
+  const barPedZ = 24.8;
+  batch.addBox([barPedX, 0.6, barPedZ], [0.44, 1.2, 0.44], materials.estateGateDark);
+  batch.addBox([barPedX, 1.15, barPedZ], [0.48, 0.12, 0.48], materials.metalDark);
+  // Status LED beacon (Green active access)
+  batch.addSphere([barPedX, 1.25, barPedZ], [0.08, 0.08, 0.08], materials.glow, { shadow: false });
+
+  // Rotating barrier arm raised at 45 degrees welcoming entry
+  const barGroup = new THREE.Group();
+  barGroup.position.set(barPedX + 0.18, 0.95, barPedZ);
+  barGroup.rotation.z = Math.PI * 0.28; // Raised 50 degrees
+  securityGroup.add(barGroup);
+
+  const barBatch = new BatchCollector();
+  // Striped barrier arm (alternating bright orange and white safety segments)
+  for (let i = 0; i < 9; i++) {
+    const segX = i * 0.45 + 0.22;
+    barBatch.addBox([segX, 0, 0], [0.44, 0.14, 0.06], (i % 2 === 0) ? materials.barrierOrange : materials.barrierWhite);
+  }
+  // Rubber impact tip
+  barBatch.addBox([4.2, 0, 0], [0.12, 0.15, 0.07], materials.carRubber);
+  barBatch.build(barGroup, true);
+
+  // Modern stainless security bollards flanking the entrance lane
+  const bollardXs = [-6.7, -0.4];
+  for (const bx of bollardXs) {
+    batch.addCylinder([bx, 0.45, 25.8], 0.12, 0.12, 0.9, materials.chrome);
+    batch.addSphere([bx, 0.9, 25.8], [0.12, 0.06, 0.12], materials.chrome);
+    // Amber reflector ring
+    batch.addCylinder([bx, 0.72, 25.8], 0.125, 0.125, 0.08, materials.flowerYellow, { shadow: false });
   }
 
   // =========================================================================
-  // 5. Security Guardhouse (Pos Satpam) (x: [-14.5, -9.5], z: [23.5, 27.5])
+  // 10. Security Guardhouse / Booth ("Pos Satpam") (x: [-14.5, -9.0], z: [23.5, 27.5])
   // =========================================================================
-  const ghX = -12.0;
+  const ghX = -11.75;
   const ghZ = 25.5;
-  // Raised stone foundation
-  batch.addBox([ghX, 0.22, ghZ], [5.2, 0.44, 4.2], materials.foundation);
-  // Stucco walls
-  batch.addBox([ghX, 1.7, ghZ], [4.8, 2.5, 3.8], materials.securityBoothWall);
-  // Flat overhanging roof with metal fascia
-  batch.addBox([ghX, 3.05, ghZ], [5.8, 0.22, 4.8], materials.securityBoothRoof);
-  // Modern roof parapet
-  batch.addBox([ghX, 3.22, ghZ], [5.6, 0.14, 4.6], materials.trim);
+  const ghW = 5.2;
+  const ghD = 4.0;
+  // Raised stone foundation plinth
+  batch.addBox([ghX, 0.24, ghZ], [ghW + 0.5, 0.48, ghD + 0.5], materials.foundation);
+  // High-end stucco walls matching villa
+  batch.addBox([ghX, 1.8, ghZ], [ghW, 2.65, ghD], materials.securityBoothWall);
+  // Architectural trim band
+  batch.addBox([ghX, 0.55, ghZ], [ghW + 0.08, 0.12, ghD + 0.08], materials.trim);
+  batch.addBox([ghX, 2.95, ghZ], [ghW + 0.1, 0.12, ghD + 0.1], materials.trim);
 
-  // Large glass inspection windows on front (South) and East (facing entrance driveway)
-  // South window (facing road)
-  batch.addBox([ghX, 1.75, ghZ + 1.92], [2.8, 1.25, 0.06], materials.glass);
-  // East window (watching cars enter gate)
-  batch.addBox([ghX + 2.42, 1.75, ghZ], [0.06, 1.25, 2.4], materials.glass);
+  // Overhanging modern flat roof with dark fascia matching reference map
+  batch.addBox([ghX, 3.2, ghZ], [ghW + 1.2, 0.26, ghD + 1.2], materials.securityBoothRoof);
+  batch.addBox([ghX, 3.38, ghZ], [ghW + 1.0, 0.14, ghD + 1.0], materials.trim);
 
-  // Guardhouse entry door on West side
-  batch.addBox([ghX - 2.42, 1.35, ghZ], [0.08, 2.2, 1.1], materials.woodDark);
+  // --- Panoramic Observation Windows ---
+  // South window (facing road and pedestrian sidewalk)
+  batch.addBox([ghX, 1.85, ghZ + ghD * 0.5 + 0.02], [3.2, 1.4, 0.12], materials.windowFrameDark);
+  batch.addBox([ghX, 1.85, ghZ + ghD * 0.5 + 0.03], [3.0, 1.24, 0.06], materials.glass);
 
-  // Interior Security Desk & CCTV Monitors
-  batch.addBox([ghX + 1.2, 0.85, ghZ + 0.8], [1.6, 0.75, 1.4], materials.woodWarm);
-  // 3 CCTV Monitor screens glowing
-  batch.addBox([ghX + 1.2, 1.45, ghZ + 1.2], [0.75, 0.45, 0.06], materials.screenCode);
-  batch.addBox([ghX + 1.85, 1.45, ghZ + 0.7], [0.06, 0.45, 0.65], materials.screenTerminal);
+  // East window (facing driveway entrance, barrier & visitors)
+  batch.addBox([ghX + ghW * 0.5 + 0.02, 1.85, ghZ], [0.12, 1.4, 2.6], materials.windowFrameDark);
+  batch.addBox([ghX + ghW * 0.5 + 0.03, 1.85, ghZ], [0.06, 1.24, 2.4], materials.glass);
 
-  // Warm ceiling downlight inside guardhouse
-  const ghLight = new THREE.PointLight(0xffdf99, 1.4, 7.0, 1.8);
-  ghLight.position.set(ghX, 2.6, ghZ);
+  // North window (facing inner villa garden and driveway loop)
+  batch.addBox([ghX, 1.85, ghZ - ghD * 0.5 - 0.02], [2.8, 1.4, 0.12], materials.windowFrameDark);
+  batch.addBox([ghX, 1.85, ghZ - ghD * 0.5 - 0.03], [2.6, 1.24, 0.06], materials.glass);
+
+  // West entrance door for security personnel
+  batch.addBox([ghX - ghW * 0.5 - 0.02, 1.45, ghZ], [0.1, 2.2, 1.1], materials.woodDark);
+  batch.addCylinder([ghX - ghW * 0.5 - 0.06, 1.4, ghZ + 0.38], 0.02, 0.02, 0.16, materials.chrome);
+
+  // Exterior Security 24/7 Signage Plaques
+  // East side facing driveway: "ESTATE SECURITY - 24/7 GUARD"
+  batch.addBox([ghX + ghW * 0.5 + 0.04, 2.62, ghZ], [0.04, 0.44, 1.8], materials.metalDark);
+  batch.addBox([ghX + ghW * 0.5 + 0.06, 2.62, ghZ], [0.03, 0.4, 1.7], materials.monumentSignSecurity);
+
+  // South side facing road: Security Badge
+  batch.addBox([ghX, 2.62, ghZ + ghD * 0.5 + 0.04], [1.8, 0.44, 0.04], materials.metalDark);
+  batch.addBox([ghX, 2.62, ghZ + ghD * 0.5 + 0.06], [1.7, 0.4, 0.03], materials.monumentSignSecurity);
+
+  // --- Interior Security Console & Surveillance Center ---
+  // Security console desk in walnut & dark slate
+  batch.addBox([ghX + 1.2, 0.9, ghZ + 0.8], [1.8, 0.78, 1.4], materials.woodWarm);
+  batch.addBox([ghX + 1.2, 0.94, ghZ + 0.8], [1.84, 0.04, 1.44], materials.metalDark);
+  // 3 Multi-screen CCTV surveillance monitors
+  batch.addBox([ghX + 1.1, 1.5, ghZ + 1.3], [0.75, 0.46, 0.06], materials.screenCode);
+  batch.addBox([ghX + 1.85, 1.5, ghZ + 0.75], [0.06, 0.46, 0.7], materials.screenTerminal);
+  batch.addBox([ghX + 0.4, 1.5, ghZ + 1.3], [0.55, 0.42, 0.06], materials.screenCode);
+  // High-back ergonomic security officer chair
+  batch.addBox([ghX + 0.9, 0.65, ghZ], [0.55, 0.1, 0.55], materials.leatherDark);
+  batch.addBox([ghX + 0.9, 1.1, ghZ - 0.25], [0.5, 0.85, 0.1], materials.leatherDark);
+
+  // Warm interior ceiling illumination
+  const ghLight = new THREE.PointLight(0xffe2a3, 1.6, 7.5, 1.8);
+  ghLight.position.set(ghX, 2.7, ghZ);
   securityGroup.add(ghLight);
 
-  // Guardhouse exterior signage: "SECURITY 24/7" badge
-  batch.addBox([ghX + 2.45, 2.55, ghZ], [0.04, 0.38, 1.4], materials.metalDark);
-  batch.addBox([ghX + 2.47, 2.55, ghZ], [0.02, 0.32, 1.3], materials.asphaltMarkingWhite);
+  // Exterior soffit downlights under overhanging roof
+  for (const [ox, oz] of [[-1.8, 1.8], [1.8, 1.8], [-1.8, -1.8], [1.8, -1.8]]) {
+    const soffitLight = new THREE.SpotLight(0xfff1cf, 1.2, 5.0, Math.PI * 0.35, 0.4);
+    soffitLight.position.set(ghX + ox, 3.15, ghZ + oz);
+    soffitLight.target.position.set(ghX + ox, 0, ghZ + oz);
+    securityGroup.add(soffitLight);
+    securityGroup.add(soffitLight.target);
+  }
 
   // Guardhouse physics collider
-  const ghBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(ghX, 1.5, ghZ));
-  world.createCollider(RAPIER.ColliderDesc.cuboid(2.5, 1.5, 2.0), ghBody);
+  const ghBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(ghX, 1.6, ghZ));
+  world.createCollider(RAPIER.ColliderDesc.cuboid((ghW + 0.4) * 0.5, 1.6, (ghD + 0.4) * 0.5), ghBody);
   staticBodies.push(ghBody);
 
   // =========================================================================
-  // 6. Security Guard NPCs (Uniformed Guards)
+  // 11. West Perimeter Wall Segments (x: [-48.0, -14.5], z = 24.5)
   // =========================================================================
-  function createGuardRig(gx, gz, rotY, isPatrol = false) {
+  const westPillarXs = [-19.5, -24.5, -29.5, -34.5, -39.5, -44.5, -48.0];
+  let curWestX = -14.65;
+  for (const px of westPillarXs) {
+    addPerimeterWallSection(px + 0.45, curWestX, monZ);
+    addPerimeterPillar(px, monZ, true);
+    curWestX = px - 0.45;
+  }
+
+  // =========================================================================
+  // 12. Security Guard NPCs (Uniformed Satpam with Peaked Cap & White Gloves)
+  // =========================================================================
+  function createGuardRig(gx, gz, rotY, role = 'gate') {
     const rig = new THREE.Group();
     rig.position.set(gx, 0, gz);
     rig.rotation.y = rotY;
@@ -274,86 +497,110 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
 
     const gb = new BatchCollector();
 
-    // Boots
-    gb.addBox([-0.18, 0.12, 0], [0.22, 0.24, 0.38], materials.carRubber);
-    gb.addBox([0.18, 0.12, 0], [0.22, 0.24, 0.38], materials.carRubber);
-    // Dark uniform trousers
+    // Polished black tactical service boots
+    gb.addBox([-0.18, 0.12, 0.02], [0.22, 0.24, 0.38], materials.carRubber);
+    gb.addBox([0.18, 0.12, 0.02], [0.22, 0.24, 0.38], materials.carRubber);
+
+    // Dark navy uniform trousers with sharp crease
     gb.addCylinder([-0.18, 0.58, 0], 0.12, 0.14, 0.72, materials.guardUniform);
     gb.addCylinder([0.18, 0.58, 0], 0.12, 0.14, 0.72, materials.guardUniform);
-    // Duty belt with holster and brass buckle
-    gb.addBox([0, 0.98, 0], [0.65, 0.1, 0.45], materials.leatherDark);
-    gb.addBox([0, 0.98, 0.23], [0.12, 0.08, 0.04], materials.guardBadge);
-    gb.addBox([0.28, 0.95, 0.1], [0.12, 0.18, 0.12], materials.leatherDark); // Holster/pouch
-    gb.addBox([-0.28, 0.98, 0.05], [0.08, 0.16, 0.08], materials.metalDark); // Radio
-    // Torso in navy security shirt with pocket flaps & gold badge
-    gb.addBox([0, 1.45, 0], [0.68, 0.85, 0.44], materials.guardUniform);
-    gb.addBox([0.18, 1.58, 0.23], [0.1, 0.1, 0.02], materials.guardBadge); // Shield badge
-    // Gold shoulder epaulets
-    gb.addBox([-0.36, 1.82, 0], [0.16, 0.04, 0.22], materials.guardBadge);
-    gb.addBox([0.36, 1.82, 0], [0.16, 0.04, 0.22], materials.guardBadge);
-    // Arms (standing attentively)
-    gb.addCylinder([-0.42, 1.35, 0.05], 0.1, 0.1, 0.7, materials.guardUniform, { rotation: [0.15, 0, 0.1] });
-    gb.addCylinder([0.42, 1.35, 0.05], 0.1, 0.1, 0.7, materials.guardUniform, { rotation: [0.15, 0, -0.1] });
-    // Hands
-    gb.addSphere([-0.46, 0.95, 0.12], [0.09, 0.09, 0.09], materials.skin);
-    gb.addSphere([0.46, 0.95, 0.12], [0.09, 0.09, 0.09], materials.skin);
-    // Head & face
-    gb.addSphere([0, 2.05, 0], [0.24, 0.26, 0.24], materials.skin);
+
+    // Signature Indonesian VIP Satpam White Duty Belt with polished gold buckle
+    gb.addBox([0, 0.98, 0], [0.66, 0.11, 0.45], materials.guardWhite);
+    gb.addBox([0, 0.98, 0.23], [0.14, 0.09, 0.03], materials.guardBadge); // Gold buckle
+    gb.addBox([0.28, 0.95, 0.08], [0.12, 0.18, 0.12], materials.leatherDark); // Holster
+    gb.addBox([-0.28, 0.98, 0.05], [0.09, 0.18, 0.09], materials.metalDark); // Walkie-talkie
+    // Walkie-talkie tall flexible antenna
+    gb.addCylinder([-0.28, 1.2, 0.05], 0.01, 0.015, 0.3, materials.metalDark);
+
+    // Navy blue security tunic/shirt
+    gb.addBox([0, 1.45, 0], [0.72, 0.86, 0.46], materials.guardUniform);
+    // White inner collar peaking through
+    gb.addBox([0, 1.88, 0.05], [0.34, 0.08, 0.28], materials.guardWhite);
+    // Gold center shirt buttons
+    for (let by = 1.15; by <= 1.75; by += 0.2) {
+      gb.addSphere([0, by, 0.24], [0.025, 0.025, 0.025], materials.guardBadge);
+    }
+    // Gold chest shield badge on left breast
+    gb.addBox([0.19, 1.58, 0.24], [0.11, 0.11, 0.02], materials.guardBadge);
+    // White name tag on right breast ("SECURITY")
+    gb.addBox([-0.19, 1.58, 0.24], [0.12, 0.04, 0.02], materials.guardWhite);
+
+    // Gold shoulder epaulets (Tanda Pangkat Satpam) with rank stripes
+    gb.addBox([-0.38, 1.83, 0], [0.18, 0.04, 0.24], materials.guardBadge);
+    gb.addBox([0.38, 1.83, 0], [0.18, 0.04, 0.24], materials.guardBadge);
+    // White security lanyard cord draping from left shoulder
+    gb.addCylinder([0.22, 1.45, 0.22], 0.015, 0.015, 0.45, materials.guardWhite, { rotation: [0, 0, 0.35] });
+
+    // Arms in attentive security posture with White Service Gloves
+    if (role === 'gate') {
+      // Guard 1: Hands clasped formally in front at duty belt (Standard VIP Satpam Siap Sedia)
+      gb.addCylinder([-0.42, 1.4, 0.05], 0.1, 0.1, 0.65, materials.guardUniform, { rotation: [0.25, 0, 0.22] });
+      gb.addCylinder([0.42, 1.4, 0.05], 0.1, 0.1, 0.65, materials.guardUniform, { rotation: [0.25, 0, -0.22] });
+      // Forearms angled inward
+      gb.addCylinder([-0.28, 1.05, 0.18], 0.09, 0.09, 0.45, materials.guardUniform, { rotation: [0.65, 0.5, 0] });
+      gb.addCylinder([0.28, 1.05, 0.18], 0.09, 0.09, 0.45, materials.guardUniform, { rotation: [0.65, -0.5, 0] });
+      // White service gloves clasped together
+      gb.addSphere([-0.08, 0.98, 0.25], [0.1, 0.09, 0.09], materials.guardWhite);
+      gb.addSphere([0.08, 0.98, 0.25], [0.1, 0.09, 0.09], materials.guardWhite);
+    } else {
+      // Guard 2: Holding visitor register clipboard
+      gb.addCylinder([-0.42, 1.4, 0.05], 0.1, 0.1, 0.65, materials.guardUniform, { rotation: [0.35, 0, 0.2] });
+      gb.addCylinder([0.42, 1.4, 0.05], 0.1, 0.1, 0.65, materials.guardUniform, { rotation: [0.45, 0, -0.2] });
+      // Left arm holding clipboard
+      gb.addBox([-0.18, 1.25, 0.32], [0.28, 0.38, 0.04], materials.woodDark, { rotation: [0.4, 0.1, 0] });
+      gb.addBox([-0.18, 1.25, 0.34], [0.24, 0.32, 0.01], materials.guardWhite, { rotation: [0.4, 0.1, 0] });
+      gb.addSphere([-0.3, 1.15, 0.28], [0.09, 0.09, 0.09], materials.guardWhite);
+      // Right hand holding silver pen
+      gb.addSphere([0.2, 1.2, 0.3], [0.09, 0.09, 0.09], materials.guardWhite);
+      gb.addCylinder([0.15, 1.25, 0.34], 0.01, 0.01, 0.16, materials.chrome, { rotation: [0.5, 0.3, 0] });
+    }
+
+    // Stylized cartoon head
+    gb.addSphere([0, 2.06, 0], [0.25, 0.27, 0.25], materials.skin);
+    // Dark styled hair visible under cap
+    gb.addSphere([0, 2.08, -0.06], [0.27, 0.26, 0.25], materials.hairDark);
+
     // Aviator sunglasses
-    gb.addBox([0, 2.1, 0.22], [0.35, 0.1, 0.06], materials.glass);
-    // Peaked Security Cap with gold chin strap & badge
-    gb.addCylinder([0, 2.28, 0], 0.28, 0.26, 0.18, materials.guardCap);
-    gb.addBox([0, 2.22, 0.24], [0.36, 0.04, 0.22], materials.guardCap, { rotation: [0.18, 0, 0] }); // Visor brim
-    gb.addBox([0, 2.32, 0.25], [0.08, 0.08, 0.02], materials.guardBadge); // Cap badge
+    gb.addBox([0, 2.12, 0.24], [0.36, 0.11, 0.06], materials.glass);
+    gb.addBox([0, 2.12, 0.24], [0.38, 0.12, 0.02], materials.carriageLanternMetal);
+
+    // --- Official Peaked Security Cap (Topi Dinas Satpam) ---
+    // Cap base crown in dark navy
+    gb.addCylinder([0, 2.28, 0.02], 0.3, 0.28, 0.18, materials.guardCap);
+    // Flared upper top crown
+    gb.addCylinder([0, 2.38, 0.04], 0.34, 0.31, 0.08, materials.guardCap);
+    // Glossy black visor / brim sloping downward
+    gb.addBox([0, 2.22, 0.28], [0.38, 0.04, 0.24], materials.leatherDark, { rotation: [0.22, 0, 0] });
+    // Gold braided chin cord above the visor
+    gb.addCylinder([0, 2.26, 0.27], 0.016, 0.016, 0.32, materials.guardBadge, { rotation: [0, 0, Math.PI * 0.5] });
+    // Gold embossed security crest / emblem on front of cap
+    gb.addBox([0, 2.34, 0.29], [0.09, 0.1, 0.03], materials.guardBadge);
 
     gb.build(rig, true);
 
-    // Static physics collider for standing guard
+    // Physics collider
     const gBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(gx, 1.1, gz));
-    world.createCollider(RAPIER.ColliderDesc.cylinder(1.1, 0.35), gBody);
+    world.createCollider(RAPIER.ColliderDesc.cylinder(1.1, 0.38), gBody);
     staticBodies.push(gBody);
 
     return {
       group: rig,
       baseX: gx,
       baseZ: gz,
-      isPatrol,
+      role,
       clock: Math.random() * 10,
     };
   }
 
-  // Guard 1: Standing at main gate checkpoint (x = -3.2, z = 25.2)
-  animatedGuards.push(createGuardRig(-3.2, 25.2, 0, false));
-  // Guard 2: Standing at guardhouse doorway (x = -15.2, z = 25.5)
-  animatedGuards.push(createGuardRig(-15.2, 25.5, Math.PI * 0.5, false));
+  // Guard 1: Stationed at main gate checkpoint & boom barrier (x = -5.8, z = 25.5)
+  animatedGuards.push(createGuardRig(-5.8, 25.5, 0, 'gate'));
+  // Guard 2: Stationed by the security booth service window (x = -8.8, z = 25.8)
+  animatedGuards.push(createGuardRig(-8.8, 25.8, Math.PI * 0.15, 'window'));
 
   // =========================================================================
-  // 7. Outer Perimeter Wall & Security Fencing (x: [-48.0, 48.0], z = 24.5)
+  // 13. Southern World Boundary Wall along highway edge (z = 42.0)
   // =========================================================================
-  // Wall segments connecting to estate sides
-  const wallSegments = [
-    // West wing wall: from -48.0 to -15.5
-    { x: -31.75, w: 32.5 },
-    // Between guardhouse & gate: -9.0 to -5.5
-    { x: -7.25, w: 3.5 },
-    // Between monument & welcome: 11.0 to 18.0
-    { x: 14.5, w: 7.0 },
-    // East outer wall: 29.0 to 48.0
-    { x: 38.5, w: 19.0 },
-  ];
-
-  for (const ws of wallSegments) {
-    batch.addBox([ws.x, 0.2, monZ], [ws.w, 0.4, 0.65], materials.foundation);
-    batch.addBox([ws.x, 1.25, monZ], [ws.w, 1.7, 0.45], materials.monumentWall);
-    batch.addBox([ws.x, 2.15, monZ], [ws.w, 0.12, 0.6], materials.trim);
-
-    const wBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(ws.x, 1.1, monZ));
-    world.createCollider(RAPIER.ColliderDesc.cuboid(ws.w * 0.5, 1.1, 0.35), wBody);
-    staticBodies.push(wBody);
-  }
-
-  // Southern World Boundary Wall along highway edge (z = 42.0)
-  // Prevents falling off the world edge
   const southBoundBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 1.5, 42.2));
   world.createCollider(RAPIER.ColliderDesc.cuboid(52.0, 1.5, 0.4), southBoundBody);
   staticBodies.push(southBoundBody);
@@ -366,11 +613,9 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
       for (const g of animatedGuards) {
         g.clock += delta;
         // Subtle natural breathing & posture shift
-        g.group.position.y = Math.sin(g.clock * 2.0) * 0.008;
-        if (!g.isPatrol) {
-          // Slow head/torso scanning
-          g.group.rotation.y += Math.sin(g.clock * 0.8) * 0.003;
-        }
+        g.group.position.y = Math.sin(g.clock * 2.2) * 0.007;
+        // Watchful scanning back and forth
+        g.group.rotation.y += Math.sin(g.clock * 0.9) * 0.0025;
       }
     },
   };

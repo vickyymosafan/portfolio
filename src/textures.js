@@ -858,88 +858,167 @@ export function createStripedAwningTexture(stripeColor = '#2b5876', creamColor =
 /**
  * Creates luxury entrance monument plaque texture matching Vicky's World Map
  */
-export function createMonumentSignTexture(variant = 'main', width = 512, height = 256) {
+export function createMonumentSignTexture(variant = 'main', width = 1024, height = 512) {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
 
   if (variant === 'main') {
-    // Dark matte bronze/slate background
-    ctx.fillStyle = '#1c242b';
+    // Rich dark slate / bronze luxury panel
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+    bgGrad.addColorStop(0, '#1a222a');
+    bgGrad.addColorStop(1, '#0e141a');
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, width, height);
 
-    // Gold brass border
+    // Double Gold brass borders
     ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 6;
-    ctx.strokeRect(10, 10, width - 20, height - 20);
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(18, 18, width - 36, height - 36);
+    ctx.lineWidth = 10;
+    ctx.strokeRect(16, 16, width - 32, height - 32);
+    ctx.lineWidth = 3;
+    ctx.strokeRect(28, 28, width - 56, height - 56);
 
-    // Decorative corner rivets
-    ctx.fillStyle = '#f3ce5c';
-    for (const [rx, ry] of [[24, 24], [width - 24, 24], [24, height - 24], [width - 24, height - 24]]) {
+    // Decorative corner rosette / rivets
+    ctx.fillStyle = '#f5d76e';
+    for (const [rx, ry] of [[40, 40], [width - 40, 40], [40, height - 40], [width - 40, height - 40]]) {
       ctx.beginPath();
-      ctx.arc(rx, ry, 4, 0, Math.PI * 2);
+      ctx.arc(rx, ry, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#b89222';
+      ctx.beginPath();
+      ctx.arc(rx, ry, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#f5d76e';
+    }
+
+    // Top subtle crest: 3 Gold Stars
+    for (let i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.arc(width * 0.5 + i * 36, height * 0.22, i === 0 ? 6 : 4.5, 0, Math.PI * 2);
       ctx.fill();
     }
 
     // Main title: VICKY'S WORLD
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#f7d770';
-    ctx.font = 'bold 36px "Nunito", sans-serif';
-    ctx.fillText("VICKY'S WORLD", width * 0.5, height * 0.44);
+    ctx.shadowColor = 'rgba(212, 175, 55, 0.45)';
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = '#fce280';
+    ctx.font = '900 68px "Nunito", "Montserrat", sans-serif';
+    ctx.fillText("VICKY'S WORLD", width * 0.5, height * 0.48);
+    ctx.shadowBlur = 0;
 
     // Decorative divider line with center diamond
     ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3.5;
     ctx.beginPath();
-    ctx.moveTo(width * 0.2, height * 0.56);
-    ctx.lineTo(width * 0.8, height * 0.56);
+    ctx.moveTo(width * 0.16, height * 0.62);
+    ctx.lineTo(width * 0.84, height * 0.62);
     ctx.stroke();
 
-    ctx.fillStyle = '#f7d770';
+    // Center Gold Diamond
+    ctx.fillStyle = '#fce280';
     ctx.beginPath();
-    ctx.arc(width * 0.5, height * 0.56, 5, 0, Math.PI * 2);
+    ctx.moveTo(width * 0.5, height * 0.62 - 10);
+    ctx.lineTo(width * 0.5 + 12, height * 0.62);
+    ctx.lineTo(width * 0.5, height * 0.62 + 10);
+    ctx.lineTo(width * 0.5 - 12, height * 0.62);
+    ctx.closePath();
     ctx.fill();
 
-    // Subtitle: DEVELOPER · CREATOR · EXPLORER
-    ctx.fillStyle = '#c5d0d8';
-    ctx.font = '600 16px "DM Sans", sans-serif';
-    ctx.letterSpacing = '2px';
-    ctx.fillText('DEVELOPER  •  CREATOR  •  EXPLORER', width * 0.5, height * 0.74);
-  } else {
-    // Welcome plaque
-    ctx.fillStyle = '#1e262c';
+    // Subtitle: DEVELOPER • CREATOR • EXPLORER
+    ctx.fillStyle = '#d5e2eb';
+    ctx.font = '700 28px "DM Sans", sans-serif';
+    ctx.letterSpacing = '5px';
+    ctx.fillText('DEVELOPER   •   CREATOR   •   EXPLORER', width * 0.5, height * 0.80);
+  } else if (variant === 'welcome') {
+    // Luxury welcome plaque
+    const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+    bgGrad.addColorStop(0, '#1c252d');
+    bgGrad.addColorStop(1, '#11171d');
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, width, height);
 
+    // Gold frame
     ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(8, 8, width - 16, height - 16);
+    ctx.lineWidth = 8;
+    ctx.strokeRect(14, 14, width - 28, height - 28);
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(24, 24, width - 48, height - 48);
 
     // Coral V badge on the left
-    ctx.fillStyle = '#e8654d';
+    const badgeX = 60;
+    const badgeY = 96;
+    const badgeSize = 148;
+    const bGrad = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeSize, badgeY + badgeSize);
+    bGrad.addColorStop(0, '#f06c53');
+    bGrad.addColorStop(1, '#d8482f');
+    ctx.fillStyle = bGrad;
     ctx.beginPath();
-    ctx.roundRect(32, 54, 72, 72, 18);
+    ctx.roundRect(badgeX, badgeY, badgeSize, badgeSize, 34);
     ctx.fill();
-    ctx.fillStyle = '#fffdfa';
-    ctx.font = '900 44px "Nunito", sans-serif';
+
+    // Gold rim around V badge
+    ctx.strokeStyle = '#f8df88';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    // White "V" inside badge
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 94px "Nunito", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('V', 68, 108);
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+    ctx.shadowBlur = 8;
+    ctx.fillText('V', badgeX + badgeSize * 0.5, badgeY + badgeSize * 0.74);
+    ctx.shadowBlur = 0;
 
     // Text on the right
+    const textLeft = 248;
     ctx.textAlign = 'left';
-    ctx.fillStyle = '#a8b6be';
-    ctx.font = '500 15px "DM Sans", sans-serif';
-    ctx.fillText('Welcome to', 124, 76);
+    ctx.fillStyle = '#a9b9c4';
+    ctx.font = '600 26px "DM Sans", sans-serif';
+    ctx.fillText('Welcome to', textLeft, 145);
 
-    ctx.fillStyle = '#fffdfa';
-    ctx.font = '800 24px "Nunito", sans-serif';
-    ctx.fillText('VICKY MOSAFAN', 124, 106);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 48px "Nunito", sans-serif';
+    ctx.fillText('VICKY MOSAFAN', textLeft, 202);
 
-    ctx.fillStyle = '#d4af37';
-    ctx.font = '700 13px "DM Sans", sans-serif';
-    ctx.fillText('CREATIVE DEVELOPER', 124, 126);
+    ctx.fillStyle = '#f5d76e';
+    ctx.font = '800 24px "DM Sans", sans-serif';
+    ctx.letterSpacing = '3px';
+    ctx.fillText('CREATIVE DEVELOPER', textLeft, 242);
+  } else if (variant === 'security') {
+    // 24/7 Security Checkpoint Badge
+    ctx.fillStyle = '#0f1720';
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(12, 12, width - 24, height - 24);
+
+    // Gold Shield
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.moveTo(width * 0.18, 60);
+    ctx.lineTo(width * 0.32, 60);
+    ctx.lineTo(width * 0.32, 140);
+    ctx.quadraticCurveTo(width * 0.25, 200, width * 0.25, 220);
+    ctx.quadraticCurveTo(width * 0.25, 200, width * 0.18, 140);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#eab308';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'left';
+    ctx.font = '900 48px "Nunito", sans-serif';
+    ctx.fillText('ESTATE SECURITY', width * 0.38, 115);
+
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = '700 28px "DM Sans", sans-serif';
+    ctx.letterSpacing = '2px';
+    ctx.fillText('24/7 GUARD  •  ACCESS CONTROL', width * 0.38, 175);
   }
 
   const texture = new THREE.CanvasTexture(canvas);
