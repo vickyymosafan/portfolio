@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { materials, palette } from './materials.js';
-import { addBox, addCylinder, addSphere, BatchCollector } from './geometry.js';
+import { addBox, addCylinder, addSphere, BatchCollector, mergeStaticHierarchy } from './geometry.js';
 
 /**
  * Creates Zone H: Sawah (Terraced Flooded Rice Paddies & Agricultural Landscape)
@@ -305,6 +305,8 @@ export function createRiceFields(scene, world, RAPIER, staticBodies) {
   staticBodies.push(northBoundBody);
 
   batch.build(riceGroup, true);
+  if (farmerNPC?.group) farmerNPC.group.traverse((ch) => { ch.userData.isDynamic = true; });
+  mergeStaticHierarchy(riceGroup);
 
   return {
     group: riceGroup,

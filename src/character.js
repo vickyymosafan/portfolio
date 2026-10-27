@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { materials, palette } from './materials.js';
-import { addBox, addSphere, addCylinder } from './geometry.js';
+import { addBox, addSphere, addCylinder, mergeStaticHierarchy } from './geometry.js';
 
 /**
  * Creates the stylized cartoon character rig with hierarchical articulation:
@@ -277,6 +277,28 @@ export function createCharacter(scene) {
       if (options.headYaw !== undefined) s.targetHeadYaw = options.headYaw;
     },
   };
+
+  // Preserve hairTuft spring dynamic animation
+  hairTuft.traverse((c) => { c.userData.keepSeparate = true; });
+
+  // Consolidate static sub-assemblies inside character rig (reduces 65 draw calls to ~14)
+  mergeStaticHierarchy(headGroup);
+  mergeStaticHierarchy(torsoGroup);
+  mergeStaticHierarchy(pelvisGroup);
+  mergeStaticHierarchy(leftForearm);
+  mergeStaticHierarchy(rightForearm);
+  mergeStaticHierarchy(leftShoe);
+  mergeStaticHierarchy(rightShoe);
+
+  // Shadow optimization: Character uses contact shadow disc + body tunic for directional sun shadow.
+  // Flag parts as dynamic so estate staticWorld merge preserves character rig articulation.
+  character.traverse((child) => {
+    child.userData.isDynamic = true;
+    if (child.isMesh) {
+      child.castShadow = (child.material === materials.tunic);
+    }
+  });
+
   return rig;
 }
 

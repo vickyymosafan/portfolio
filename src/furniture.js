@@ -58,13 +58,11 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
     // Room-specific furnishings with physics colliders
     buildRoomFurniture(building, spec, world, RAPIER, staticBodies);
 
-    // Interactive glowing floor beacon placed conveniently in front/center of each room
+    // Register interaction point covering the full room bay
     const isAbout = spec.id === 'about';
     const beaconX = isAbout ? -1.4 : spec.x;
     const beaconZ = spec.id === 'contact' ? -11.8 : (spec.id === 'bathroom' ? -5.5 : (isAbout ? 1.7 : -1.5));
-    createFloorBeacon(building, beaconX, spec.y, beaconZ, spec.accent);
 
-    // Register interaction point covering the full room bay
     const roomInfo = portfolio.rooms.find((r) => r.id === spec.id);
     interactionPoints.push({
       id: spec.id,
@@ -75,31 +73,56 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
       getLabel: () => `Explore ${roomInfo ? roomInfo.title : spec.subtitle}`,
     });
   }
-}
 
-function createFloorBeacon(parent, x, y, z, colorHex) {
-  const beacon = new THREE.Group();
-  beacon.position.set(x, y + 0.025, z);
-  parent.add(beacon);
-
-  const ringGeo = new THREE.RingGeometry(0.48, 0.68, 24);
+  // High-performance InstancedMesh floor beacons (reduces 18 draw calls down to 2)
+  const bCount = roomSpecs.length;
+  const ringGeo = new THREE.RingGeometry(0.48, 0.68, 16);
   const ringMat = new THREE.MeshBasicMaterial({
-    color: colorHex,
+    color: 0xffffff,
     transparent: true,
     opacity: 0.45,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
-  const ring = new THREE.Mesh(ringGeo, ringMat);
-  ring.rotation.x = -Math.PI * 0.5;
-  beacon.add(ring);
+  const beaconRings = new THREE.InstancedMesh(ringGeo, ringMat, bCount);
+  beaconRings.userData.keepSeparate = true;
 
-  const centerDisc = new THREE.Mesh(
-    new THREE.CircleGeometry(0.28, 16),
-    new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false })
-  );
-  centerDisc.rotation.x = -Math.PI * 0.5;
-  beacon.add(centerDisc);
+  const discGeo = new THREE.CircleGeometry(0.28, 12);
+  const discMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.25,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  const beaconDiscs = new THREE.InstancedMesh(discGeo, discMat, bCount);
+  beaconDiscs.userData.keepSeparate = true;
+
+  const dummy = new THREE.Object3D();
+  const c = new THREE.Color();
+  for (let i = 0; i < bCount; i += 1) {
+    const spec = roomSpecs[i];
+    const isAbout = spec.id === 'about';
+    const beaconX = isAbout ? -1.4 : spec.x;
+    const beaconZ = spec.id === 'contact' ? -11.8 : (spec.id === 'bathroom' ? -5.5 : (isAbout ? 1.7 : -1.5));
+    dummy.position.set(beaconX, spec.y + 0.025, beaconZ);
+    dummy.rotation.x = -Math.PI * 0.5;
+    dummy.updateMatrix();
+
+    beaconRings.setMatrixAt(i, dummy.matrix);
+    beaconDiscs.setMatrixAt(i, dummy.matrix);
+
+    c.set(spec.accent);
+    beaconRings.setColorAt(i, c);
+    beaconDiscs.setColorAt(i, c);
+  }
+  beaconRings.instanceMatrix.needsUpdate = true;
+  if (beaconRings.instanceColor) beaconRings.instanceColor.needsUpdate = true;
+  beaconDiscs.instanceMatrix.needsUpdate = true;
+  if (beaconDiscs.instanceColor) beaconDiscs.instanceColor.needsUpdate = true;
+
+  building.add(beaconRings);
+  building.add(beaconDiscs);
 }
 
 function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {

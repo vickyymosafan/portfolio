@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { materials, palette } from './materials.js';
-import { addBox, addSphere, addCylinder, BatchCollector } from './geometry.js';
+import { addBox, addSphere, addCylinder, BatchCollector, mergeStaticHierarchy } from './geometry.js';
 
-export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlockers) {
+export function createArchitecture(parent, world, RAPIER, staticBodies, cameraBlockers) {
   const building = new THREE.Group();
-  scene.add(building);
+  parent.add(building);
   const archBatch = new BatchCollector();
 
   const addColliderBox = (pos, halfExtents) => {
@@ -13,6 +13,17 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
     world.createCollider(RAPIER.ColliderDesc.cuboid(halfExtents[0], halfExtents[1], halfExtents[2]), body);
     staticBodies.push(body);
     return body;
+  };
+
+  const addBlocker = (mesh) => {
+    if (mesh && cameraBlockers) {
+      mesh.updateMatrixWorld(true);
+      const proxy = new THREE.Mesh(mesh.geometry);
+      proxy.matrixWorld.copy(mesh.matrixWorld);
+      proxy.matrixAutoUpdate = false;
+      cameraBlockers.push(proxy);
+    }
+    return mesh;
   };
 
   /**
@@ -156,49 +167,49 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
 
   // Left West Wall (x = -16.5, z: [3.8, -8.2])
   const wallWest = addBox(building, [-16.5, 5.2, -2.2], [0.65, 10.4, 12.0], materials.wall, { shadow: true });
-  cameraBlockers.push(wallWest);
+  addBlocker(wallWest);
   addColliderBox([-16.5, 5.2, -2.2], [0.325, 5.2, 6.0]);
   archBatch.addBox([-16.45, 0.65, -2.2], [0.68, 1.1, 12.0], materials.wainscot);
   archBatch.addBox([-16.45, 5.2, -2.2], [0.68, 0.3, 12.0], materials.woodWarm);
 
   // Right East Wall (x = 26.0, z: [3.8, -8.2])
   const wallEast = addBox(building, [26.0, 5.2, -2.2], [0.65, 10.4, 12.0], materials.wall, { shadow: true });
-  cameraBlockers.push(wallEast);
+  addBlocker(wallEast);
   addColliderBox([26.0, 5.2, -2.2], [0.325, 5.2, 6.0]);
   archBatch.addBox([25.95, 0.65, -2.2], [0.68, 1.1, 12.0], materials.wainscot);
   archBatch.addBox([25.95, 5.2, -2.2], [0.68, 0.3, 12.0], materials.woodWarm);
 
   // Rear North Wall (z = -8.2, x: [-16.5, 26.0], width 42.5m)
   const rearWallLeft = addBox(building, [-11.0, 5.2, -8.2], [11.0, 10.4, 0.65], materials.wall, { shadow: true });
-  cameraBlockers.push(rearWallLeft);
+  addBlocker(rearWallLeft);
   addColliderBox([-11.0, 5.2, -8.2], [5.5, 5.2, 0.325]);
 
   const rearWallCenter = addBox(building, [0, 7.6, -8.2], [11.0, 5.6, 0.65], materials.wall, { shadow: true });
-  cameraBlockers.push(rearWallCenter);
+  addBlocker(rearWallCenter);
   addColliderBox([0, 7.6, -8.2], [5.5, 2.8, 0.325]);
 
   const rearWallRight = addBox(building, [10.75, 5.2, -8.2], [10.5, 10.4, 0.65], materials.wall, { shadow: true });
-  cameraBlockers.push(rearWallRight);
+  addBlocker(rearWallRight);
   addColliderBox([10.75, 5.2, -8.2], [5.25, 5.2, 0.325]);
 
   const rearGarage = addBox(building, [21.0, 5.2, -8.2], [10.0, 10.4, 0.65], materials.wall, { shadow: true });
-  cameraBlockers.push(rearGarage);
+  addBlocker(rearGarage);
   addColliderBox([21.0, 5.2, -8.2], [5.0, 5.2, 0.325]);
 
   // Chapter 1 Living Room rear wall flanks & terrace opening portal (z = -8.2, x: [-5.5, 5.5])
   // Solid left wall flank (x: [-5.5, -2.4], width 3.1m) - mounts the "About Me" display board
   const rearFlankLeft = addBox(building, [-3.95, 2.4, -8.2], [3.1, 4.8, 0.65], materials.wall, { shadow: true });
-  cameraBlockers.push(rearFlankLeft);
+  addBlocker(rearFlankLeft);
   addColliderBox([-3.95, 2.4, -8.2], [1.55, 2.4, 0.325]);
 
   // Solid right wall flank (x: [2.4, 5.5], width 3.1m) - wraps alongside the staircase
   const rearFlankRight = addBox(building, [3.95, 2.4, -8.2], [3.1, 4.8, 0.65], materials.wall, { shadow: true });
-  cameraBlockers.push(rearFlankRight);
+  addBlocker(rearFlankRight);
   addColliderBox([3.95, 2.4, -8.2], [1.55, 2.4, 0.325]);
 
   // Lintel beam & header over the 4.8m wide sliding glass portal
   const rearLintel = addBox(building, [0, 4.55, -8.2], [5.0, 0.5, 0.65], materials.wall, { shadow: true });
-  cameraBlockers.push(rearLintel);
+  addBlocker(rearLintel);
   addColliderBox([0, 4.55, -8.2], [2.5, 0.25, 0.325]);
   archBatch.addBox([0, 4.35, -8.2], [5.0, 0.12, 0.36], materials.trim);
   archBatch.addBox([0, 0.04, -8.2], [5.0, 0.08, 0.24], materials.trim);
@@ -300,7 +311,7 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   // Partition Gallery / About Me Room at x = -5.5 (z: [3.8, -8.2])
   // 1. Front Dedicated About Me Feature Wall Section (z: [3.8, -0.4], depth 4.2m, center z = 1.7)
   const partWestG1 = addBox(building, [-5.5, 2.6, 1.7], [0.45, 5.2, 4.2], materials.wall, { shadow: true });
-  cameraBlockers.push(partWestG1);
+  addBlocker(partWestG1);
   addColliderBox([-5.5, 2.6, 1.7], [0.225, 2.6, 2.1]);
   // Architectural wainscoting and top crown molding
   archBatch.addBox([-5.45, 0.65, 1.7], [0.48, 1.1, 4.2], materials.wainscot);
@@ -315,7 +326,7 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
 
   // 3. Rear Solid Wall Section (z: [-3.8, -8.2], depth 4.4m, center z = -6.0)
   const partWestG2 = addBox(building, [-5.5, 2.6, -6.0], [0.45, 5.2, 4.4], materials.wall, { shadow: true });
-  cameraBlockers.push(partWestG2);
+  addBlocker(partWestG2);
   addColliderBox([-5.5, 2.6, -6.0], [0.225, 2.6, 2.2]);
   archBatch.addBox([-5.45, 0.65, -6.0], [0.48, 1.1, 4.4], materials.wainscot);
   archBatch.addBox([-5.45, 5.05, -6.0], [0.50, 0.18, 4.4], materials.trim);
@@ -323,7 +334,7 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   // Partition Living Room / Home Office at x = 5.5 (z: [3.8, -8.2])
   // Front entrance portal from foyer into Home Office (width 2.2m, z: [0.9, 3.1])
   const partEastFrontPost = addBox(building, [5.5, 2.6, 3.45], [0.45, 5.2, 0.7], materials.wall, { shadow: true });
-  cameraBlockers.push(partEastFrontPost);
+  addBlocker(partEastFrontPost);
   addColliderBox([5.5, 2.6, 3.45], [0.225, 2.6, 0.35]);
 
   archBatch.addBox([5.5, 4.4, 2.0], [0.48, 1.6, 2.2], materials.wall);
@@ -331,13 +342,13 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
 
   // Solid structural wall behind portal against which the side staircase ascends (z: [-8.2, 0.9], length 9.1m)
   const partEastSolid = addBox(building, [5.5, 2.6, -3.65], [0.45, 5.2, 9.1], materials.wall, { shadow: true });
-  cameraBlockers.push(partEastSolid);
+  addBlocker(partEastSolid);
   addColliderBox([5.5, 2.6, -3.65], [0.225, 2.6, 4.55]);
 
   // Partition Home Office / Garasi at x = 16.0 (z: [3.8, -8.2])
   // Front wall section (z: [3.8, -0.9], depth 4.7m)
   const partGarageFront = addBox(building, [16.0, 2.6, 1.45], [0.45, 5.2, 4.7], materials.wall, { shadow: true });
-  cameraBlockers.push(partGarageFront);
+  addBlocker(partGarageFront);
   addColliderBox([16.0, 2.6, 1.45], [0.225, 2.6, 2.35]);
 
   // Wide Walkthrough Doorway between Office and Garage at z = -2.0 (width 2.2m, z: [-0.9, -3.1])
@@ -346,7 +357,7 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
 
   // Rear wall section (z: [-3.1, -8.2], depth 5.1m)
   const partGarageRear = addBox(building, [16.0, 2.6, -5.65], [0.45, 5.2, 5.1], materials.wall, { shadow: true });
-  cameraBlockers.push(partGarageRear);
+  addBlocker(partGarageRear);
   addColliderBox([16.0, 2.6, -5.65], [0.225, 2.6, 2.55]);
 
   // =========================================================================
@@ -421,25 +432,25 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   // Partition Bedroom / Bathroom at x = -5.5 (z: [3.8, -8.2])
   // Front section
   const partMBS = addBox(building, [-5.5, 7.8, 1.8], [0.45, 5.2, 4.0], materials.wall, { shadow: true });
-  cameraBlockers.push(partMBS);
+  addBlocker(partMBS);
   addColliderBox([-5.5, 7.8, 1.8], [0.225, 2.6, 2.0]);
   // Arched walkthrough portal connecting Bedroom to Bathroom / Mezzanine (z: [-1.2, -4.2])
   archBatch.addBox([-5.5, 9.6, -2.7], [0.48, 1.6, 3.0], materials.wall);
   archBatch.addBox([-5.5, 8.75, -2.7], [0.52, 0.16, 3.0], materials.woodWarm);
   // Rear section
   const partMBN = addBox(building, [-5.5, 7.8, -6.2], [0.45, 5.2, 4.0], materials.wall, { shadow: true });
-  cameraBlockers.push(partMBN);
+  addBlocker(partMBN);
   addColliderBox([-5.5, 7.8, -6.2], [0.225, 2.6, 2.0]);
 
   // Partition Bathroom / Library at x = 5.5 (z: [3.8, -8.2])
   // Front section (z: [0.8, 3.8])
   const partLibS = addBox(building, [5.5, 7.8, 2.3], [0.45, 5.2, 3.0], materials.wall, { shadow: true });
-  cameraBlockers.push(partLibS);
+  addBlocker(partLibS);
   addColliderBox([5.5, 7.8, 2.3], [0.225, 2.6, 1.5]);
 
   // Mid section along stairwell ascent (z: [-5.6, 0.8], depth 6.4m - solid structural backdrop)
   const partLibMid = addBox(building, [5.5, 7.8, -2.4], [0.45, 5.2, 6.4], materials.wall, { shadow: true });
-  cameraBlockers.push(partLibMid);
+  addBlocker(partLibMid);
   addColliderBox([5.5, 7.8, -2.4], [0.225, 2.6, 3.2]);
 
   // Arched walkthrough portal connecting Upper Landing to Library (z: [-5.8, -7.8])
@@ -448,20 +459,20 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
 
   // North corner post (z: [-7.8, -8.2])
   const partLibN = addBox(building, [5.5, 7.8, -8.0], [0.45, 5.2, 0.4], materials.wall, { shadow: true });
-  cameraBlockers.push(partLibN);
+  addBlocker(partLibN);
   addColliderBox([5.5, 7.8, -8.0], [0.225, 2.6, 0.2]);
 
   // Partition Library / Creative Studio at x = 16.0 (z: [3.8, -8.2])
   // Front section
   const partStudioS = addBox(building, [16.0, 7.8, 1.8], [0.45, 5.2, 4.0], materials.wall, { shadow: true });
-  cameraBlockers.push(partStudioS);
+  addBlocker(partStudioS);
   addColliderBox([16.0, 7.8, 1.8], [0.225, 2.6, 2.0]);
   // Connecting Gallery Portal between Library & Creative Studio (z: [-1.2, -4.2])
   archBatch.addBox([16.0, 9.6, -2.7], [0.48, 1.6, 3.0], materials.wall);
   archBatch.addBox([16.0, 8.75, -2.7], [0.52, 0.16, 3.0], materials.woodWarm);
   // Rear section
   const partStudioN = addBox(building, [16.0, 7.8, -6.2], [0.45, 5.2, 4.0], materials.wall, { shadow: true });
-  cameraBlockers.push(partStudioN);
+  addBlocker(partStudioN);
   addColliderBox([16.0, 7.8, -6.2], [0.225, 2.6, 2.0]);
 
   // =========================================================================
@@ -644,20 +655,21 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   return { building, roofGroup };
 }
 
-export function createInteractiveDoors(scene, world, RAPIER, doorColliders, interactionPoints) {
+export function createInteractiveDoors(scene, world, RAPIER, doorColliders, interactionPoints, staticWorld) {
   const frameMat = materials.windowFrame || materials.metalDark;
+  const frameTarget = staticWorld || scene;
 
   // -----------------------------------------------------------------
   // 1. FRONT ENTRANCE FULL-GLASS DOORS (z = 3.75, x: [-1.6, 1.6])
   // -----------------------------------------------------------------
+  // Modern architectural portal frame (merged statically)
+  addBox(frameTarget, [-1.65, 1.8, 3.75], [0.18, 3.6, 0.22], frameMat);
+  addBox(frameTarget, [1.65, 1.8, 3.75], [0.18, 3.6, 0.22], frameMat);
+  addBox(frameTarget, [0, 3.65, 3.75], [3.48, 0.18, 0.24], frameMat);
+
   const frontFrame = new THREE.Group();
   frontFrame.position.set(0, 0, 3.75);
   scene.add(frontFrame);
-
-  // Modern architectural portal frame
-  addBox(frontFrame, [-1.65, 1.8, 0], [0.18, 3.6, 0.22], frameMat);
-  addBox(frontFrame, [1.65, 1.8, 0], [0.18, 3.6, 0.22], frameMat);
-  addBox(frontFrame, [0, 3.65, 0], [3.48, 0.18, 0.24], frameMat);
 
   const doorLeft = new THREE.Group();
   const doorRight = new THREE.Group();
@@ -786,11 +798,11 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
   rearGroup.position.set(0, 0, -8.2);
   scene.add(rearGroup);
 
-  // Modern perimeter frame and tracks
-  addBox(rearGroup, [-2.42, 2.18, 0], [0.10, 4.36, 0.20], frameMat);
-  addBox(rearGroup, [2.42, 2.18, 0], [0.10, 4.36, 0.20], frameMat);
-  addBox(rearGroup, [0, 4.32, 0], [4.94, 0.10, 0.22], frameMat);
-  addBox(rearGroup, [0, 0.04, 0], [4.94, 0.08, 0.22], frameMat);
+  // Modern perimeter frame and tracks (merged statically)
+  addBox(frameTarget, [-2.42, 2.18, -8.2], [0.10, 4.36, 0.20], frameMat);
+  addBox(frameTarget, [2.42, 2.18, -8.2], [0.10, 4.36, 0.20], frameMat);
+  addBox(frameTarget, [0, 4.32, -8.2], [4.94, 0.10, 0.22], frameMat);
+  addBox(frameTarget, [0, 0.04, -8.2], [4.94, 0.08, 0.22], frameMat);
 
   // Left & Right sliding door leaves (slight z-offset so they bypass smoothly)
   const rearDoorLeft = new THREE.Group();
@@ -816,6 +828,16 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
   addBox(rearDoorRight, [1.15, 2.16, 0], [0.08, 4.24, 0.08], frameMat);
   addCylinder(rearDoorRight, [-0.95, 1.8, 0.055], [0.024, 0.95, 0.024], materials.brass);
   addCylinder(rearDoorRight, [-0.95, 1.8, -0.055], [0.024, 0.95, 0.024], materials.brass);
+
+  // Consolidate static geometry inside each moving leaf, then flag dynamic
+  mergeStaticHierarchy(doorLeft);
+  mergeStaticHierarchy(doorRight);
+  mergeStaticHierarchy(rearDoorLeft);
+  mergeStaticHierarchy(rearDoorRight);
+  doorLeft.traverse((c) => { c.userData.isDynamic = true; });
+  doorRight.traverse((c) => { c.userData.isDynamic = true; });
+  rearDoorLeft.traverse((c) => { c.userData.isDynamic = true; });
+  rearDoorRight.traverse((c) => { c.userData.isDynamic = true; });
 
   // Dynamic Rapier static colliders for rear sliding doors (active when closed)
   const rearColliders = [];

@@ -448,3 +448,10 @@ export const materials = {
   carSuvWhite: new THREE.MeshPhysicalMaterial({ color: 0xf6f6f8, roughness: 0.12, metalness: 0.05, clearcoat: 1.0, clearcoatRoughness: 0.04 }),
 };
 
+// Tag every material with its identifier for high-performance geometry batching & shadow filtering
+for (const [name, mat] of Object.entries(materials)) {
+  if (mat && (mat.isMaterial || mat instanceof THREE.Material)) {
+    mat.name = name;
+  }
+}
+
