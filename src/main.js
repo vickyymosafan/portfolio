@@ -141,7 +141,7 @@ let elapsed = 0;
 let accumulator = 0;
 let physX = 0;
 let physY = 1.12;
-let physZ = 13.0;
+let physZ = 16.8;
 let lastRoomVisited = '';
 
 const keys = new Set();
@@ -1188,7 +1188,7 @@ const tourStops = [
     name: 'Front Yard & Garden Gate',
     subtitle: 'A LITTLE WORLD, BUILT BY HAND',
     intro: 'Welcome to Vicky’s 3D portfolio! Stroll along the sandstone pathway through the blooming cartoon garden.',
-    position: [0, 1.12, 12.0],
+    position: [0, 1.12, 16.8],
     archX: 0,
     facing: Math.PI,
     cameraYaw: 0,
@@ -2127,7 +2127,7 @@ async function init() {
     window.portfolioScene = initialScene;
 
     playerBody = world.createRigidBody(
-      RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, 1.12, 13.0)
+      RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, 1.12, 16.8)
     );
     playerCollider = world.createCollider(
       RAPIER.ColliderDesc.capsule(0.96, 0.32).setFriction(0),
@@ -2205,8 +2205,8 @@ async function init() {
     worldInteractions.setDebug(import.meta.env.DEV);
     window.__playerCameraState = () => ({ cameraDistance, yaw, pitch });
 
-    camera.position.set(0, 4.8, 22.5);
-    camera.lookAt(0, 2.0, 13.0);
+    camera.position.set(0, 4.2, 22.8);
+    camera.lookAt(0, 2.0, 16.8);
     setRoom('yard');
     initWorldMarkers();
 

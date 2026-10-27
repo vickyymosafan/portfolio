@@ -13,7 +13,7 @@ import { addBox, addSphere, addCylinder } from './geometry.js';
 export function createCharacter(scene) {
   const character = new THREE.Group();
   scene.add(character);
-  character.position.set(0, 1.12, 13.0);
+  character.position.set(0, 1.12, 16.8);
 
   // Dynamic stylized ground contact shadow blob
   const shadowGeo = new THREE.CircleGeometry(0.55, 24);

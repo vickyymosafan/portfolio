@@ -18,7 +18,7 @@ export class QuestSystem {
         name: 'The Fountain Heart',
         room: 'Front Yard',
         quote: '“Every great journey begins with a single curious step.”',
-        pos: [0.0, 0.9, 13.0],
+        pos: [0.0, 0.9, 16.0],
         color: 0x48cae4,
       },
       {

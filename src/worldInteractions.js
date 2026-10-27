@@ -741,7 +741,7 @@ export class WorldInteractionManager {
         this.syncPosition(stand.x, stand.y, stand.z, this.activeSeat.charFacing);
       } else {
         if (!isFiniteNumber(char.position.x) || !isFiniteNumber(char.position.y) || !isFiniteNumber(char.position.z)) {
-          char.position.set(0, 1.12, 13.0);
+          char.position.set(0, 1.12, 16.8);
         }
         char.position.y = Math.max(1.12, char.position.y);
         this.syncPosition(char.position.x, char.position.y, char.position.z, char.rotation.y);

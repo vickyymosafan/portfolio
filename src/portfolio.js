@@ -13,7 +13,7 @@ export const portfolio = {
       count: '01 / 10',
       eyebrow: 'A little world, built by hand',
       title: 'Welcome in',
-      position: [0, 1.12, 13.0],
+      position: [0, 1.12, 16.8],
       facing: Math.PI,
       yaw: 0,
       pitch: 0.18,

@@ -34,18 +34,16 @@ export function createDriveway(scene, world, RAPIER, staticBodies) {
   for (let i = 0; i < basinSides; i += 1) {
     const angle = (i / basinSides) * Math.PI * 2;
     const nextAngle = ((i + 1) / basinSides) * Math.PI * 2;
-    const mx = fountainX + (Math.cos(angle) + Math.cos(nextAngle)) * 0.5 * basinRadius;
-    const mz = fountainZ + (Math.sin(angle) + Math.sin(nextAngle)) * 0.5 * basinRadius;
-    const segLen = Math.hypot(
-      Math.cos(nextAngle) * basinRadius - Math.cos(angle) * basinRadius,
-      Math.sin(nextAngle) * basinRadius - Math.sin(angle) * basinRadius
-    );
+    const midAngle = (angle + nextAngle) * 0.5;
+    const mx = fountainX + Math.cos(midAngle) * basinRadius;
+    const mz = fountainZ + Math.sin(midAngle) * basinRadius;
+    const segLen = 2 * basinRadius * Math.sin(Math.PI / basinSides);
     batch.addBox([mx, 0.38, mz], [segLen + 0.12, 0.68, 0.38], materials.stoneWarm, {
-      rotation: [0, -angle - Math.PI / basinSides, 0],
+      rotation: [0, -midAngle - Math.PI * 0.5, 0],
     });
     // Decorative coping cap
     batch.addBox([mx, 0.74, mz], [segLen + 0.18, 0.08, 0.52], materials.trim, {
-      rotation: [0, -angle - Math.PI / basinSides, 0],
+      rotation: [0, -midAngle - Math.PI * 0.5, 0],
     });
   }
 
@@ -89,11 +87,14 @@ export function createDriveway(scene, world, RAPIER, staticBodies) {
   fountainLight.position.set(fountainX, 1.2, fountainZ);
   driveGroup.add(fountainLight);
 
-  // Fountain Physics Collider (solid stone basin)
+  // Fountain Physics Collider (solid stone basin + full-height central pillar to prevent any clipping/tembus)
   const fountainBody = world.createRigidBody(
-    RAPIER.RigidBodyDesc.fixed().setTranslation(fountainX, 0.5, fountainZ)
+    RAPIER.RigidBodyDesc.fixed().setTranslation(fountainX, 0, fountainZ)
   );
-  world.createCollider(RAPIER.ColliderDesc.cylinder(0.5, basinRadius), fountainBody);
+  // Solid outer basin collider (radius 3.15m, height 1.1m)
+  world.createCollider(RAPIER.ColliderDesc.cylinder(0.55, basinRadius + 0.15).setTranslation(0, 0.55, 0), fountainBody);
+  // Solid center pillar & upper bowls collider (radius 1.75m, height 4.0m)
+  world.createCollider(RAPIER.ColliderDesc.cylinder(2.0, 1.75).setTranslation(0, 2.0, 0), fountainBody);
   staticBodies.push(fountainBody);
 
   // 2. Asphalt Driveway & Garage Parking Court (x: [8.0, 26.0], z: [4.5, 22.0])
