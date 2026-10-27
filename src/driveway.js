@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { materials, palette } from './materials.js';
-import { addBox, addCylinder, addSphere, BatchCollector, mergeStaticHierarchy } from './geometry.js';
+import { addBox, addCylinder, addSphere, BatchCollector } from './geometry.js';
 
 /**
  * Creates Zone B & C: Paved Driveway, Parking Court & Fountain Roundabout
@@ -172,6 +172,9 @@ export function createDriveway(scene, world, RAPIER, staticBodies) {
       batch.addSphere([lx + sx, 3.1, lz], [0.08, 0.12, 0.08], materials.glow, { shadow: false });
       batch.addCylinder([lx + sx, 3.35, lz], 0.02, 0.32, 0.12, materials.metalDark, { segments: 4, rotation: [0, Math.PI * 0.25, 0] });
 
+      const light = new THREE.PointLight(0xffdf99, 1.0, 6.0, 2.0);
+      light.position.set(lx + sx, 3.1, lz);
+      driveGroup.add(light);
     }
 
     // Street lamp pole collider
@@ -183,6 +186,5 @@ export function createDriveway(scene, world, RAPIER, staticBodies) {
   }
 
   batch.build(driveGroup, true);
-  mergeStaticHierarchy(driveGroup);
   return driveGroup;
 }

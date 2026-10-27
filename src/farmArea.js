@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { materials, palette } from './materials.js';
-import { addBox, addCylinder, addSphere, BatchCollector, mergeStaticHierarchy } from './geometry.js';
+import { addBox, addCylinder, addSphere, BatchCollector } from './geometry.js';
 
 /**
  * Creates Zone G: Peternakan (Farm & Livestock Area)
@@ -344,7 +344,7 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
     cb.addSphere([-0.1, 0.65, 0.24], [0.025, 0.025, 0.025], materials.cowBlack);
     cb.addSphere([0.1, 0.65, 0.24], [0.025, 0.025, 0.025], materials.cowBlack);
 
-    cb.build(chkRig, false);
+    cb.build(chkRig, true);
 
     return {
       group: chkRig,
@@ -483,29 +483,6 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
   farmWorker = { group: wGroup, clock: 0 };
 
   batch.build(farmGroup, true);
-  for (const c of animatedCows) {
-    if (c.head) {
-      mergeStaticHierarchy(c.head);
-      c.head.traverse((ch) => { ch.userData.isDynamic = true; });
-    }
-  }
-  for (const chk of animatedChickens) {
-    if (chk.group) {
-      mergeStaticHierarchy(chk.group);
-      chk.group.traverse((ch) => { ch.userData.isDynamic = true; });
-    }
-  }
-  for (const f of animatedFish) {
-    if (f.group) {
-      mergeStaticHierarchy(f.group);
-      f.group.traverse((ch) => { ch.userData.isDynamic = true; });
-    }
-  }
-  if (farmWorker?.group) {
-    mergeStaticHierarchy(farmWorker.group);
-    farmWorker.group.traverse((ch) => { ch.userData.isDynamic = true; });
-  }
-  mergeStaticHierarchy(farmGroup);
 
   return {
     group: farmGroup,

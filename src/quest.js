@@ -215,66 +215,45 @@ export class QuestSystem {
     const gemGeo = new THREE.OctahedronGeometry(0.24, 0);
     const ringGeo = new THREE.RingGeometry(0.32, 0.45, 24);
 
-    const gemMat = new THREE.MeshStandardMaterial({
-      roughness: 0.15,
-      metalness: 0.25,
-      emissive: 0xffffff,
-      emissiveIntensity: 0.35,
-    });
-    this.gemInstanced = new THREE.InstancedMesh(gemGeo, gemMat, this.totalCount);
-    this.gemInstanced.castShadow = false;
-    this.gemInstanced.receiveShadow = false;
+    for (const cfg of this.itemsConfig) {
+      const group = new THREE.Group();
+      group.position.set(...cfg.pos);
 
-    const ringMat = new THREE.MeshBasicMaterial({
-      transparent: true,
-      opacity: 0.4,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-    this.ringInstanced = new THREE.InstancedMesh(ringGeo, ringMat, this.totalCount);
-    this.ringInstanced.castShadow = false;
-    this.ringInstanced.receiveShadow = false;
+      // Main floating gem
+      const gemMat = new THREE.MeshStandardMaterial({
+        color: cfg.color,
+        roughness: 0.15,
+        metalness: 0.25,
+        emissive: cfg.color,
+        emissiveIntensity: 0.35,
+      });
+      const gem = new THREE.Mesh(gemGeo, gemMat);
+      gem.castShadow = true;
+      group.add(gem);
 
-    this.dummy = new THREE.Object3D();
+      // Floor aura ring
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: cfg.color,
+        transparent: true,
+        opacity: 0.4,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = -Math.PI * 0.5;
+      ring.position.y = -cfg.pos[1] + 0.03;
+      group.add(ring);
 
-    for (let i = 0; i < this.itemsConfig.length; i += 1) {
-      const cfg = this.itemsConfig[i];
-      const color = new THREE.Color(cfg.color);
-      this.gemInstanced.setColorAt(i, color);
-      this.ringInstanced.setColorAt(i, color);
-
-      this.dummy.position.set(...cfg.pos);
-      this.dummy.rotation.set(0, 0, 0);
-      this.dummy.scale.set(1, 1, 1);
-      this.dummy.updateMatrix();
-      this.gemInstanced.setMatrixAt(i, this.dummy.matrix);
-
-      this.dummy.position.set(cfg.pos[0], 0.03, cfg.pos[2]);
-      this.dummy.rotation.set(-Math.PI * 0.5, 0, 0);
-      this.dummy.scale.set(1, 1, 1);
-      this.dummy.updateMatrix();
-      this.ringInstanced.setMatrixAt(i, this.dummy.matrix);
-
+      this.scene.add(group);
       this.collectibles.push({
         ...cfg,
-        index: i,
+        group,
+        gem,
+        ring,
         baseY: cfg.pos[1],
-        curY: cfg.pos[1],
-        rotY: 0,
-        rotZ: 0,
-        ringRot: 0,
-        scale: 1.0,
         collected: false,
       });
     }
-
-    if (this.gemInstanced.instanceColor) this.gemInstanced.instanceColor.needsUpdate = true;
-    if (this.ringInstanced.instanceColor) this.ringInstanced.instanceColor.needsUpdate = true;
-    this.gemInstanced.instanceMatrix.needsUpdate = true;
-    this.ringInstanced.instanceMatrix.needsUpdate = true;
-
-    this.scene.add(this.gemInstanced);
-    this.scene.add(this.ringInstanced);
   }
 
   showToast(title, subtitle) {
@@ -333,52 +312,46 @@ export class QuestSystem {
   }
 
   update(dt, elapsed, playerPos) {
-    let matrixChanged = false;
-    for (let i = 0; i < this.collectibles.length; i += 1) {
-      const item = this.collectibles[i];
+    for (const item of this.collectibles) {
       if (item.collected) {
-        if (item.scale > 0.001) {
-          item.scale = Math.max(0, item.scale - dt * 8.0);
-          matrixChanged = true;
-        } else {
-          continue;
+        if (item.group.scale.x > 0.001) {
+          item.group.scale.multiplyScalar(Math.max(0, 1 - dt * 8.0));
         }
-      } else {
-        item.rotY += dt * 1.8;
-        item.rotZ += dt * 0.9;
-        item.curY = item.baseY + Math.sin(elapsed * 2.8 + item.baseY) * 0.08;
-        item.ringRot += dt * 0.6;
-        const ringScale = item.scale * (1 + Math.sin(elapsed * 3.5) * 0.12);
-        matrixChanged = true;
-
-        if (playerPos) {
-          const dx = playerPos.x - item.pos[0];
-          const dy = playerPos.y - item.curY;
-          const dz = playerPos.z - item.pos[2];
-          if (dx * dx + dy * dy + dz * dz < 1.7 * 1.7) {
-            this.collectItem(item.id);
-          }
-        }
-
-        // Update ring matrix
-        this.dummy.position.set(item.pos[0], 0.03, item.pos[2]);
-        this.dummy.rotation.set(-Math.PI * 0.5, 0, item.ringRot);
-        this.dummy.scale.set(ringScale, ringScale, item.scale);
-        this.dummy.updateMatrix();
-        this.ringInstanced.setMatrixAt(i, this.dummy.matrix);
+        continue;
       }
 
-      // Update gem matrix
-      this.dummy.position.set(item.pos[0], item.curY, item.pos[2]);
-      this.dummy.rotation.set(0, item.rotY, item.rotZ);
-      this.dummy.scale.setScalar(item.scale);
-      this.dummy.updateMatrix();
-      this.gemInstanced.setMatrixAt(i, this.dummy.matrix);
-    }
+      // Gentle floating bob & rotation
+      item.gem.rotation.y += dt * 1.8;
+      item.gem.rotation.z += dt * 0.9;
+      item.group.position.y = item.baseY + Math.sin(elapsed * 2.8 + item.baseY) * 0.08;
 
-    if (matrixChanged) {
-      this.gemInstanced.instanceMatrix.needsUpdate = true;
-      this.ringInstanced.instanceMatrix.needsUpdate = true;
+      // Pulse floor ring
+      item.ring.rotation.z += dt * 0.6;
+      item.ring.scale.setScalar(1 + Math.sin(elapsed * 3.5) * 0.12);
+
+      // Check distance to player
+      if (playerPos) {
+        const dx = playerPos.x - item.group.position.x;
+        const dy = playerPos.y - item.group.position.y;
+        const dz = playerPos.z - item.group.position.z;
+        const distSq = dx * dx + dy * dy + dz * dz;
+
+        if (distSq < 1.7 * 1.7) {
+          item.collected = true;
+          this.collectedCount += 1;
+          this.playChime('collect');
+
+          // Update HUD
+          const countEl = document.getElementById('quest-count');
+          if (countEl) countEl.textContent = `${this.collectedCount} / ${this.totalCount}`;
+
+          this.showToast(item.name, `${item.room} · ${item.quote}`);
+
+          if (this.collectedCount >= this.totalCount) {
+            setTimeout(() => this.showCompletionModal(), 600);
+          }
+        }
+      }
     }
   }
 
@@ -392,7 +365,7 @@ export class QuestSystem {
     if (countEl) countEl.textContent = `${this.collectedCount} / ${this.totalCount}`;
     this.showToast(item.name, `${item.room} · ${item.quote}`);
     if (this.collectedCount >= this.totalCount) {
-      setTimeout(() => this.showCompletionModal(), 600);
+      this.showCompletionModal();
     }
     return true;
   }

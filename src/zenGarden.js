@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { materials, palette } from './materials.js';
-import { addBox, addCylinder, addSphere, BatchCollector, mergeStaticHierarchy } from './geometry.js';
+import { addBox, addCylinder, addSphere, BatchCollector } from './geometry.js';
 
 /**
  * Creates Zone F: Private Zen Garden, Waterfall Koi Pond, Arched Footbridge & Tea Gazebo
@@ -256,13 +256,11 @@ export function createZenGarden(scene, world, RAPIER, staticBodies) {
     batch.addCylinder([tx, 1.48, tz], 0.08, 0.75, 0.22, materials.stoneWarm, { segments: 4, rotation: [0, Math.PI * 0.25, 0] });
     batch.addSphere([tx, 1.64, tz], [0.08, 0.08, 0.08], materials.stoneWarm);
 
+    const toroLight = new THREE.PointLight(0xffdf99, 0.7, 4.5, 2.0);
+    toroLight.position.set(tx, 1.22, tz);
+    zenGroup.add(toroLight);
   }
 
-  const toroLight = new THREE.PointLight(0xffdf99, 0.9, 6.5, 2.0);
-  toroLight.position.set(34.0, 1.35, -6.0);
-  zenGroup.add(toroLight);
-
   batch.build(zenGroup, true);
-  mergeStaticHierarchy(zenGroup);
   return zenGroup;
 }

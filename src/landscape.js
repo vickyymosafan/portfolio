@@ -173,12 +173,9 @@ export function createFlowerBed(parent, x, z, width = 3, depth = 1.2, seed = 99)
     const flowerMat = [materials.coral, materials.yellow, materials.pink, materials.purple, materials.cream][i % 5];
     batch.addSphere([fx, 0.22 + stemH + 0.04, fz], [0.09, 0.07, 0.09], flowerMat, {
       rotation: [0, rand() * Math.PI, 0],
-      lowPoly: true,
     });
     // Center eye
-    batch.addSphere([fx, 0.22 + stemH + 0.08, fz], [0.035, 0.035, 0.035], materials.yellow, {
-      lowPoly: true,
-    });
+    batch.addSphere([fx, 0.22 + stemH + 0.08, fz], [0.035, 0.035, 0.035], materials.yellow);
   }
 
   batch.build(bed, true);
@@ -245,7 +242,7 @@ export function createGardenFence(parent) {
       if (Math.abs(z % 5.6) < 0.6) {
         batch.addCylinder([x - side * 0.22, 1.05, z], 0.03, 0.03, 0.3, materials.brass);
         batch.addBox([x - side * 0.28, 1.2, z], [0.18, 0.24, 0.18], materials.brass);
-        batch.addSphere([x - side * 0.28, 1.2, z], [0.12, 0.14, 0.12], materials.glow, { shadow: false });
+        addSphere(fenceGroup, [x - side * 0.28, 1.2, z], [0.12, 0.14, 0.12], materials.glow, { shadow: false });
       }
     }
 

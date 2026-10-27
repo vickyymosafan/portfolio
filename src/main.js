@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { portfolio } from './portfolio.js';
 import { materials, palette } from './materials.js';
-import { addBox, addSphere, addCylinder, mergeStaticHierarchy } from './geometry.js';
+import { addBox, addSphere, addCylinder } from './geometry.js';
 import {
   createCartoonTree,
   createCartoonBush,
@@ -157,8 +157,8 @@ const rayHits = [];
 const touch = { x: 0, y: 0, active: false, pointer: null };
 
 const qualityPresets = {
-  high: { pixelRatio: 1.25, shadows: true, shadowSize: 1536 },
-  medium: { pixelRatio: 1.0, shadows: true, shadowSize: 1024 },
+  high: { pixelRatio: 1.5, shadows: true, shadowSize: 1536 },
+  medium: { pixelRatio: 1.15, shadows: true, shadowSize: 1024 },
   low: { pixelRatio: 0.85, shadows: false, shadowSize: 0 },
   mobile: { pixelRatio: 0.75, shadows: false, shadowSize: 0 },
 };
@@ -197,7 +197,7 @@ function createScene() {
   const sun = new THREE.DirectionalLight(0xfff9e6, 2.5);
   sun.position.set(-18, 26, 20);
   sun.castShadow = !mobile;
-  sun.shadow.mapSize.set(mobile ? 512 : 1536, mobile ? 512 : 1536);
+  sun.shadow.mapSize.set(mobile ? 512 : 2048, mobile ? 512 : 2048);
   sun.shadow.camera.left = -26;
   sun.shadow.camera.right = 26;
   sun.shadow.camera.top = 28;
@@ -216,62 +216,32 @@ function createScene() {
   rimLight.castShadow = false;
   scene.add(rimLight);
 
-  // Strategic warm interior ceiling fixtures (2 key hero PointLights for efficient forward-shading)
+  // Strategic warm interior point lights centered in wide room bays with high ceiling fixtures
   const interiorLights = [
-    { pos: [-8.5, 3.8, -0.2], color: 0xffb566, intensity: 1.8, distance: 15, shade: materials.terracotta }, // Living room
-    { pos: [8.5, 3.8, -0.2], color: 0xffebad, intensity: 1.6, distance: 15, shade: materials.ceramicTeal },  // Office
-    { pos: [-8.5, 3.8, -8.3], color: 0xffe299, intensity: 1.6, distance: 12, shade: materials.brass },       // Library
-    { pos: [8.5, 3.8, -8.3], color: 0xfff0d0, intensity: 1.5, distance: 12, shade: materials.ceramic },     // Gallery
-    { pos: [-8.5, 3.8, -16.1], color: 0xffe6b0, intensity: 1.5, distance: 12, shade: materials.metalDark }, // Studio
-    { pos: [8.5, 3.8, -16.1], color: 0xffd588, intensity: 1.6, distance: 12, shade: materials.terracotta }, // Terrace
+    { pos: [-8.5, 3.8, -0.2], color: 0xffb566, intensity: 1.8, distance: 12, shade: materials.terracotta }, // Living room
+    { pos: [8.5, 3.8, -0.2], color: 0xffebad, intensity: 1.6, distance: 11, shade: materials.ceramicTeal },  // Office
+    { pos: [-8.5, 3.8, -8.3], color: 0xffe299, intensity: 1.6, distance: 11, shade: materials.brass },       // Library
+    { pos: [8.5, 3.8, -8.3], color: 0xfff0d0, intensity: 1.5, distance: 11, shade: materials.ceramic },     // Gallery
+    { pos: [-8.5, 3.8, -16.1], color: 0xffe6b0, intensity: 1.5, distance: 11, shade: materials.metalDark }, // Studio
+    { pos: [8.5, 3.8, -16.1], color: 0xffd588, intensity: 1.6, distance: 11, shade: materials.terracotta }, // Terrace
   ];
-  interiorLights.forEach((l, index) => {
-    if (index < 2) {
-      const pLight = new THREE.PointLight(l.color, l.intensity, l.distance, 1.8);
-      pLight.position.set(...l.pos);
-      scene.add(pLight);
-    }
-
-    // Master consolidated static world group for high-performance single-batch rendering
-    if (!scene.userData.staticWorld) {
-      const staticWorld = new THREE.Group();
-      staticWorld.name = 'staticWorld';
-      scene.add(staticWorld);
-      scene.userData.staticWorld = staticWorld;
-    }
-    const staticWorld = scene.userData.staticWorld;
+  for (const l of interiorLights) {
+    const pLight = new THREE.PointLight(l.color, l.intensity, l.distance, 1.5);
+    pLight.position.set(...l.pos);
+    scene.add(pLight);
 
     // Visible physical ceiling pendant fixture near ceiling level (height 5.2m)
     const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.45, 8), materials.metalDark);
     cord.position.set(l.pos[0], 4.88, l.pos[2]);
-    cord.castShadow = false;
-    cord.receiveShadow = false;
-    cord.matrixAutoUpdate = false;
-    cord.updateMatrix();
-    staticWorld.add(cord);
+    scene.add(cord);
 
-    const shade = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.18, 12), l.shade);
+    const shade = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.18, 16), l.shade);
     shade.position.set(l.pos[0], 4.65, l.pos[2]);
-    shade.castShadow = false;
-    shade.receiveShadow = false;
-    shade.matrixAutoUpdate = false;
-    shade.updateMatrix();
-    staticWorld.add(shade);
+    scene.add(shade);
 
-    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), materials.glow);
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 10), materials.glow);
     bulb.position.set(l.pos[0], 4.55, l.pos[2]);
-    bulb.castShadow = false;
-    bulb.receiveShadow = false;
-    bulb.matrixAutoUpdate = false;
-    bulb.updateMatrix();
-    staticWorld.add(bulb);
-  });
-
-  const staticWorld = scene.userData.staticWorld || new THREE.Group();
-  if (!scene.userData.staticWorld) {
-    staticWorld.name = 'staticWorld';
-    scene.add(staticWorld);
-    scene.userData.staticWorld = staticWorld;
+    scene.add(bulb);
   }
 
   // 1. Landscape Foundation & Lawns
@@ -279,10 +249,10 @@ function createScene() {
   ground.rotation.x = -Math.PI * 0.5;
   ground.position.set(1.0, -0.08, -2.5);
   ground.receiveShadow = true;
-  staticWorld.add(ground);
+  scene.add(ground);
 
   // Raised garden lawn spanning whole estate grounds (Pool, Mansion, Gardens, Farm & Rice Fields)
-  const lawn = addBox(staticWorld, [1.0, -0.16, -2.5], [104, 0.24, 92], materials.lawnRaised, { receive: true, shadow: true });
+  const lawn = addBox(scene, [1.0, -0.16, -2.5], [104, 0.24, 92], materials.lawnRaised, { receive: true, shadow: true });
   lawn.receiveShadow = true;
 
   // Rapier ground collider spanning whole estate
@@ -290,24 +260,20 @@ function createScene() {
   world.createCollider(RAPIER.ColliderDesc.cuboid(54, 0.15, 48), groundBody);
   staticBodies.push(groundBody);
 
-  // 1. Estate Landscaping & Nature
-  const landscapeGroup = new THREE.Group();
-  staticWorld.add(landscapeGroup);
-
   // Garden paths, stepping stones, fences
-  createGardenPath(landscapeGroup);
-  createGardenFence(landscapeGroup);
+  createGardenPath(scene);
+  createGardenFence(scene);
 
   // Phase 3 & 4: Exterior Estate Zones (Pool Deck, Driveway & Roundabout, Zen Garden, Security Area, Farm & Rice Fields)
-  createPoolArea(staticWorld, world, RAPIER, staticBodies);
-  createDriveway(staticWorld, world, RAPIER, staticBodies);
-  createZenGarden(staticWorld, world, RAPIER, staticBodies);
-  securityZone = createSecurityArea(staticWorld, world, RAPIER, staticBodies);
-  farmZone = createFarmArea(staticWorld, world, RAPIER, staticBodies);
-  riceZone = createRiceFields(staticWorld, world, RAPIER, staticBodies);
+  createPoolArea(scene, world, RAPIER, staticBodies);
+  createDriveway(scene, world, RAPIER, staticBodies);
+  createZenGarden(scene, world, RAPIER, staticBodies);
+  securityZone = createSecurityArea(scene, world, RAPIER, staticBodies);
+  farmZone = createFarmArea(scene, world, RAPIER, staticBodies);
+  riceZone = createRiceFields(scene, world, RAPIER, staticBodies);
 
   for (const [bx, bz, brot] of [[-9.2, 9.8, 0.35], [9.2, 9.8, -0.35]]) {
-    createGardenBench(landscapeGroup, bx, 0, bz, brot);
+    createGardenBench(scene, bx, 0, bz, brot);
     const benchBody = world.createRigidBody(
       RAPIER.RigidBodyDesc.fixed()
         .setTranslation(bx, BENCH.backTop * 0.5, bz)
@@ -334,7 +300,7 @@ function createScene() {
     [27.0, -12.5, 1.4, 7.5, 127],
   ];
   for (const [fbx, fbz, fbw, fbd, seed] of flowerBedSpecs) {
-    createFlowerBed(landscapeGroup, fbx, fbz, fbw, fbd, seed);
+    createFlowerBed(scene, fbx, fbz, fbw, fbd, seed);
     const bedBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(fbx, 0.35, fbz));
     world.createCollider(RAPIER.ColliderDesc.cuboid(fbw * 0.5, 0.35, fbd * 0.5), bedBody);
     staticBodies.push(bedBody);
@@ -357,7 +323,7 @@ function createScene() {
   ];
   for (const [tx, tz, ts, seed] of treeCoords) {
     const tree = createCartoonTree(tx, tz, ts, seed);
-    landscapeGroup.add(tree);
+    scene.add(tree);
     const trunkBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(tx, 1.2 * ts, tz));
     world.createCollider(RAPIER.ColliderDesc.cylinder(1.2 * ts, 0.46 * ts), trunkBody);
     staticBodies.push(trunkBody);
@@ -384,32 +350,27 @@ function createScene() {
   ];
   for (const [bx, bz, bs, seed] of bushCoords) {
     const bush = createCartoonBush(bx, bz, bs, seed);
-    landscapeGroup.add(bush);
+    scene.add(bush);
     const bushBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(bx, 0.55 * bs, bz));
     world.createCollider(RAPIER.ColliderDesc.cylinder(0.55 * bs, 0.70 * bs), bushBody);
     staticBodies.push(bushBody);
   }
+
   // 2. Architecture & Interactive Doors
-  const arch = createArchitecture(staticWorld, world, RAPIER, staticBodies, cameraBlockers);
+  const arch = createArchitecture(scene, world, RAPIER, staticBodies, cameraBlockers);
   roofGroup = arch.roofGroup;
-  doorControls = createInteractiveDoors(scene, world, RAPIER, doorColliders, interactionPoints, staticWorld);
+  doorControls = createInteractiveDoors(scene, world, RAPIER, doorColliders, interactionPoints);
 
   // 3. Room Interiors & Furnishings
-  const interiorsGroup = new THREE.Group();
-  staticWorld.add(interiorsGroup);
-  createRoomInteriors(interiorsGroup, interactionPoints, handleRoomInteraction, world, RAPIER, staticBodies);
+  createRoomInteriors(scene, interactionPoints, handleRoomInteraction, world, RAPIER, staticBodies);
 
   // 4. Character
   characterRig = createCharacter(scene);
 
   // 5. Decorative Backdrop
-  addDecorativeBackdrop(staticWorld, scene);
+  addDecorativeBackdrop(scene);
 
-  // Master geometry consolidation: batches all static estate geometry into single draw calls per material
-  mergeStaticHierarchy(staticWorld);
-
-
-
+  // Expose statistics for testing & harness
   window.__cv = {
     stats: () => ({
       fps: Math.round(1000 / Math.max(1, frameAverage)),
@@ -421,11 +382,10 @@ function createScene() {
   return scene;
 }
 
-function addDecorativeBackdrop(parent, scene) {
-  const backdropGroup = new THREE.Group();
-  parent.add(backdropGroup);
-
+function addDecorativeBackdrop(scene) {
   // Distant Horizon Rolling Hills (85m - 120m far out on the horizon)
+  // Low-profile, wide gentle rolling ridges providing a beautiful cartoon landscape
+  // without protruding into the garden fence (Taman) or crowding the rice field (Sawah).
   const hills = [
     // North Horizon (far behind Sawah & Farm)
     [-38, -108, 56, materials.foliageMid],
@@ -442,14 +402,16 @@ function addDecorativeBackdrop(parent, scene) {
     [36, 108, 48, materials.foliageMid],
   ];
   for (const [hx, hz, hs, hMat] of hills) {
-    const hill = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), hMat);
+    const hill = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), hMat);
+    // Submerged base (y = -hs * 0.32) with low-profile aspect (hs * 0.36)
+    // so only a soft, gentle rolling silhouette peak (~2m above ground) is visible far away
     hill.position.set(hx, -hs * 0.32, hz);
     hill.scale.set(hs, hs * 0.36, hs * 0.65);
-    backdropGroup.add(hill);
+    scene.add(hill);
   }
 
   const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 });
-  // High-altitude cartoon cumulus clouds floating gracefully
+  // High-altitude cartoon cumulus clouds floating gracefully well above roofs, trees, and gazebos
   const clouds = [
     [-24, 26, -36, 2.8],
     [24, 28, -42, 3.2],
@@ -460,7 +422,7 @@ function addDecorativeBackdrop(parent, scene) {
   for (const [cx, cy, cz, cs] of clouds) {
     const cloud = new THREE.Group();
     cloud.position.set(cx, cy, cz);
-    backdropGroup.add(cloud);
+    scene.add(cloud);
     addSphere(cloud, [0, 0, 0], [cs, cs * 0.55, cs * 0.55], cloudMat, { lowPoly: true });
     addSphere(cloud, [-cs * 0.72, -0.1, 0.02], [cs * 0.65, cs * 0.42, cs * 0.42], cloudMat, { lowPoly: true });
     addSphere(cloud, [cs * 0.68, -0.08, -0.02], [cs * 0.68, cs * 0.45, cs * 0.42], cloudMat, { lowPoly: true });
@@ -468,12 +430,9 @@ function addDecorativeBackdrop(parent, scene) {
 
   // Expanded sky hemisphere encompassing the distant horizon
   const sky = new THREE.Mesh(
-    new THREE.SphereGeometry(175, 16, 12),
+    new THREE.SphereGeometry(175, 24, 16),
     new THREE.MeshBasicMaterial({ color: 0xbfe0d5, side: THREE.BackSide })
   );
-  sky.position.set(0, 0, 0);
-  sky.matrixAutoUpdate = false;
-  sky.updateMatrix();
   scene.add(sky);
 }
 
@@ -1822,7 +1781,8 @@ function updatePerformance(dt, timestamp, activeScene) {
   }
   if (timestamp - lastHudUpdate > 500) {
     lastHudUpdate = timestamp;
-    const fps = Math.round(1000 / Math.max(1.0, frameAverage));
+    const rawFps = Math.round(1000 / Math.max(16.66, frameAverage));
+    const fps = Math.min(60, rawFps);
     ui.perfText.textContent = `${fps} FPS`;
     ui.drawText.textContent = `${renderer.info.render.calls} draws`;
     $('perf-pill').title = `Smoothed frame time: ${frameAverage.toFixed(1)} ms · Render resolution scale: ${renderScale.toFixed(2)}`;

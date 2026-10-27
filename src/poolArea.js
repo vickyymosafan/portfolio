@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { materials, palette } from './materials.js';
-import { addBox, addCylinder, addSphere, BatchCollector, mergeStaticHierarchy } from './geometry.js';
+import { addBox, addCylinder, addSphere, BatchCollector } from './geometry.js';
 
 /**
  * Creates Zone E: Luxury Swimming Pool & Leisure Deck
@@ -92,15 +92,13 @@ export function createPoolArea(scene, world, RAPIER, staticBodies) {
   );
   waterMesh.position.set(deckCenterX, 0.08, deckCenterZ);
   waterMesh.receiveShadow = true;
-  waterMesh.userData.keepSeparate = true;
   poolGroup.add(waterMesh);
 
   // Underwater LED Pool Lights emitting cool blue glow
-  const poolLight = new THREE.PointLight(0x48cae4, 1.4, 7.5, 2.0);
-  poolLight.position.set(deckCenterX, -0.4, deckCenterZ);
-  poolGroup.add(poolLight);
-
   for (const lz of [-3.5, 0, 3.5]) {
+    const light = new THREE.PointLight(0x48cae4, 1.2, 5.5, 2.0);
+    light.position.set(deckCenterX, -0.4, deckCenterZ + lz);
+    poolGroup.add(light);
     // Underwater fixture glass lens
     batch.addCylinder([deckCenterX - poolW * 0.5 + 0.05, -0.4, deckCenterZ + lz], 0.12, 0.12, 0.04, materials.chrome, { rotation: [0, 0, Math.PI * 0.5] });
     batch.addSphere([deckCenterX - poolW * 0.5 + 0.08, -0.4, deckCenterZ + lz], [0.08, 0.08, 0.08], materials.glow, { shadow: false });
@@ -274,6 +272,5 @@ export function createPoolArea(scene, world, RAPIER, staticBodies) {
   }
 
   batch.build(poolGroup, true);
-  mergeStaticHierarchy(poolGroup);
   return { poolGroup, waterMesh };
 }
