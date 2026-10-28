@@ -144,10 +144,132 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
     archBatch.addSphere([hx + 0.15, 4.62, 7.35], [0.12, 0.12, 0.12], materials.yellow);
   }
 
-  // Porch roof canopy over entrance (y = 5.2m to 5.6m)
-  archBatch.addBox([0, 5.35, 5.8], [13.4, 0.32, 4.0], materials.roof);
-  archBatch.addBox([0, 5.48, 5.8], [13.6, 0.14, 4.2], materials.roofTrim);
-  archBatch.addBox([0, 5.16, 5.8], [13.2, 0.12, 3.8], materials.woodWarm);
+  // =========================================================================
+  // 2B. SECOND FLOOR EXECUTIVE BALCONY TERRACE (z: [3.8, 7.8], x: [-6.7, 6.7])
+  // Directly extends over the grand entrance portico at y = 5.06 - 5.22m
+  // =========================================================================
+
+  // 1. Structural Concrete Cantilever Balcony Slab (flush with Lantai 2 interior floor slab at y = 5.06)
+  addBox(building, [0, 5.06, 5.8], [13.4, 0.28, 4.0], materials.stone, { shadow: false, receive: true });
+  addColliderBox([0, 5.06, 5.8], [6.7, 0.14, 2.0]);
+
+  // 2. Premium Weather-Resistant Outdoor Teak Wood Decking Planks (y = 5.21, top at 5.23)
+  addBox(building, [0, 5.21, 5.8], [13.1, 0.04, 3.8], materials.woodFloor, { shadow: false, receive: true });
+
+  // 3. Lower Soffit & Ceiling Panel of Porch Entrance with Recessed Warm Lighting
+  archBatch.addBox([0, 4.90, 5.8], [13.2, 0.14, 3.8], materials.woodWarm);
+  archBatch.addBox([0, 4.82, 5.8], [13.4, 0.06, 4.0], materials.roofTrim);
+  // Recessed warm ceiling downlights illuminating the front steps below
+  for (const lx of [-4.5, -1.5, 1.5, 4.5]) {
+    archBatch.addCylinder([lx, 4.88, 5.8], 0.22, 0.22, 0.04, materials.brass, { segments: 12 });
+    addSphere(building, [lx, 4.87, 5.8], [0.15, 0.06, 0.15], materials.glow, { shadow: false });
+  }
+
+  // 4. Perimeter Cantilever Architectural Fascia Beams & Stone Trim
+  archBatch.addBox([0, 5.06, 7.85], [13.6, 0.32, 0.18], materials.trim);
+  archBatch.addBox([-6.75, 5.06, 5.8], [0.18, 0.32, 4.1], materials.trim);
+  archBatch.addBox([6.75, 5.06, 5.8], [0.18, 0.32, 4.1], materials.trim);
+  archBatch.addBox([0, 5.22, 7.86], [13.7, 0.06, 0.22], materials.woodDark);
+  archBatch.addBox([-6.76, 5.22, 5.8], [0.22, 0.06, 4.15], materials.woodDark);
+  archBatch.addBox([6.76, 5.22, 5.8], [0.22, 0.06, 4.15], materials.woodDark);
+
+  // =========================================================================
+  // 2C. ARCHITECTURAL BALCONY RAILING & SAFETY BALUSTRADE (Lantai 2 Balkon)
+  // Konsep Arsitektur: Pagar pengaman bertingkat dengan pegangan tangan ergonomis,
+  // tiang balustrade kokoh, panel kaca tempered bening, dan base curb pencegah jatuh.
+  // Standard safety code height: 1.10m above finished deck (y = 5.21 + 1.10 = 6.31m).
+  // =========================================================================
+
+  // A. Handrails (Pegangan Tangan) - Profil ergonomis kayu mahoni / jati gelap dengan aksen kuningan
+  // West Handrail (x = -6.65, z: [3.8, 7.7], length 3.9m)
+  archBatch.addBox([-6.65, 6.31, 5.75], [0.14, 0.08, 3.9], materials.woodDark);
+  archBatch.addBox([-6.65, 6.26, 5.75], [0.16, 0.02, 3.9], materials.brass);
+
+  // East Handrail (x = 6.65, z: [3.8, 7.7], length 3.9m)
+  archBatch.addBox([6.65, 6.31, 5.75], [0.14, 0.08, 3.9], materials.woodDark);
+  archBatch.addBox([6.65, 6.26, 5.75], [0.16, 0.02, 3.9], materials.brass);
+
+  // Front-West Handrail (z = 7.7, x: [-6.65, -3.6], length 3.05m)
+  archBatch.addBox([-5.12, 6.31, 7.7], [3.05, 0.08, 0.14], materials.woodDark);
+  archBatch.addBox([-5.12, 6.26, 7.7], [3.05, 0.02, 0.16], materials.brass);
+
+  // Front-East Handrail (z = 7.7, x: [3.6, 6.65], length 3.05m)
+  archBatch.addBox([5.12, 6.31, 7.7], [3.05, 0.08, 0.14], materials.woodDark);
+  archBatch.addBox([5.12, 6.26, 7.7], [3.05, 0.02, 0.16], materials.brass);
+
+  // Central Balcony Parapet Handrail crowning the "Vicky's World" centerpiece (z = 7.7, x: [-3.6, 3.6])
+  archBatch.addBox([0, 6.62, 7.7], [7.3, 0.10, 0.18], materials.woodDark);
+  archBatch.addBox([0, 6.56, 7.7], [7.34, 0.02, 0.20], materials.brass);
+
+  // B. Base Shoe Plinth Channels (Curb pengaman lantai penahan panel kaca)
+  const shoeMat = materials.windowFrame || materials.metalDark;
+  archBatch.addBox([-6.65, 5.28, 5.75], [0.12, 0.10, 3.9], shoeMat);
+  archBatch.addBox([6.65, 5.28, 5.75], [0.12, 0.10, 3.9], shoeMat);
+  archBatch.addBox([-5.12, 5.28, 7.7], [3.05, 0.10, 0.12], shoeMat);
+  archBatch.addBox([5.12, 5.28, 7.7], [3.05, 0.10, 0.12], shoeMat);
+
+  // C. Architectural Safety Glass Infill Panels (Panel kaca tempered bening & berkelas)
+  addBox(building, [-6.65, 5.79, 5.75], [0.04, 0.92, 3.7], materials.glass, { shadow: false });
+  addBox(building, [6.65, 5.79, 5.75], [0.04, 0.92, 3.7], materials.glass, { shadow: false });
+  addBox(building, [-5.12, 5.79, 7.7], [2.85, 0.92, 0.04], materials.glass, { shadow: false });
+  addBox(building, [5.12, 5.79, 7.7], [2.85, 0.92, 0.04], materials.glass, { shadow: false });
+
+  // D. Stainless / Brass Standoff Baluster Spigots (Klem penjepit struktural kaca)
+  for (let bz = 4.3; bz <= 7.2; bz += 0.72) {
+    archBatch.addCylinder([-6.65, 5.79, bz], 0.022, 0.022, 0.94, materials.brass, { segments: 8 });
+    archBatch.addCylinder([6.65, 5.79, bz], 0.022, 0.022, 0.94, materials.brass, { segments: 8 });
+  }
+  for (const bx of [-6.0, -5.3, -4.6, -3.9, 3.9, 4.6, 5.3, 6.0]) {
+    archBatch.addCylinder([bx, 5.79, 7.7], 0.022, 0.022, 0.94, materials.brass, { segments: 8 });
+  }
+
+  // E. Solid Architectural Balustrade Newel Posts (Tiang utama pembatas balkon)
+  const balconyPosts = [
+    [-6.65, 7.7],   // Front-West Corner
+    [6.65, 7.7],    // Front-East Corner
+    [-6.65, 3.8],   // Wall Anchor West
+    [6.65, 3.8],    // Wall Anchor East
+    [-3.6, 7.7],    // Center Parapet West Flank
+    [3.6, 7.7],     // Center Parapet East Flank
+  ];
+  for (const [px, pz] of balconyPosts) {
+    archBatch.addBox([px, 5.35, pz], [0.22, 0.24, 0.22], materials.stone);
+    archBatch.addBox([px, 5.80, pz], [0.18, 0.88, 0.18], materials.column);
+    archBatch.addBox([px, 6.28, pz], [0.20, 0.08, 0.20], materials.brass);
+    archBatch.addBox([px, 6.38, pz], [0.22, 0.12, 0.22], materials.woodDark);
+  }
+
+  // F. Solid Rapier Safety Colliders for Balcony Perimeter (mencegah karakter jatuh)
+  addColliderBox([-6.65, 5.85, 5.75], [0.15, 0.70, 1.95]); // West
+  addColliderBox([6.65, 5.85, 5.75], [0.15, 0.70, 1.95]);  // East
+  addColliderBox([0, 5.85, 7.7], [6.7, 0.70, 0.15]);       // Front
+
+  // G. Luxury Balcony Greenery & Ornamental Potted Topiaries ("Better visual di depan")
+  for (const tx of [-5.8, 5.8]) {
+    archBatch.addCylinder([tx, 5.48, 5.4], 0.42, 0.32, 0.52, materials.terracotta, { segments: 16 });
+    archBatch.addCylinder([tx, 5.74, 5.4], 0.44, 0.42, 0.06, materials.terracotta, { segments: 16 });
+    archBatch.addCylinder([tx, 5.73, 5.4], 0.38, 0.38, 0.04, materials.soil, { segments: 12 });
+    archBatch.addSphere([tx, 6.22, 5.4], [0.46, 0.46, 0.46], materials.foliageBright);
+    archBatch.addSphere([tx, 6.45, 5.4], [0.34, 0.34, 0.34], materials.foliageMid);
+    archBatch.addSphere([tx - 0.2, 5.85, 5.5], [0.08, 0.08, 0.08], materials.coral);
+    archBatch.addSphere([tx + 0.2, 5.85, 5.3], [0.08, 0.08, 0.08], materials.yellow);
+    archBatch.addSphere([tx, 5.88, 5.55], [0.08, 0.08, 0.08], materials.bluePastel);
+    addColliderBox([tx, 5.85, 5.4], [0.45, 0.65, 0.45]);
+  }
+
+  // H. Balcony Terrace Cafe Lounge Set (Bistro Table & Chairs on East Wing)
+  const bistroX = 3.6;
+  const bistroZ = 5.2;
+  archBatch.addCylinder([bistroX, 5.25, bistroZ], 0.32, 0.32, 0.04, materials.brass, { segments: 14 });
+  archBatch.addCylinder([bistroX, 5.55, bistroZ], 0.04, 0.04, 0.56, materials.brass, { segments: 10 });
+  archBatch.addCylinder([bistroX, 5.85, bistroZ], 0.48, 0.48, 0.04, materials.ceramic, { segments: 20 });
+  archBatch.addCylinder([bistroX + 0.12, 5.92, bistroZ + 0.08], 0.06, 0.05, 0.10, materials.ceramicTeal, { segments: 10 });
+  for (const [cx, cz, rotY] of [[bistroX - 0.65, bistroZ, Math.PI * 0.5], [bistroX + 0.65, bistroZ, -Math.PI * 0.5]]) {
+    archBatch.addBox([cx, 5.48, cz], [0.44, 0.06, 0.44], materials.woodDark);
+    archBatch.addBox([cx, 5.34, cz], [0.38, 0.22, 0.38], materials.metalDark);
+    archBatch.addBox([cx, 5.52, cz], [0.42, 0.05, 0.42], materials.cushionCoral);
+    archBatch.addBox([cx + (rotY > 0 ? -0.18 : 0.18), 5.78, cz], [0.06, 0.52, 0.42], materials.woodDark);
+  }
 
   // =========================================================================
   // 3. EXTERIOR WALLS & ARCHITECTURAL CUTAWAY POSTS
@@ -373,15 +495,29 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   addColliderBox([4.05, 5.06, 2.3], [1.45, 0.14, 1.5]);
 
   // Modern safety glass balustrades framing the stairwell opening on Lantai 2 (open well at x: [2.6, 5.5], z: [-5.6, 0.8])
-  // Inner side balustrade along x = 2.65
-  addBox(building, [2.65, 5.65, -2.4], [0.06, 0.9, 6.4], materials.glass);
-  archBatch.addBox([2.65, 6.12, -2.4], [0.1, 0.08, 6.4], materials.woodWarm);
-  addColliderBox([2.65, 5.65, -2.4], [0.06, 0.45, 3.2]);
+  // Architectural Code: 1.05m height safety balustrade with ergonomic handrail & brass spigots
+  // Base shoe curb channels
+  archBatch.addBox([2.65, 5.26, -2.4], [0.10, 0.10, 6.4], materials.windowFrame);
+  archBatch.addBox([4.05, 5.26, 0.8], [2.7, 0.10, 0.10], materials.windowFrame);
 
-  // Front balustrade along z = 0.8 (x: [2.7, 5.4])
-  addBox(building, [4.05, 5.65, 0.8], [2.7, 0.9, 0.06], materials.glass);
-  archBatch.addBox([4.05, 6.12, 0.8], [2.7, 0.08, 0.1], materials.woodWarm);
-  addColliderBox([4.05, 5.65, 0.8], [1.35, 0.45, 0.06]);
+  // Inner side glass panel along x = 2.65
+  addBox(building, [2.65, 5.75, -2.4], [0.04, 0.88, 6.4], materials.glass, { shadow: false });
+  archBatch.addBox([2.65, 6.25, -2.4], [0.12, 0.08, 6.4], materials.woodDark);
+  archBatch.addBox([2.65, 6.20, -2.4], [0.14, 0.02, 6.4], materials.brass);
+  addColliderBox([2.65, 5.75, -2.4], [0.08, 0.55, 3.2]);
+
+  // Front glass panel along z = 0.8 (x: [2.7, 5.4])
+  addBox(building, [4.05, 5.75, 0.8], [2.7, 0.88, 0.04], materials.glass, { shadow: false });
+  archBatch.addBox([4.05, 6.25, 0.8], [2.7, 0.08, 0.12], materials.woodDark);
+  archBatch.addBox([4.05, 6.20, 0.8], [2.7, 0.02, 0.14], materials.brass);
+  addColliderBox([4.05, 5.75, 0.8], [1.35, 0.55, 0.08]);
+
+  // Corner and terminal newel posts for stairwell void
+  for (const [vx, vz] of [[2.65, 0.8], [2.65, -5.6], [5.4, 0.8]]) {
+    archBatch.addBox([vx, 5.75, vz], [0.16, 1.05, 0.16], materials.woodDark);
+    archBatch.addBox([vx, 5.26, vz], [0.18, 0.10, 0.18], materials.brass);
+    archBatch.addBox([vx, 6.30, vz], [0.18, 0.08, 0.18], materials.brass);
+  }
 
   // Library Nook Floor Slab (Bay 3: x: [5.5, 16.0], z: [3.8, -8.2])
   addBox(building, [10.75, 5.06, -2.2], [10.5, 0.28, 12.0], materials.woodFloor, { shadow: false, receive: true });
@@ -404,8 +540,20 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   // Bay 1: Master Bedroom Front Glass (x: [-16.15, -5.85])
   addGlassFacade(-16.15, -5.85, 5.25, 9.85, 4);
 
-  // Bay 2: Bathroom & Central Atrium Front Glass (x: [-5.15, 5.15])
-  addGlassFacade(-5.15, 5.15, 5.25, 9.85, 4);
+  // Bay 2: Bathroom & Central Atrium Front Glass with Grand Balcony Portal (Lantai 2)
+  // West flanking glass curtain wall (x: [-5.15, -1.8])
+  addGlassFacade(-5.15, -1.8, 5.25, 9.85, 2);
+  // East flanking glass curtain wall (x: [1.8, 5.15])
+  addGlassFacade(1.8, 5.15, 5.25, 9.85, 2);
+  // Transom window above the second floor balcony doors (y: [8.55, 9.85], x: [-1.8, 1.8])
+  addGlassFacade(-1.8, 1.8, 8.55, 9.85, 2, { transoms: [] });
+
+  // Architectural Portal Architrave Framing for 2nd Floor Balcony Doorway (x: [-1.8, 1.8], y: [5.20, 8.55], z = 3.8)
+  const portalFrameMat = materials.windowFrame || materials.metalDark;
+  archBatch.addBox([0, 8.50, 3.8], [3.65, 0.18, 0.22], portalFrameMat);
+  archBatch.addBox([-1.76, 6.85, 3.8], [0.18, 3.25, 0.22], portalFrameMat);
+  archBatch.addBox([1.76, 6.85, 3.8], [0.18, 3.25, 0.22], portalFrameMat);
+  archBatch.addBox([0, 5.22, 3.8], [3.65, 0.06, 0.24], materials.brass); // Flush brass threshold
 
   // Bay 3: Library Nook Front Glass (x: [5.85, 15.65])
   addGlassFacade(5.85, 15.65, 5.25, 9.85, 4);
@@ -508,31 +656,68 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
     staticBodies.push(rampBody);
   }
 
-  // Inner floating glass balustrade with mahogany handrail along the open (left) side of the stairs
+  // =========================================================================
+  // ARCHITECTURAL STAIRCASE RAILING & BALUSTRADE (Railing Tangga)
+  // Konsep Arsitektur: Media pengaman pada hunian bertingkat dengan pegangan tangan ergonomis,
+  // tiang balustrade awal & akhir, klem spigots kuningan, dan pegangan tangan dinding (wall handrail).
+  // =========================================================================
   const sx = stairX - stairWidth * 0.5; // x = 3.2
   const midZ = (startZ + endZ) * 0.5;
   const midY = (startY + endY) * 0.5 + 1.0;
   const stairLen = Math.hypot(endZ - startZ, endY - startY);
   const stairAngle = Math.atan2(endY - startY, Math.abs(endZ - startZ));
 
-  // Polished mahogany top handrail
-  archBatch.addBox([sx, midY, midZ], [0.10, 0.10, stairLen], materials.woodDark, {
+  // 1. Starting Newel Post (Tiang Awal Tangga) pada anak tangga pertama
+  archBatch.addBox([sx, 0.55, startZ + 0.05], [0.18, 1.10, 0.18], materials.woodDark);
+  archBatch.addBox([sx, 0.08, startZ + 0.05], [0.22, 0.16, 0.22], materials.brass);
+  archBatch.addBox([sx, 1.14, startZ + 0.05], [0.20, 0.08, 0.20], materials.brass);
+  archBatch.addSphere([sx, 1.24, startZ + 0.05], [0.10, 0.10, 0.10], materials.brass);
+
+  // 2. Intermediate Support Post (Tiang Tengah Tangga)
+  archBatch.addBox([sx, midY - 0.40, midZ], [0.14, 1.05, 0.14], materials.woodDark);
+  archBatch.addBox([sx, midY + 0.14, midZ], [0.16, 0.06, 0.16], materials.brass);
+
+  // 3. Top Landing Newel Post (Tiang Puncak Tangga) menyambung ke void Lantai 2
+  archBatch.addBox([sx, endY + 0.55, endZ - 0.05], [0.18, 1.10, 0.18], materials.woodDark);
+  archBatch.addBox([sx, endY + 0.08, endZ - 0.05], [0.22, 0.16, 0.22], materials.brass);
+  archBatch.addBox([sx, endY + 1.14, endZ - 0.05], [0.20, 0.08, 0.20], materials.brass);
+  archBatch.addSphere([sx, endY + 1.24, endZ - 0.05], [0.10, 0.10, 0.10], materials.brass);
+
+  // 4. Polished mahogany top handrail (Pegangan Tangan Tangga Kiri)
+  archBatch.addBox([sx, midY, midZ], [0.12, 0.10, stairLen], materials.woodDark, {
+    rotation: [stairAngle, 0, 0],
+  });
+  archBatch.addBox([sx, midY - 0.04, midZ], [0.14, 0.02, stairLen], materials.brass, {
     rotation: [stairAngle, 0, 0],
   });
 
-  // Architectural crystal clear glass balustrade panel along staircase flight
+  // 5. Architectural crystal clear glass balustrade panel along staircase flight
   archBatch.addBox([sx, midY - 0.42, midZ], [0.04, 0.76, stairLen], materials.glass, {
     rotation: [stairAngle, 0, 0],
   });
 
-  // Vertical stainless steel standoff balusters
-  for (let i = 0; i < numSteps; i += 3) {
+  // 6. Brass standoff clamp balusters every 2 steps
+  for (let i = 0; i < numSteps; i += 2) {
     const t = (i + 0.5) / numSteps;
     const bz = startZ + (endZ - startZ) * t;
-    const by = startY + (endY - startY) * t + 0.5;
-    archBatch.addCylinder([sx, by, bz], 0.025, 0.025, 0.95, materials.trim, { segments: 8 });
+    const by = startY + (endY - startY) * t + 0.52;
+    archBatch.addCylinder([sx, by, bz], 0.024, 0.024, 0.94, materials.brass, { segments: 8 });
   }
-  addColliderBox([sx, midY - 0.35, midZ], [0.08, 0.75, stairLen * 0.5]);
+  addColliderBox([sx, midY - 0.35, midZ], [0.10, 0.75, stairLen * 0.5]);
+
+  // 7. Wall-Mounted Handrail (Pegangan Tangan Dinding Kanan pada x = 4.86, menempel di dinding x = 5.5)
+  const wallHx = stairX + stairWidth * 0.5 - 0.04; // 4.86
+  archBatch.addBox([wallHx, midY, midZ], [0.08, 0.08, stairLen], materials.woodDark, {
+    rotation: [stairAngle, 0, 0],
+  });
+  // Brass mounting brackets anchoring to the solid wall
+  for (let i = 2; i < numSteps; i += 5) {
+    const t = (i + 0.5) / numSteps;
+    const bz = startZ + (endZ - startZ) * t;
+    const by = startY + (endY - startY) * t + 0.98;
+    archBatch.addBox([wallHx + 0.08, by, bz], [0.12, 0.03, 0.05], materials.brass);
+    archBatch.addCylinder([wallHx + 0.14, by, bz], 0.04, 0.04, 0.02, materials.brass, { segments: 8 });
+  }
 
   // Under-stair modern architectural feature (minimalist warm teak plinth with ambient display ledge)
   archBatch.addBox([stairX, 0.15, -4.0], [stairWidth - 0.1, 0.3, 3.2], materials.woodDark);
@@ -636,6 +821,13 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
     // Upper floor sconces
     archBatch.addBox([sx, 8.8, 3.95], [0.14, 0.28, 0.14], materials.brass);
     addSphere(building, [sx, 8.8, 3.95], [0.12, 0.12, 0.12], materials.glow, { shadow: false });
+  }
+
+  // Wall Sconces flanking second floor balcony glass doors
+  for (const sx of [-2.05, 2.05]) {
+    archBatch.addBox([sx, 7.3, 3.96], [0.12, 0.26, 0.16], materials.brass);
+    archBatch.addBox([sx, 7.3, 4.06], [0.18, 0.32, 0.18], materials.windowFrame);
+    addSphere(building, [sx, 7.3, 4.06], [0.10, 0.10, 0.10], materials.glow, { shadow: false });
   }
 
   // Build batched architecture
@@ -902,20 +1094,146 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
     },
   });
 
+  // -----------------------------------------------------------------
+  // 3. SECOND FLOOR BALCONY FULL-GLASS DOORS (z = 3.75, y = 5.22, x: [-1.6, 1.6])
+  // -----------------------------------------------------------------
+  const balconyFrame = new THREE.Group();
+  balconyFrame.position.set(0, 5.22, 3.75);
+  scene.add(balconyFrame);
+
+  // Modern architectural portal frame
+  addBox(balconyFrame, [-1.65, 1.62, 0], [0.18, 3.24, 0.22], frameMat);
+  addBox(balconyFrame, [1.65, 1.62, 0], [0.18, 3.24, 0.22], frameMat);
+  addBox(balconyFrame, [0, 3.28, 0], [3.48, 0.16, 0.24], frameMat);
+
+  const balconyDoorLeft = new THREE.Group();
+  const balconyDoorRight = new THREE.Group();
+  balconyDoorLeft.position.set(-1.54, 0, 0.04);
+  balconyDoorRight.position.set(1.54, 0, 0.04);
+  balconyFrame.add(balconyDoorLeft, balconyDoorRight);
+
+  // Left leaf (Full glass with sleek aluminum frame & brass handle)
+  addBox(balconyDoorLeft, [0.77, 2.95, 0], [1.52, 0.10, 0.08], frameMat);
+  addBox(balconyDoorLeft, [0.77, 0.08, 0], [1.52, 0.16, 0.08], frameMat);
+  addBox(balconyDoorLeft, [0.05, 1.50, 0], [0.10, 3.0, 0.08], frameMat);
+  addBox(balconyDoorLeft, [1.49, 1.50, 0], [0.10, 3.0, 0.08], frameMat);
+  addBox(balconyDoorLeft, [0.77, 1.50, 0], [1.38, 2.80, 0.04], materials.glass);
+  addCylinder(balconyDoorLeft, [1.38, 1.40, 0.06], 0.022, 0.022, 0.85, materials.brass);
+  addCylinder(balconyDoorLeft, [1.38, 1.40, -0.06], 0.022, 0.022, 0.85, materials.brass);
+
+  // Right leaf (Full glass with sleek aluminum frame & brass handle)
+  addBox(balconyDoorRight, [-0.77, 2.95, 0], [1.52, 0.10, 0.08], frameMat);
+  addBox(balconyDoorRight, [-0.77, 0.08, 0], [1.52, 0.16, 0.08], frameMat);
+  addBox(balconyDoorRight, [-0.05, 1.50, 0], [0.10, 3.0, 0.08], frameMat);
+  addBox(balconyDoorRight, [-1.49, 1.50, 0], [0.10, 3.0, 0.08], frameMat);
+  addBox(balconyDoorRight, [-0.77, 1.50, 0], [1.38, 2.80, 0.04], materials.glass);
+  addCylinder(balconyDoorRight, [-1.38, 1.40, 0.06], 0.022, 0.022, 0.85, materials.brass);
+  addCylinder(balconyDoorRight, [-1.38, 1.40, -0.06], 0.022, 0.022, 0.85, materials.brass);
+
+  const balconyColliders = [];
+  if (world && RAPIER) {
+    for (const x of [-0.77, 0.77]) {
+      const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(x, 5.22 + 1.50, 3.8));
+      const collider = world.createCollider(RAPIER.ColliderDesc.cuboid(0.77, 1.50, 0.1), body);
+      balconyColliders.push(collider);
+    }
+  }
+
+  let balconyState = 'closed';
+  let balconyFrom = 0;
+  let balconyTo = 0;
+  let balconyClock = 0;
+  let balconyPendingCallback = null;
+
+  const setBalconyAngle = (a) => {
+    balconyDoorLeft.rotation.y = -a;
+    balconyDoorRight.rotation.y = a;
+  };
+  const currentBalconyAngle = () => balconyDoorRight.rotation.y;
+
+  const finishBalcony = () => {
+    setBalconyAngle(balconyTo);
+    balconyState = balconyTo > 0 ? 'open' : 'closed';
+    if (balconyState === 'closed') {
+      for (const collider of balconyColliders) collider.setEnabled(true);
+    }
+    const cb = balconyPendingCallback;
+    balconyPendingCallback = null;
+    if (cb) cb(balconyState === 'open');
+  };
+
+  const updateBalcony = (dt) => {
+    if (balconyState !== 'opening' && balconyState !== 'closing') return;
+    balconyClock += dt;
+    const t = Math.min(1, balconyClock / DOOR_DURATION);
+    setBalconyAngle(balconyFrom + (balconyTo - balconyFrom) * easeInOut(t));
+    if (t >= 1) finishBalcony();
+  };
+
+  const toggleBalcony = (onComplete) => {
+    if (balconyState === 'opening' || balconyState === 'closing') return false;
+    const opening = balconyState === 'closed';
+    balconyFrom = currentBalconyAngle();
+    balconyTo = opening ? OPEN_ANGLE : 0;
+    balconyClock = 0;
+    balconyState = opening ? 'opening' : 'closing';
+    balconyPendingCallback = onComplete || null;
+    if (opening) {
+      for (const collider of balconyColliders) collider.setEnabled(false);
+    }
+    return true;
+  };
+
+  const settleBalcony = () => {
+    if (balconyState === 'opening' || balconyState === 'closing') finishBalcony();
+  };
+
+  const balconyControls = {
+    toggle: toggleBalcony,
+    settle: settleBalcony,
+    update: updateBalcony,
+    isOpen: () => balconyState === 'open',
+    isBusy: () => balconyState === 'opening' || balconyState === 'closing',
+    getState: () => balconyState,
+    panels: { doorLeft: balconyDoorLeft, doorRight: balconyDoorRight },
+    hingeWorld: () => ({
+      left: balconyDoorLeft.getWorldPosition(new THREE.Vector3()),
+      right: balconyDoorRight.getWorldPosition(new THREE.Vector3()),
+    }),
+  };
+
+  interactionPoints.push({
+    id: 'door_balcony',
+    type: 'door',
+    title: 'Balcony glass doors',
+    position: new THREE.Vector3(0, 5.9, 3.8),
+    radius: 3.5,
+    controls: balconyControls,
+    action: () => toggleBalcony(),
+    getLabel: () => {
+      if (balconyState === 'opening') return 'Opening balcony glass doors...';
+      if (balconyState === 'closing') return 'Closing balcony glass doors...';
+      return balconyState === 'open' ? 'Close balcony glass doors' : 'Open balcony glass doors';
+    },
+  });
+
   return {
     front: frontControls,
     rear: rearControls,
+    balcony: balconyControls,
     toggle: (cb) => frontControls.toggle(cb),
-    settle: () => { frontControls.settle(); rearControls.settle(); },
-    update: (dt) => { frontControls.update(dt); rearControls.update(dt); },
-    isOpen: () => frontControls.isOpen() || rearControls.isOpen(),
-    isBusy: () => frontControls.isBusy() || rearControls.isBusy(),
+    settle: () => { frontControls.settle(); rearControls.settle(); balconyControls.settle(); },
+    update: (dt) => { frontControls.update(dt); rearControls.update(dt); balconyControls.update(dt); },
+    isOpen: () => frontControls.isOpen() || rearControls.isOpen() || balconyControls.isOpen(),
+    isBusy: () => frontControls.isBusy() || rearControls.isBusy() || balconyControls.isBusy(),
     getState: () => frontControls.getState(),
     panels: {
       doorLeft,
       doorRight,
       rearDoorLeft,
       rearDoorRight,
+      balconyDoorLeft,
+      balconyDoorRight,
     },
     hingeWorld: frontControls.hingeWorld,
   };

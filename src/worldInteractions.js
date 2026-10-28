@@ -499,6 +499,9 @@ export class WorldInteractionManager {
     this.stateDuration = 0.32;
     this.watchdogClock = 0;
 
+    const isUpperFloor = char.position.y > 3.0;
+    const floorY = isUpperFloor ? 5.2 : 0.0;
+
     // Correct character orientation facing the door:
     // When outdoor (z > 3.92): door is at z = 3.92 (-Z direction). In Three.js, Math.PI faces -Z.
     // When indoor (z < 3.92): door is at z = 3.92 (+Z direction). In Three.js, 0 faces +Z.
@@ -510,20 +513,18 @@ export class WorldInteractionManager {
     this._charStartRot = char.rotation.y;
     this._charTargetRot = facingYaw;
 
-    // Compute cinematic framing inside the porch footprint (avoiding columns at x=±3.4/z=7.4 & front facade)
+    // Compute cinematic framing inside the porch/balcony footprint
     if (this.camera) {
       this._camStartPos.copy(this.camera.position);
       this._camStartLook.set(char.position.x, char.position.y + 1.3, char.position.z);
       this._currentLook.copy(this._camStartLook);
 
       if (isOutdoor) {
-        // Front-centre, slightly right of axis: the open leaves (tips ~x=±1.6, z=5.5) stay outside
-        // the camera->doorway sight line, and the porch columns/rails (|x|>=3.4) are not in view.
-        this._camTargetPos.set(1.1, 2.0, 7.6);
-        this._camTargetLook.set(0, 1.8, 4.0);
+        this._camTargetPos.set(1.1, floorY + 2.0, 7.6);
+        this._camTargetLook.set(0, floorY + 1.8, 4.0);
       } else {
-        this._camTargetPos.set(1.1, 2.0, 0.4);
-        this._camTargetLook.set(0, 1.8, 3.9);
+        this._camTargetPos.set(1.1, floorY + 2.0, 0.4);
+        this._camTargetLook.set(0, floorY + 1.8, 3.9);
       }
     }
 

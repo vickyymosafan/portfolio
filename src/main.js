@@ -992,11 +992,12 @@ function findInteraction() {
   const nearbySeat = worldInteractions ? worldInteractions.getNearbySeat(physX, physZ, physY) : null;
   const nearbyInspectable = worldInteractions ? worldInteractions.getNearbyInspectable(physX, physZ) : null;
 
-  // Door interaction candidate (E) - front entrance or rear terrace glass doors
+  // Door interaction candidate (E) - front entrance, rear terrace, or second floor balcony glass doors
   let doorCandidate = null;
   let bestDoorDist = Infinity;
   for (const item of interactionPoints) {
     if (item.type !== 'door') continue;
+    if (item.position?.y !== undefined && Math.abs(physY - item.position.y) > 2.5) continue;
     const dist = Math.hypot(physX - item.position.x, physZ - item.position.z);
     if (dist < item.radius && dist < bestDoorDist) {
       bestDoorDist = dist;
@@ -1121,38 +1122,43 @@ function dispatchInteraction(code) {
     // KeyE: ONLY doors and room exhibits. NEVER triggers sitting!
     if (w.mode !== InteractionMode.NONE) return reject('other_interaction_active');
 
-    // Priority 1: Check nearest door (front entrance or terrace glass doors)
-    let doorTarget = null;
-    let bestDoorDist = Infinity;
-    for (const item of interactionPoints) {
-      if (item.type !== 'door') continue;
-      const dist = Math.hypot(physX - item.position.x, physZ - item.position.z);
-      if (dist < item.radius && dist < bestDoorDist) {
-        bestDoorDist = dist;
-        doorTarget = item;
+    // 1. If findInteraction() already selected an active door or room exhibit for KeyE, execute it directly!
+    let target = null;
+    if (currentInteraction && (currentInteraction.type === 'door' || currentInteraction.type === 'room' || typeof currentInteraction.action === 'function')) {
+      target = currentInteraction;
+    }
+
+    if (!target) {
+      // Priority 1: Check nearest door (filtering by vertical height / floor elevation!)
+      let bestDoorDist = Infinity;
+      for (const item of interactionPoints) {
+        if (item.type !== 'door') continue;
+        if (item.position?.y !== undefined && Math.abs(physY - item.position.y) > 2.5) continue;
+        const dist = Math.hypot(physX - item.position.x, physZ - item.position.z);
+        if (dist < item.radius && dist < bestDoorDist) {
+          bestDoorDist = dist;
+          target = item;
+        }
       }
     }
 
-    if (doorTarget) {
-      if (import.meta.env.DEV) console.log('[Interaction] KeyE -> door toggle:', doorTarget.id);
-      result = doorTarget.action() !== false;
-    } else {
+    if (!target) {
       // Priority 2: Check nearest room exhibit
-      let bestRoom = null;
       let bestDist = Infinity;
       for (const item of interactionPoints) {
         if (item.type === 'door') continue;
         if (item.position?.y !== undefined && Math.abs(physY - item.position.y) > 2.8) continue;
         const dist = Math.hypot(physX - item.position.x, physZ - item.position.z);
         if (dist < item.radius && dist < bestDist) {
-          bestRoom = item;
           bestDist = dist;
+          target = item;
         }
       }
-      if (!bestRoom) return reject('no_e_target_in_range');
-      if (import.meta.env.DEV) console.log('[Interaction] KeyE -> room beacon:', bestRoom.id);
-      result = bestRoom.action() !== false;
     }
+
+    if (!target) return reject('no_e_target_in_range');
+    if (import.meta.env.DEV) console.log('[Interaction] KeyE -> execute target:', target.id);
+    result = target.action() !== false;
   } else if (code === 'KeyF') {
     // KeyF: ONLY environmental inspectables.
     if (w.mode === InteractionMode.INSPECTING) {
