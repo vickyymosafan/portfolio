@@ -593,10 +593,10 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
     };
   }
 
-  // Guard 1: Stationed at main gate checkpoint & boom barrier (x = -5.8, z = 25.5)
-  animatedGuards.push(createGuardRig(-5.8, 25.5, 0, 'gate'));
-  // Guard 2: Stationed by the security booth service window (x = -8.8, z = 25.8)
-  animatedGuards.push(createGuardRig(-8.8, 25.8, Math.PI * 0.15, 'window'));
+  // Guard 1 (Sisi Kiri / West Flank): Stationed at main gate checkpoint & boom barrier
+  animatedGuards.push(createGuardRig(-5.8, 25.5, Math.PI * 0.06, 'gate'));
+  // Guard 2 (Sisi Kanan / East Flank): Stationed at right gate pier & visitor check post
+  animatedGuards.push(createGuardRig(-1.2, 25.5, -Math.PI * 0.06, 'window'));
 
   // =========================================================================
   // 13. Southern World Boundary Wall along highway edge (z = 42.0)
