@@ -91,11 +91,23 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   archBatch.addBox([4.75, 0.16, -8.25], [42.8, 0.38, 0.4], materials.foundation);
 
   // =========================================================================
-  // 2. GRAND ENTRANCE STEPS & FRONT PORCH
+  // 2. GRAND ENTRANCE STEPS & FRONT PORCH WITH CONTINUOUS STONE FOUNDATION
   // Porch platform at z = [3.8, 7.6], x = [-6.5, 6.5]
+  // Complete architectural foundation (pondasi batu alam, stylobate, umpak tiang)
   // =========================================================================
-  archBatch.addBox([0, 0.08, 5.7], [13.0, 0.22, 3.8], materials.woodLight);
-  addColliderBox([0, -0.03, 5.7], [6.5, 0.11, 1.9]);
+
+  // 1. Heavy Continuous Stone Foundation Skirt & Stylobate Podium (Pondasi Dasar Batu Alam)
+  // Extends into the earth from y = -0.55 up to ground level (y = 0.05) to firmly ground the porch
+  archBatch.addBox([0, -0.25, 5.75], [13.8, 0.60, 4.2], materials.foundation);
+  addColliderBox([0, -0.25, 5.75], [6.9, 0.30, 2.1]);
+
+  // Stepped architectural plinth stylobate molding around porch perimeter
+  archBatch.addBox([0, 0.02, 5.7], [13.6, 0.16, 4.0], materials.stone);
+  archBatch.addBox([0, 0.12, 5.7], [13.4, 0.06, 3.9], materials.trim);
+
+  // Porch platform finish floor at z = [3.8, 7.6], x = [-6.5, 6.5]
+  archBatch.addBox([0, 0.18, 5.7], [13.0, 0.12, 3.8], materials.woodLight);
+  addColliderBox([0, 0.08, 5.7], [6.5, 0.12, 1.9]);
 
   // Grand descending stone stairs with wide curved treads leading to front fountain roundabout
   for (let step = 0; step < 4; step += 1) {
@@ -106,21 +118,86 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
     addColliderBox([0, sy - 0.06, sz], [sw * 0.5, 0.08, 0.3]);
   }
 
+  // Foundation Wing Cheek Retaining Walls flanking the grand stone stairs
+  for (const sx of [-4.9, 4.9]) {
+    archBatch.addBox([sx, -0.15, 8.4], [0.45, 0.55, 2.4], materials.foundation);
+    archBatch.addBox([sx, 0.16, 8.4], [0.55, 0.12, 2.45], materials.stone);
+    archBatch.addBox([sx, 0.24, 7.6], [0.65, 0.22, 0.65], materials.stone);
+    archBatch.addBox([sx, 0.10, 9.5], [0.65, 0.22, 0.65], materials.stone);
+  }
+
   // Double-height front monumental columns (height 10.2m) flanking central entrance
   const frontColX = [-5.5, -2.2, 2.2, 5.5];
   for (const cx of frontColX) {
-    // Pedestal base
-    archBatch.addBox([cx, 0.45, 7.4], [0.85, 0.7, 0.85], materials.stone);
-    archBatch.addCylinder([cx, 0.9, 7.4], 0.38, 0.42, 0.2, materials.woodWarm, { segments: 16 });
-    // Lower shaft (ground floor)
-    archBatch.addCylinder([cx, 3.0, 7.4], 0.32, 0.36, 4.0, materials.column, { segments: 20 });
-    // Mid capital / floor ring at second floor level
+    // A. Sub-grade reinforced foundation footing pad (Tapak Pondasi Umpak Cakar Ayam)
+    archBatch.addBox([cx, -0.22, 7.4], [1.2, 0.56, 1.2], materials.foundation);
+
+    // B. Stepped stone pedestal base (Umpak Pondasi Batu Alam Bertingkat)
+    archBatch.addBox([cx, 0.18, 7.4], [1.05, 0.24, 1.05], materials.stone);
+    archBatch.addBox([cx, 0.48, 7.4], [0.88, 0.40, 0.88], materials.stone);
+    archBatch.addCylinder([cx, 0.72, 7.4], 0.42, 0.46, 0.12, materials.woodWarm, { segments: 16 });
+    archBatch.addCylinder([cx, 0.82, 7.4], 0.38, 0.42, 0.10, materials.brass, { segments: 16 });
+
+    // C. Lower shaft (ground floor)
+    archBatch.addCylinder([cx, 2.95, 7.4], 0.32, 0.36, 4.15, materials.column, { segments: 20 });
+
+    // D. Mid capital / floor ring at second floor level
     archBatch.addBox([cx, 5.2, 7.4], [0.8, 0.3, 0.8], materials.woodWarm);
-    // Upper shaft (second floor)
+
+    // E. Upper shaft (second floor)
     archBatch.addCylinder([cx, 7.6, 7.4], 0.28, 0.32, 4.5, materials.column, { segments: 20 });
-    // Upper ornate capital
-    archBatch.addBox([cx, 10.0, 7.4], [0.95, 0.35, 0.95], materials.stone);
+
+    // F. Upper ornate classical capital
+    archBatch.addCylinder([cx, 9.75, 7.4], 0.34, 0.30, 0.2, materials.woodWarm, { segments: 16 });
+    archBatch.addBox([cx, 9.95, 7.4], [0.95, 0.22, 0.95], materials.stone);
+    archBatch.addBox([cx, 10.10, 7.4], [1.05, 0.12, 1.05], materials.brass);
+
     addColliderBox([cx, 5.0, 7.4], [0.45, 5.0, 0.45]);
+  }
+
+  // =========================================================================
+  // 2A. MONUMENTAL CLASSICAL ENTABLATURE & PORTICO SUPERSTRUCTURE
+  // Structural beams resting on top of the 4 columns at y = 10.15 - 10.95m
+  // Tying all columns together and connecting back to the mansion front wall
+  // =========================================================================
+
+  // 1. Architrave (Balok Epistyle / Balok Gelagar Utama)
+  // Continuous transverse structural stone beam resting on the 4 column capitals (spanning 12.4m)
+  archBatch.addBox([0, 10.28, 7.4], [12.6, 0.36, 0.84], materials.stone);
+  archBatch.addBox([0, 10.12, 7.4], [12.4, 0.06, 0.76], materials.brass);
+
+  // Longitudinal return tie-beams (Balok Pengikat Samping) connecting side columns (cx = -5.5, 5.5) back to wall (z = 3.8)
+  for (const sx of [-5.5, 5.5]) {
+    archBatch.addBox([sx, 10.28, 5.6], [0.68, 0.36, 3.6], materials.stone);
+    archBatch.addBox([sx, 10.12, 5.6], [0.60, 0.06, 3.6], materials.brass);
+  }
+
+  // 2. Frieze Band (Balok Fascia Arsitektural)
+  archBatch.addBox([0, 10.60, 7.4], [12.3, 0.34, 0.74], materials.wall);
+  for (const sx of [-5.5, 5.5]) {
+    archBatch.addBox([sx, 10.60, 5.6], [0.60, 0.34, 3.6], materials.wall);
+  }
+  // Decorative modillion / triglyph bracket accents at each column axis
+  for (const cx of frontColX) {
+    archBatch.addBox([cx, 10.60, 7.82], [0.40, 0.30, 0.10], materials.brass);
+    archBatch.addBox([cx, 10.60, 7.86], [0.32, 0.22, 0.04], materials.woodDark);
+  }
+
+  // 3. Cornice Molding (Listplang Geison Bertingkat)
+  // Projecting molded cornice with drip cap
+  archBatch.addBox([0, 10.84, 7.4], [12.9, 0.18, 0.98], materials.stone);
+  archBatch.addBox([0, 10.95, 7.4], [13.0, 0.04, 1.04], materials.brass);
+  for (const sx of [-5.5, 5.5]) {
+    archBatch.addBox([sx, 10.84, 5.6], [0.78, 0.18, 3.7], materials.stone);
+    archBatch.addBox([sx, 10.95, 5.6], [0.84, 0.04, 3.75], materials.brass);
+  }
+
+  // 4. Portico Luxury Coffered Ceiling Soffit (Plafon Kayu Mewah di Bawah Kanopi Portico)
+  archBatch.addBox([0, 10.05, 5.6], [11.8, 0.08, 3.5], materials.woodWarm);
+  // Recessed warm lighting fixtures in the portico ceiling
+  for (const lx of [-3.8, 0, 3.8]) {
+    archBatch.addCylinder([lx, 10.03, 5.6], 0.24, 0.24, 0.04, materials.brass, { segments: 12 });
+    addSphere(building, [lx, 10.00, 5.6], [0.16, 0.06, 0.16], materials.glow, { shadow: false });
   }
 
   // Porch balustrades & railings on ground floor
@@ -181,56 +258,56 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   // =========================================================================
 
   // A. Handrails (Pegangan Tangan) - Profil ergonomis kayu mahoni / jati gelap dengan aksen kuningan
-  // West Handrail (x = -6.65, z: [3.8, 7.7], length 3.9m)
-  archBatch.addBox([-6.65, 6.31, 5.75], [0.14, 0.08, 3.9], materials.woodDark);
-  archBatch.addBox([-6.65, 6.26, 5.75], [0.16, 0.02, 3.9], materials.brass);
+  // West Handrail (x = -6.65, z: [3.8, 7.85], length 4.05m)
+  archBatch.addBox([-6.65, 6.31, 5.825], [0.14, 0.08, 4.05], materials.woodDark);
+  archBatch.addBox([-6.65, 6.26, 5.825], [0.16, 0.02, 4.05], materials.brass);
 
-  // East Handrail (x = 6.65, z: [3.8, 7.7], length 3.9m)
-  archBatch.addBox([6.65, 6.31, 5.75], [0.14, 0.08, 3.9], materials.woodDark);
-  archBatch.addBox([6.65, 6.26, 5.75], [0.16, 0.02, 3.9], materials.brass);
+  // East Handrail (x = 6.65, z: [3.8, 7.85], length 4.05m)
+  archBatch.addBox([6.65, 6.31, 5.825], [0.14, 0.08, 4.05], materials.woodDark);
+  archBatch.addBox([6.65, 6.26, 5.825], [0.16, 0.02, 4.05], materials.brass);
 
-  // Front-West Handrail (z = 7.7, x: [-6.65, -3.6], length 3.05m)
-  archBatch.addBox([-5.12, 6.31, 7.7], [3.05, 0.08, 0.14], materials.woodDark);
-  archBatch.addBox([-5.12, 6.26, 7.7], [3.05, 0.02, 0.16], materials.brass);
+  // Front-West Handrail (z = 7.85, x: [-6.65, -3.7], length 2.95m)
+  archBatch.addBox([-5.175, 6.31, 7.85], [2.95, 0.08, 0.14], materials.woodDark);
+  archBatch.addBox([-5.175, 6.26, 7.85], [2.95, 0.02, 0.16], materials.brass);
 
-  // Front-East Handrail (z = 7.7, x: [3.6, 6.65], length 3.05m)
-  archBatch.addBox([5.12, 6.31, 7.7], [3.05, 0.08, 0.14], materials.woodDark);
-  archBatch.addBox([5.12, 6.26, 7.7], [3.05, 0.02, 0.16], materials.brass);
+  // Front-East Handrail (z = 7.85, x: [3.7, 6.65], length 2.95m)
+  archBatch.addBox([5.175, 6.31, 7.85], [2.95, 0.08, 0.14], materials.woodDark);
+  archBatch.addBox([5.175, 6.26, 7.85], [2.95, 0.02, 0.16], materials.brass);
 
-  // Central Balcony Parapet Handrail crowning the "Vicky's World" centerpiece (z = 7.7, x: [-3.6, 3.6])
-  archBatch.addBox([0, 6.62, 7.7], [7.3, 0.10, 0.18], materials.woodDark);
-  archBatch.addBox([0, 6.56, 7.7], [7.34, 0.02, 0.20], materials.brass);
+  // Central Balcony Parapet Handrail crowning the "Vicky's World" centerpiece (z = 7.88, x: [-3.7, 3.7], in front of columns)
+  archBatch.addBox([0, 6.62, 7.88], [7.5, 0.10, 0.22], materials.woodDark);
+  archBatch.addBox([0, 6.56, 7.88], [7.54, 0.02, 0.24], materials.brass);
 
   // B. Base Shoe Plinth Channels (Curb pengaman lantai penahan panel kaca)
   const shoeMat = materials.windowFrame || materials.metalDark;
-  archBatch.addBox([-6.65, 5.28, 5.75], [0.12, 0.10, 3.9], shoeMat);
-  archBatch.addBox([6.65, 5.28, 5.75], [0.12, 0.10, 3.9], shoeMat);
-  archBatch.addBox([-5.12, 5.28, 7.7], [3.05, 0.10, 0.12], shoeMat);
-  archBatch.addBox([5.12, 5.28, 7.7], [3.05, 0.10, 0.12], shoeMat);
+  archBatch.addBox([-6.65, 5.28, 5.825], [0.12, 0.10, 4.05], shoeMat);
+  archBatch.addBox([6.65, 5.28, 5.825], [0.12, 0.10, 4.05], shoeMat);
+  archBatch.addBox([-5.175, 5.28, 7.85], [2.95, 0.10, 0.12], shoeMat);
+  archBatch.addBox([5.175, 5.28, 7.85], [2.95, 0.10, 0.12], shoeMat);
 
   // C. Architectural Safety Glass Infill Panels (Panel kaca tempered bening & berkelas)
-  addBox(building, [-6.65, 5.79, 5.75], [0.04, 0.92, 3.7], materials.glass, { shadow: false });
-  addBox(building, [6.65, 5.79, 5.75], [0.04, 0.92, 3.7], materials.glass, { shadow: false });
-  addBox(building, [-5.12, 5.79, 7.7], [2.85, 0.92, 0.04], materials.glass, { shadow: false });
-  addBox(building, [5.12, 5.79, 7.7], [2.85, 0.92, 0.04], materials.glass, { shadow: false });
+  addBox(building, [-6.65, 5.79, 5.825], [0.04, 0.92, 3.85], materials.glass, { shadow: false });
+  addBox(building, [6.65, 5.79, 5.825], [0.04, 0.92, 3.85], materials.glass, { shadow: false });
+  addBox(building, [-5.175, 5.79, 7.85], [2.75, 0.92, 0.04], materials.glass, { shadow: false });
+  addBox(building, [5.175, 5.79, 7.85], [2.75, 0.92, 0.04], materials.glass, { shadow: false });
 
   // D. Stainless / Brass Standoff Baluster Spigots (Klem penjepit struktural kaca)
-  for (let bz = 4.3; bz <= 7.2; bz += 0.72) {
+  for (let bz = 4.3; bz <= 7.4; bz += 0.75) {
     archBatch.addCylinder([-6.65, 5.79, bz], 0.022, 0.022, 0.94, materials.brass, { segments: 8 });
     archBatch.addCylinder([6.65, 5.79, bz], 0.022, 0.022, 0.94, materials.brass, { segments: 8 });
   }
   for (const bx of [-6.0, -5.3, -4.6, -3.9, 3.9, 4.6, 5.3, 6.0]) {
-    archBatch.addCylinder([bx, 5.79, 7.7], 0.022, 0.022, 0.94, materials.brass, { segments: 8 });
+    archBatch.addCylinder([bx, 5.79, 7.85], 0.022, 0.022, 0.94, materials.brass, { segments: 8 });
   }
 
   // E. Solid Architectural Balustrade Newel Posts (Tiang utama pembatas balkon)
   const balconyPosts = [
-    [-6.65, 7.7],   // Front-West Corner
-    [6.65, 7.7],    // Front-East Corner
-    [-6.65, 3.8],   // Wall Anchor West
-    [6.65, 3.8],    // Wall Anchor East
-    [-3.6, 7.7],    // Center Parapet West Flank
-    [3.6, 7.7],     // Center Parapet East Flank
+    [-6.65, 7.85],   // Front-West Corner
+    [6.65, 7.85],    // Front-East Corner
+    [-6.65, 3.8],    // Wall Anchor West
+    [6.65, 3.8],     // Wall Anchor East
+    [-3.7, 7.85],    // Center Parapet West Flank
+    [3.7, 7.85],     // Center Parapet East Flank
   ];
   for (const [px, pz] of balconyPosts) {
     archBatch.addBox([px, 5.35, pz], [0.22, 0.24, 0.22], materials.stone);
@@ -240,9 +317,9 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   }
 
   // F. Solid Rapier Safety Colliders for Balcony Perimeter (mencegah karakter jatuh)
-  addColliderBox([-6.65, 5.85, 5.75], [0.15, 0.70, 1.95]); // West
-  addColliderBox([6.65, 5.85, 5.75], [0.15, 0.70, 1.95]);  // East
-  addColliderBox([0, 5.85, 7.7], [6.7, 0.70, 0.15]);       // Front
+  addColliderBox([-6.65, 5.85, 5.825], [0.15, 0.70, 2.05]); // West
+  addColliderBox([6.65, 5.85, 5.825], [0.15, 0.70, 2.05]);  // East
+  addColliderBox([0, 5.85, 7.88], [6.7, 0.70, 0.15]);        // Front
 
   // G. Luxury Balcony Greenery & Ornamental Potted Topiaries ("Better visual di depan")
   for (const tx of [-5.8, 5.8]) {
@@ -746,6 +823,40 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   roofBatch.addBox([0, 11.1, 3.85], [11.4, 1.6, 0.3], materials.wall);
   roofBatch.addBox([0, 11.95, 3.9], [11.8, 0.22, 0.4], materials.roofTrim);
 
+  // =========================================================================
+  // GRAND MONUMENTAL PORTICO GABLED ROOF & PEDIMENT (Over the 4 Columns, z: [3.8, 7.85])
+  // Crowns the monumental columns with a neoclassical triangular pediment & roof
+  // =========================================================================
+
+  // Sloping portico gabled roof pitches matching central atrium ridge line
+  // West slope
+  roofBatch.addBox([-3.2, 11.80, 5.825], [7.1, 0.40, 4.3], materials.roof, { rotation: [0, 0, 0.22] });
+  roofBatch.addBox([-3.2, 11.58, 5.825], [6.9, 0.16, 4.15], materials.woodWarm, { rotation: [0, 0, 0.22] });
+  // East slope
+  roofBatch.addBox([3.2, 11.80, 5.825], [7.1, 0.40, 4.3], materials.roof, { rotation: [0, 0, -0.22] });
+  roofBatch.addBox([3.2, 11.58, 5.825], [6.9, 0.16, 4.15], materials.woodWarm, { rotation: [0, 0, -0.22] });
+
+  // Ridge cap bridging portico roof seamlessly back into central atrium roof
+  roofBatch.addBox([0, 12.60, 5.825], [1.3, 0.34, 4.4], materials.roofTrim);
+
+  // Front Triangular Portico Tympanum (Dinding Segitiga Pediment Depan at z = 7.45)
+  roofBatch.addBox([0, 11.35, 7.45], [11.8, 0.70, 0.26], materials.wall);
+  roofBatch.addBox([0, 11.85, 7.45], [7.8, 0.50, 0.26], materials.wall);
+  roofBatch.addBox([0, 12.25, 7.45], [3.8, 0.40, 0.26], materials.wall);
+
+  // Raking cornice trim (listplang miring pediment) framing front triangle
+  roofBatch.addBox([-3.2, 11.90, 7.62], [7.1, 0.24, 0.38], materials.roofTrim, { rotation: [0, 0, 0.22] });
+  roofBatch.addBox([3.2, 11.90, 7.62], [7.1, 0.24, 0.38], materials.roofTrim, { rotation: [0, 0, -0.22] });
+
+  // Apex acroterion finial ornament crowning the pediment
+  roofBatch.addBox([0, 12.82, 7.68], [0.48, 0.36, 0.28], materials.brass);
+  roofBatch.addCylinder([0, 13.08, 7.68], 0.10, 0.18, 0.32, materials.brass, { segments: 12 });
+
+  // Classical decorative brass medallion crest in center of pediment tympanum
+  roofBatch.addCylinder([0, 11.55, 7.60], 0.65, 0.65, 0.08, materials.brass, { segments: 24, rotation: [Math.PI * 0.5, 0, 0] });
+  roofBatch.addCylinder([0, 11.55, 7.64], 0.48, 0.48, 0.06, materials.woodDark, { segments: 24, rotation: [Math.PI * 0.5, 0, 0] });
+  roofBatch.addSphere([0, 11.55, 7.68], [0.20, 0.20, 0.10], materials.brass);
+
   // East Wing Gable (Over Library Nook, x: [5.5, 16.0])
   roofBatch.addBox([10.75, 10.9, -2.2], [11.2, 0.38, 13.0], materials.roof, { rotation: [0, 0, -0.12] });
   roofBatch.addBox([10.75, 10.7, -2.2], [11.0, 0.18, 12.8], materials.woodWarm, { rotation: [0, 0, -0.12] });
@@ -783,9 +894,21 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
 
   // =========================================================================
   // 9. GRAND ENTRANCE SIGNBOARD ("VICKY'S WORLD")
-  // Mounted directly above the porch entrance columns
+  // Mounted proudly IN FRONT of the monumental columns (z = 7.88 - 7.99)
+  // Ensures columns (z = 7.4) remain cleanly behind the sign with zero clipping.
   // =========================================================================
-  addBox(building, [0, 5.85, 7.4], [7.2, 1.45, 0.18], materials.woodDark);
+
+  // Structural architectural mounting brackets connecting the columns (cx = -2.2, 2.2) to the sign
+  for (const cx of [-2.2, 2.2]) {
+    archBatch.addBox([cx, 5.85, 7.62], [0.42, 1.25, 0.38], materials.stone);
+    archBatch.addBox([cx, 5.85, 7.78], [0.46, 1.28, 0.06], materials.brass);
+  }
+
+  // Solid backing signboard structure in front of the columns
+  addBox(building, [0, 5.85, 7.88], [7.4, 1.45, 0.16], materials.woodDark);
+  archBatch.addBox([0, 5.85, 7.96], [7.44, 1.49, 0.04], materials.brass);
+  archBatch.addBox([0, 5.10, 7.88], [7.5, 0.08, 0.22], materials.trim);
+
   const welcomeCanvas = document.createElement('canvas');
   welcomeCanvas.width = 1024;
   welcomeCanvas.height = 256;
@@ -807,10 +930,10 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   const signTex = new THREE.CanvasTexture(welcomeCanvas);
   signTex.colorSpace = THREE.SRGBColorSpace;
   const signMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(6.8, 1.35),
+    new THREE.PlaneGeometry(7.0, 1.35),
     new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.4, metalness: 0.05 })
   );
-  signMesh.position.set(0, 5.85, 7.51);
+  signMesh.position.set(0, 5.85, 7.99);
   building.add(signMesh);
 
   // Warm Brass Wall Sconces along cutaway pilasters
