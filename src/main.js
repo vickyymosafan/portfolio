@@ -26,6 +26,18 @@ import { BENCH } from './seatLayout.js';
 import './style.css';
 
 const $ = (id) => document.getElementById(id);
+
+/**
+ * Optimizes INP by yielding to the main thread during heavy initialization tasks.
+ * Uses scheduler.yield() when supported, with setTimeout(0) fallback.
+ */
+export const yieldToMain = () => {
+  if (typeof window !== 'undefined' && 'scheduler' in window && typeof window.scheduler?.yield === 'function') {
+    return window.scheduler.yield();
+  }
+  return new Promise((resolve) => setTimeout(resolve, 0));
+};
+
 const sceneHost = $('scene');
 const ui = {
   welcome: $('welcome'),
@@ -184,7 +196,7 @@ function createRenderer() {
   return renderer;
 }
 
-function createScene() {
+async function createScene() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xbfe0d5);
   scene.fog = new THREE.Fog(0xbfe0d5, 95, 275);
@@ -263,14 +275,20 @@ function createScene() {
   // Garden paths, stepping stones, fences
   createGardenPath(scene);
   createGardenFence(scene);
+  await yieldToMain();
 
   // Phase 3 & 4: Exterior Estate Zones (Pool Deck, Driveway & Roundabout, Zen Garden, Security Area, Farm & Rice Fields)
   createPoolArea(scene, world, RAPIER, staticBodies);
   createDriveway(scene, world, RAPIER, staticBodies);
+  await yieldToMain();
+
   createZenGarden(scene, world, RAPIER, staticBodies);
   securityZone = createSecurityArea(scene, world, RAPIER, staticBodies);
+  await yieldToMain();
+
   farmZone = createFarmArea(scene, world, RAPIER, staticBodies);
   riceZone = createRiceFields(scene, world, RAPIER, staticBodies);
+  await yieldToMain();
 
   for (const [bx, bz, brot] of [[-9.2, 9.8, 0.35], [9.2, 9.8, -0.35]]) {
     createGardenBench(scene, bx, 0, bz, brot);
@@ -355,20 +373,24 @@ function createScene() {
     world.createCollider(RAPIER.ColliderDesc.cylinder(0.55 * bs, 0.70 * bs), bushBody);
     staticBodies.push(bushBody);
   }
+  await yieldToMain();
 
   // 2. Architecture & Interactive Doors
   const arch = createArchitecture(scene, world, RAPIER, staticBodies, cameraBlockers);
   roofGroup = arch.roofGroup;
   doorControls = createInteractiveDoors(scene, world, RAPIER, doorColliders, interactionPoints);
+  await yieldToMain();
 
   // 3. Room Interiors & Furnishings
   createRoomInteriors(scene, interactionPoints, handleRoomInteraction, world, RAPIER, staticBodies);
+  await yieldToMain();
 
   // 4. Character
   characterRig = createCharacter(scene);
 
   // 5. Decorative Backdrop
   addDecorativeBackdrop(scene);
+  await yieldToMain();
 
   // Expose statistics for testing & harness
   window.__cv = {
@@ -945,45 +967,67 @@ function toggleOverviewMode(force) {
   }
 }
 
+const lastPromptState = {
+  visible: false,
+  key: '',
+  label: '',
+  touch: 'Interact',
+};
+
+function setPromptUI(visible, key = '', label = '', touch = 'Interact') {
+  if (lastPromptState.visible !== visible) {
+    ui.prompt.classList.toggle('is-visible', visible);
+    lastPromptState.visible = visible;
+  }
+  if (visible) {
+    const promptKey = $('interact-key');
+    if (promptKey && lastPromptState.key !== key) {
+      promptKey.textContent = key;
+      lastPromptState.key = key;
+    }
+    if (lastPromptState.label !== label) {
+      ui.promptLabel.textContent = label;
+      lastPromptState.label = label;
+    }
+    if (lastPromptState.touch !== touch) {
+      const touchBtn = $('touch-interact');
+      if (touchBtn) touchBtn.textContent = touch;
+      lastPromptState.touch = touch;
+    }
+  } else if (lastPromptState.touch !== 'Interact') {
+    const touchBtn = $('touch-interact');
+    if (touchBtn) touchBtn.textContent = 'Interact';
+    lastPromptState.touch = 'Interact';
+  }
+}
+
 function findInteraction() {
   if (cinematicDirector && cinematicDirector.isActive()) {
-    ui.prompt.classList.remove('is-visible');
+    setPromptUI(false);
     return;
   }
 
-  const promptKey = $('interact-key');
-
   // 1. If currently interacting, display active interaction lifecycle status
   if (worldInteractions && worldInteractions.isActive()) {
-    ui.prompt.classList.add('is-visible');
-
     if (worldInteractions.mode === InteractionMode.SITTING) {
-      if (promptKey) promptKey.textContent = 'C';
       if (worldInteractions.lifecycleState === InteractionState.APPROACHING) {
-        ui.promptLabel.textContent = 'Sitting down...';
-        $('touch-interact').textContent = '...';
+        setPromptUI(true, 'C', 'Sitting down...', '...');
       } else if (worldInteractions.lifecycleState === InteractionState.RESTORING) {
-        ui.promptLabel.textContent = 'Standing up...';
-        $('touch-interact').textContent = '...';
+        setPromptUI(true, 'C', 'Standing up...', '...');
       } else {
-        ui.promptLabel.textContent = 'Stand up';
-        $('touch-interact').textContent = 'Stand';
+        setPromptUI(true, 'C', 'Stand up', 'Stand');
       }
       return;
     }
 
     if (worldInteractions.mode === InteractionMode.DOOR) {
-      if (promptKey) promptKey.textContent = 'E';
       const doorState = doorControls?.getState?.();
-      ui.promptLabel.textContent = doorState === 'closing' ? 'Closing the garden door...' : 'Opening the garden door...';
-      $('touch-interact').textContent = '...';
+      setPromptUI(true, 'E', doorState === 'closing' ? 'Closing the garden door...' : 'Opening the garden door...', '...');
       return;
     }
 
     if (worldInteractions.mode === InteractionMode.INSPECTING) {
-      if (promptKey) promptKey.textContent = 'F';
-      ui.promptLabel.textContent = 'Resume walking';
-      $('touch-interact').textContent = 'Resume';
+      setPromptUI(true, 'F', 'Resume walking', 'Resume');
       return;
     }
   }
@@ -1076,14 +1120,10 @@ function findInteraction() {
 
   const canShowPrompt = Boolean(started && !panelOpen && !settingsOpen && !tourActive && (!cinematicDirector || !cinematicDirector.isActive()));
 
-  if (chosen) {
-    ui.prompt.classList.toggle('is-visible', canShowPrompt);
-    if (promptKey) promptKey.textContent = chosen.key;
-    ui.promptLabel.textContent = chosen.label;
-    $('touch-interact').textContent = chosen.touch;
+  if (chosen && canShowPrompt) {
+    setPromptUI(true, chosen.key, chosen.label, chosen.touch);
   } else {
-    ui.prompt.classList.remove('is-visible');
-    $('touch-interact').textContent = 'Interact';
+    setPromptUI(false);
   }
 }
 
@@ -1751,7 +1791,10 @@ function updateCamera(dt, timestamp) {
   camera.lookAt(lookPoint);
 }
 
-function updateRoomFromPosition() {
+let lastRoomCheck = 0;
+function updateRoomFromPosition(timestamp = 0) {
+  if (timestamp && timestamp - lastRoomCheck < 120) return;
+  lastRoomCheck = timestamp || performance.now();
   let nearest = portfolio.rooms[0];
   let nearestDistance = Infinity;
   for (const room of portfolio.rooms) {
@@ -1874,8 +1917,11 @@ function bindEvents() {
   }
 
   window.addEventListener('keydown', (event) => {
+    if (!window.__SCENE_READY__) return;
     if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) {
       event.preventDefault();
+      // INP optimization: ignore repeated keydown events for locomotion to avoid main-thread event queue pileup
+      if (event.repeat) return;
     }
     if (event.code === 'Escape') {
       if (cinematicDirector && cinematicDirector.isActive()) {
@@ -2097,7 +2143,7 @@ function animate(timestamp) {
 
   updateCharacterRig(characterRig, dt, elapsed, moveAmount, grounded);
   if (doorControls?.update) doorControls.update(dt);
-  updateRoomFromPosition();
+  updateRoomFromPosition(timestamp);
   findInteraction();
   if (questSystem) questSystem.update(dt, elapsed, characterRig ? characterRig.character.position : null);
   if (securityZone?.update) securityZone.update(dt);
@@ -2120,17 +2166,21 @@ function animate(timestamp) {
 }
 
 async function init() {
-  bindEvents();
   try {
     createRenderer();
+    await yieldToMain();
+
     RAPIER = (await import('@dimforge/rapier3d-compat')).default;
     await RAPIER.init();
+    await yieldToMain();
+
     world = new RAPIER.World({ x: 0, y: -13.5, z: 0 });
     world.timestep = 1 / 60;
     world.numSolverIterations = 4;
 
-    const initialScene = createScene();
+    const initialScene = await createScene();
     window.portfolioScene = initialScene;
+    await yieldToMain();
 
     playerBody = world.createRigidBody(
       RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, 1.12, 16.8)
@@ -2252,10 +2302,15 @@ async function init() {
     window.__dispatchInteraction = dispatchInteraction;
     window.__interactionPoints = interactionPoints;
     window.__findInteraction = findInteraction;
-    window.__SCENE_READY__ = true;
+    // Pre-warm initial WebGL shader compilation and first frame presentation
+    renderer.render(scene, camera);
+    await yieldToMain();
 
+    window.__SCENE_READY__ = true;
     document.documentElement.classList.add('webgl-ready');
     $('loading-screen').classList.add('is-hidden');
+
+    bindEvents();
     renderer.setAnimationLoop(animate);
     window.addEventListener('beforeunload', dispose, { once: true });
   } catch (error) {
