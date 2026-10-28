@@ -23,6 +23,9 @@ import { CinematicDirector, CinematicState } from './cinematic.js';
 import { QuestSystem } from './quest.js';
 import { WorldInteractionManager, InteractionMode, InteractionState } from './worldInteractions.js';
 import { BENCH } from './seatLayout.js';
+import { InputManager } from './systems/inputManager.js';
+import { CameraController } from './systems/cameraController.js';
+import { UIManager } from './ui/uiManager.js';
 import './style.css';
 
 const $ = (id) => document.getElementById(id);
@@ -39,6 +42,7 @@ export const yieldToMain = () => {
 };
 
 const sceneHost = $('scene');
+const uiManager = new UIManager();
 const ui = {
   welcome: $('welcome'),
   loading: $('loading-screen'),
@@ -88,6 +92,7 @@ let riceZone;
 const doorColliders = [];
 const interactionPoints = [];
 const cameraBlockers = [];
+let cameraController = null;
 const staticBodies = [];
 
 const WORLD_MARKERS = [
@@ -156,7 +161,92 @@ let physY = 1.12;
 let physZ = 16.8;
 let lastRoomVisited = '';
 
-const keys = new Set();
+const inputManager = new InputManager({
+  onEscape: () => {
+    if (cinematicDirector && cinematicDirector.isActive()) {
+      cinematicDirector.exitScene();
+      return;
+    }
+    if (worldInteractions && worldInteractions.cancelAny()) {
+      findInteraction();
+      return;
+    }
+    if (overviewMode) {
+      toggleOverviewMode(false);
+      return;
+    }
+    if (!renderer) {
+      if (!started) $('loading-screen').classList.add('is-hidden');
+      return;
+    }
+    if (panelOpen) closeDetails();
+    else if (settingsOpen) closeSettings();
+    else if (tourActive) endTour();
+    else if (!started) return;
+    else setPaused(!paused);
+  },
+  onToggleMap: () => {
+    if (!panelOpen && !settingsOpen) {
+      toggleOverviewMode();
+    }
+  },
+  onSit: () => {
+    if (!renderer || !started) return;
+    dispatchInteraction('KeyC');
+  },
+  onInteract: () => {
+    if (!renderer) { startExperience(); return; }
+    if (!started) startExperience();
+    else if (cinematicDirector && cinematicDirector.isActive()) {
+      return;
+    } else if (tourActive) {
+      const stop = tourStops[tourStopIndex];
+      if (stop) startCinematic(stop.id);
+    } else {
+      dispatchInteraction('KeyE');
+    }
+  },
+  onInspect: () => {
+    if (!renderer || !started) { startExperience(); return; }
+    if (cinematicDirector && cinematicDirector.isActive()) return;
+    if (dispatchInteraction('KeyF')) return;
+    if (!worldInteractions || worldInteractions.mode === InteractionMode.NONE) beginTour();
+  },
+  onJump: () => {
+    if (tourActive && tourWaitingAtStop) {
+      advanceTourStop();
+      return true;
+    }
+    return false;
+  },
+  onCarouselNext: () => {
+    if (cinematicDirector && cinematicDirector.isActive() && cinematicDirector.activeSection === 'projects') {
+      const nextBtn = document.querySelector('.project-carousel-nav .carousel-nav-btn:last-child');
+      if (nextBtn) {
+        nextBtn.click();
+        return true;
+      }
+    }
+    return false;
+  },
+  onCarouselPrev: () => {
+    if (cinematicDirector && cinematicDirector.isActive() && cinematicDirector.activeSection === 'projects') {
+      const prevBtn = document.querySelector('.project-carousel-nav .carousel-nav-btn:first-child');
+      if (prevBtn) {
+        prevBtn.click();
+        return true;
+      }
+    }
+    return false;
+  },
+  isSuspended: () => {
+    return panelOpen || settingsOpen || tourActive ||
+      (cinematicDirector && cinematicDirector.isInputLocked()) ||
+      (worldInteractions && worldInteractions.isActive());
+  }
+});
+const keys = inputManager.keys;
+const touch = inputManager.touch;
 const raycaster = new THREE.Raycaster();
 const cameraOrigin = new THREE.Vector3();
 const cameraDesired = new THREE.Vector3();
@@ -166,7 +256,6 @@ const lookPoint = new THREE.Vector3();
 const physicsDisplacement = { x: 0, y: 0, z: 0 };
 const nextPhysicsPosition = { x: 0, y: 0, z: 0 };
 const rayHits = [];
-const touch = { x: 0, y: 0, active: false, pointer: null };
 
 const qualityPresets = {
   high: { pixelRatio: 1.5, shadows: true, shadowSize: 1536 },
@@ -193,6 +282,7 @@ function createRenderer() {
 
   const initialAspect = window.innerWidth / window.innerHeight;
   camera = new THREE.PerspectiveCamera(initialAspect < 1.0 ? 64 : 48, initialAspect, 0.1, 350);
+  cameraController = new CameraController(camera, { cameraBlockers, yaw, pitch });
   return renderer;
 }
 
@@ -378,6 +468,7 @@ async function createScene() {
   // 2. Architecture & Interactive Doors
   const arch = createArchitecture(scene, world, RAPIER, staticBodies, cameraBlockers);
   roofGroup = arch.roofGroup;
+  if (cameraController) cameraController.setRoofGroup(roofGroup);
   doorControls = createInteractiveDoors(scene, world, RAPIER, doorColliders, interactionPoints);
   await yieldToMain();
 
@@ -718,14 +809,7 @@ function closeSettings() {
 }
 
 function updateRoomLabel(room) {
-  ui.roomName.textContent = room.label;
-  ui.roomCount.textContent = room.count;
-  for (const button of document.querySelectorAll('.room-link')) {
-    const isActive = button.dataset.room === room.id;
-    button.classList.toggle('is-active', isActive);
-    if (isActive) button.setAttribute('aria-current', 'location');
-    else button.removeAttribute('aria-current');
-  }
+  uiManager.updateRoom(room);
 }
 
 function handleRoomInteraction(id) {
@@ -967,38 +1051,8 @@ function toggleOverviewMode(force) {
   }
 }
 
-const lastPromptState = {
-  visible: false,
-  key: '',
-  label: '',
-  touch: 'Interact',
-};
-
 function setPromptUI(visible, key = '', label = '', touch = 'Interact') {
-  if (lastPromptState.visible !== visible) {
-    ui.prompt.classList.toggle('is-visible', visible);
-    lastPromptState.visible = visible;
-  }
-  if (visible) {
-    const promptKey = $('interact-key');
-    if (promptKey && lastPromptState.key !== key) {
-      promptKey.textContent = key;
-      lastPromptState.key = key;
-    }
-    if (lastPromptState.label !== label) {
-      ui.promptLabel.textContent = label;
-      lastPromptState.label = label;
-    }
-    if (lastPromptState.touch !== touch) {
-      const touchBtn = $('touch-interact');
-      if (touchBtn) touchBtn.textContent = touch;
-      lastPromptState.touch = touch;
-    }
-  } else if (lastPromptState.touch !== 'Interact') {
-    const touchBtn = $('touch-interact');
-    if (touchBtn) touchBtn.textContent = 'Interact';
-    lastPromptState.touch = 'Interact';
-  }
+  uiManager.setPrompt(visible, key, label, touch);
 }
 
 function findInteraction() {
@@ -1677,11 +1731,6 @@ function updatePhysics(dt) {
 }
 
 function updateCamera(dt, timestamp) {
-  const inHouse = physZ <= 3.8 && physZ >= -8.0 && physX >= -16.5 && physX <= 26.0;
-  if (roofGroup) {
-    roofGroup.visible = overviewMode ? true : !inHouse;
-  }
-
   if (cinematicDirector && cinematicDirector.isActive()) {
     cinematicDirector.update(dt);
     return;
@@ -1692,103 +1741,32 @@ function updateCamera(dt, timestamp) {
     return;
   }
 
-  if (teleportCameraOverride) {
-    camera.position.set(
-      teleportCameraOverride.cam[0],
-      teleportCameraOverride.cam[1],
-      teleportCameraOverride.cam[2]
+  if (cameraController) {
+    cameraController.yaw = yaw;
+    cameraController.pitch = pitch;
+    cameraController.userZoom = userZoom;
+    cameraController.overviewMode = overviewMode;
+    cameraController.teleportOverride = teleportCameraOverride;
+
+    cameraController.update(
+      dt,
+      timestamp,
+      { x: physX, y: physY, z: physZ },
+      {
+        panelOpen,
+        settingsOpen,
+        tourActive,
+        cinematicActive: false,
+        interactionActive: false,
+      },
+      keys
     );
-    camera.lookAt(
-      teleportCameraOverride.target[0],
-      teleportCameraOverride.target[1],
-      teleportCameraOverride.target[2]
-    );
+
+    yaw = cameraController.yaw;
+    pitch = cameraController.pitch;
+    cameraDistance = cameraController.cameraDistance;
     return;
   }
-
-  if (overviewMode) {
-    if (roofGroup) roofGroup.visible = true;
-    camera.position.x = THREE.MathUtils.damp(camera.position.x, overviewCamPos.x, 5.0, dt);
-    camera.position.y = THREE.MathUtils.damp(camera.position.y, overviewCamPos.y, 5.0, dt);
-    camera.position.z = THREE.MathUtils.damp(camera.position.z, overviewCamPos.z, 5.0, dt);
-    lookPoint.x = THREE.MathUtils.damp(lookPoint.x, overviewTarget.x, 6.0, dt);
-    lookPoint.y = THREE.MathUtils.damp(lookPoint.y, overviewTarget.y, 6.0, dt);
-    lookPoint.z = THREE.MathUtils.damp(lookPoint.z, overviewTarget.z, 6.0, dt);
-    camera.lookAt(lookPoint);
-    return;
-  }
-
-  // Camera goal distance & height with responsive mobile compensation
-  const isPortrait = camera.aspect < 1.0;
-  const baseDistance = inHouse ? (isPortrait ? 3.2 : 3.4) : (isPortrait ? 7.6 : 6.8);
-  cameraDistanceGoal = baseDistance * userZoom;
-
-  const targetY = physY + (isPortrait ? 1.35 : 1.25);
-  cameraTarget.set(physX, targetY, physZ);
-
-  // Flexible pitch range: allows looking up at chandeliers/ceilings and down at props/floors
-  const maxPitch = inHouse ? 0.82 : 0.92;
-  const minPitch = inHouse ? -0.38 : -0.52;
-  pitch = THREE.MathUtils.clamp(pitch, minPitch, maxPitch);
-
-  // Keyboard camera orbit shortcuts (Q, [ and ] to rotate, PageUp / PageDown for vertical tilt)
-  if (!panelOpen && !settingsOpen && !tourActive && (!cinematicDirector || !cinematicDirector.isActive()) && (!worldInteractions || !worldInteractions.isActive())) {
-    if (keys.has('KeyQ')) yaw += 2.4 * dt;
-    if (keys.has('BracketLeft')) yaw += 2.4 * dt;
-    if (keys.has('BracketRight')) yaw -= 2.4 * dt;
-    if (keys.has('PageUp')) pitch = THREE.MathUtils.clamp(pitch + 1.6 * dt, minPitch, maxPitch);
-    if (keys.has('PageDown')) pitch = THREE.MathUtils.clamp(pitch - 1.6 * dt, minPitch, maxPitch);
-  }
-
-  // Over-the-shoulder offset for depth and framing
-  const horizontal = cameraDistance * Math.cos(pitch);
-  const shoulderOffset = isPortrait ? 0 : 0.22;
-  const shoulderX = Math.cos(yaw) * shoulderOffset;
-  const shoulderZ = -Math.sin(yaw) * shoulderOffset;
-
-  cameraDesired.set(
-    physX + Math.sin(yaw) * horizontal + shoulderX,
-    physY + (inHouse ? 1.38 : 1.52) + Math.sin(pitch) * cameraDistance,
-    physZ + Math.cos(yaw) * horizontal + shoulderZ
-  );
-
-  // Ceiling height clamp: indoor camera height adapts between Ground Floor (max 3.8m) and Second Floor (max 10.2m)
-  if (inHouse) {
-    const isUpperFloor = physY > 3.0;
-    const minCamY = isUpperFloor ? 5.5 : 0.8;
-    const maxCamY = isUpperFloor ? 10.2 : 3.8;
-    cameraDesired.y = THREE.MathUtils.clamp(cameraDesired.y, minCamY, maxCamY);
-  }
-
-  const dx = cameraDesired.x - cameraTarget.x;
-  const dy = cameraDesired.y - cameraTarget.y;
-  const dz = cameraDesired.z - cameraTarget.z;
-  const desiredDistance = Math.hypot(dx, dy, dz);
-  dampVector.set(dx, dy, dz).normalize();
-
-  if (timestamp - lastCameraCollisionCheck > 32) {
-    lastCameraCollisionCheck = timestamp;
-    cameraOrigin.copy(cameraTarget);
-    raycaster.set(cameraTarget, dampVector);
-    raycaster.far = desiredDistance;
-    raycaster.intersectObjects(cameraBlockers, false, rayHits);
-    cameraSafeDistance = rayHits.length ? Math.max(1.8, rayHits[0].distance - 0.35) : desiredDistance;
-    rayHits.length = 0;
-  }
-
-  const effectiveDistance = Math.min(cameraSafeDistance, desiredDistance);
-  // Fast contraction if hitting a wall, smooth damping when unobstructed
-  const dampSpeed = cameraSafeDistance < cameraDistance ? 16.0 : 5.0;
-  cameraDistance = THREE.MathUtils.damp(cameraDistance, effectiveDistance, dampSpeed, dt);
-
-  cameraDesired.copy(cameraTarget).addScaledVector(dampVector, cameraDistance);
-  camera.position.x = THREE.MathUtils.damp(camera.position.x, cameraDesired.x, 9.0, dt);
-  camera.position.y = THREE.MathUtils.damp(camera.position.y, cameraDesired.y, 9.0, dt);
-  camera.position.z = THREE.MathUtils.damp(camera.position.z, cameraDesired.z, 9.0, dt);
-
-  lookPoint.copy(cameraTarget);
-  lookPoint.y += 0.22;
-  camera.lookAt(lookPoint);
 }
 
 let lastRoomCheck = 0;
@@ -1842,6 +1820,7 @@ let eventsBound = false;
 function bindEvents() {
   if (eventsBound) return;
   eventsBound = true;
+  uiManager.init();
 
   $('enter-button')?.addEventListener('click', startExperience);
   $('welcome-close')?.addEventListener('click', startExperience);
@@ -1916,100 +1895,8 @@ function bindEvents() {
     });
   }
 
-  window.addEventListener('keydown', (event) => {
-    if (!window.__SCENE_READY__) return;
-    if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) {
-      event.preventDefault();
-      // INP optimization: ignore repeated keydown events for locomotion to avoid main-thread event queue pileup
-      if (event.repeat) return;
-    }
-    if (event.code === 'Escape') {
-      if (cinematicDirector && cinematicDirector.isActive()) {
-        cinematicDirector.exitScene();
-        return;
-      }
-      if (worldInteractions && worldInteractions.cancelAny()) {
-        findInteraction();
-        return;
-      }
-      if (overviewMode) {
-        toggleOverviewMode(false);
-        return;
-      }
-      if (!renderer) {
-        if (!started) $('loading-screen').classList.add('is-hidden');
-        return;
-      }
-      if (panelOpen) closeDetails();
-      else if (settingsOpen) closeSettings();
-      else if (tourActive) endTour();
-      else if (!started) return;
-      else setPaused(!paused);
-      return;
-    }
-    if (event.code === 'KeyM' && !event.repeat && !panelOpen && !settingsOpen) {
-      toggleOverviewMode();
-      return;
-    }
-    if (event.code === 'KeyC' && !event.repeat) {
-      if (!renderer || !started) return;
-      dispatchInteraction('KeyC');
-      return;
-    }
-    if (event.code === 'KeyE' && !event.repeat) {
-      if (!renderer) { startExperience(); return; }
-      if (!started) startExperience();
-      else if (cinematicDirector && cinematicDirector.isActive()) {
-        return;
-      } else if (tourActive) {
-        const stop = tourStops[tourStopIndex];
-        if (stop) startCinematic(stop.id);
-      } else {
-        dispatchInteraction('KeyE');
-      }
-      return;
-    }
-    if (cinematicDirector && cinematicDirector.isActive() && cinematicDirector.activeSection === 'projects') {
-      if (event.code === 'ArrowRight' && !event.repeat) {
-        const nextBtn = document.querySelector('.project-carousel-nav .carousel-nav-btn:last-child');
-        if (nextBtn) nextBtn.click();
-        return;
-      }
-      if (event.code === 'ArrowLeft' && !event.repeat) {
-        const prevBtn = document.querySelector('.project-carousel-nav .carousel-nav-btn:first-child');
-        if (prevBtn) prevBtn.click();
-        return;
-      }
-    }
-    if (event.code === 'KeyF' && !event.repeat) {
-      if (!renderer) { startExperience(); return; }
-      if (!started) { startExperience(); return; }
-      if (cinematicDirector && cinematicDirector.isActive()) return;
-      if (dispatchInteraction('KeyF')) return;
-      // F keeps its original fallback (start the tour) only when nothing else is active
-      if (!worldInteractions || worldInteractions.mode === InteractionMode.NONE) beginTour();
-      return;
-    }
-    if (event.code === 'Space' && !event.repeat) {
-      if (tourActive && tourWaitingAtStop) {
-        advanceTourStop();
-        return;
-      }
-    }
-    if (event.code === 'Space' && event.repeat) return;
-    keys.add(event.code);
-  });
-
-  window.addEventListener('keyup', (event) => keys.delete(event.code));
-  window.addEventListener('blur', () => {
-    keys.clear();
-    pointerHeld = false;
-    touch.active = false;
-    touch.x = 0;
-    touch.y = 0;
-    $('joystick').style.setProperty('--joy-x', '0px');
-    $('joystick').style.setProperty('--joy-y', '0px');
-  });
+  inputManager.attachListeners();
+  inputManager.setReady(true);
   window.addEventListener('resize', onResize, { passive: true });
 
   if (renderer) {
@@ -2107,6 +1994,7 @@ function onResize() {
 }
 
 function dispose() {
+  inputManager.detachListeners();
   window.removeEventListener('resize', onResize);
   if (world) {
     if (characterController) world.removeCharacterController(characterController);
