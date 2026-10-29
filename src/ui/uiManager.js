@@ -96,8 +96,14 @@ export class UIManager {
     for (const button of this.roomLinks) {
       const isActive = button.dataset.room === room.id;
       button.classList.toggle('is-active', isActive);
-      if (isActive) button.setAttribute('aria-current', 'location');
-      else button.removeAttribute('aria-current');
+      if (isActive) {
+        button.setAttribute('aria-current', 'location');
+        if (typeof window !== 'undefined' && (window.innerWidth <= 900 || window.innerHeight <= 500) && typeof button.scrollIntoView === 'function') {
+          button.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      } else {
+        button.removeAttribute('aria-current');
+      }
     }
   }
 

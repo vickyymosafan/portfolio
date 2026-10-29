@@ -153,7 +153,7 @@ let cameraDistance = 7.2;
 let cameraDistanceGoal = 7.2;
 let cameraSafeDistance = 7.2;
 let panelReturnFocus = null;
-let mobile = matchMedia('(pointer: coarse)').matches;
+let mobile = matchMedia('(pointer: coarse)').matches || window.innerWidth <= 860;
 let elapsed = 0;
 let accumulator = 0;
 let physX = 0;
@@ -295,7 +295,7 @@ const qualityPresets = {
     fogFar: 185,
   },
   mobile: {
-    pixelRatio: 0.7,
+    pixelRatio: 0.9,
     shadows: false,
     shadowSize: 0,
     shadowType: THREE.BasicShadowMap,
@@ -315,7 +315,7 @@ function createRenderer() {
   if (!('WebGL2RenderingContext' in window)) {
     throw new Error('This browser does not support WebGL2.');
   }
-  renderer = new THREE.WebGLRenderer({ antialias: !mobile, powerPreference: 'high-performance' });
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.08;
@@ -2141,6 +2141,8 @@ function updateJoystick(event) {
 }
 
 function onResize() {
+  mobile = matchMedia('(pointer: coarse)').matches || window.innerWidth <= 860;
+  if ($('controls-note')) $('controls-note').hidden = mobile;
   if (!renderer || !camera || !scene) return;
   const aspect = window.innerWidth / window.innerHeight;
   camera.aspect = aspect;

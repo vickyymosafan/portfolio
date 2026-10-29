@@ -231,3 +231,475 @@
 .cinematic-next-btn{padding:8px 13px;border:1px solid rgba(36,72,61,.2);border-radius:12px;background:#f4efe4;color:#1d4033;font-size:12px;font-weight:800;cursor:pointer;transition:all .15s ease}
 .cinematic-next-btn:hover{background:#db553c;border-color:#db553c;color:#ffffff;transform:translateY(-1px)}
 
+/* =========================================================================
+   RESPONSIVE & MOBILE-FIRST ERGONOMICS (Phone Portrait, Landscape & Tablet)
+   ========================================================================= */
+.quest-pill,.tour-button,.icon-button{white-space:nowrap;flex-shrink:0}
+.tour-btn-prefix{font-style:normal}
+.brand{min-width:0}
+.touch-controls{position:absolute;pointer-events:none}
+.joystick,.touch-action,.touch-jump{position:absolute;pointer-events:auto}
+.joystick{display:grid;place-items:center;border:1.5px solid rgba(36,72,61,.2);border-radius:50%;background:rgba(255,248,233,.68);box-shadow:0 5px 20px rgba(35,73,55,.12);touch-action:none}
+.joystick:before,.joystick:after{content:'';position:absolute;border-radius:50%;border:1px solid rgba(36,72,61,.12)}
+#joystick-knob{position:absolute;z-index:1;border:2px solid #fff9eb;border-radius:50%;background:#557e65;box-shadow:0 3px 7px rgba(28,61,43,.25);transform:translate(var(--joy-x,0px),var(--joy-y,0px));pointer-events:none}
+
+@media (max-width: 860px) {
+  /* 1. Topbar: Single crisp row with zero text wrapping */
+  .topbar {
+    padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 10px;
+    gap: 8px;
+  }
+  .brand {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 8px;
+    font-size: 13.5px;
+  }
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 11px;
+    font-size: 16px;
+  }
+  .brand > span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .brand small {
+    margin-top: 2px;
+    font-size: 8.5px;
+    letter-spacing: 0.04em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .quality-label {
+    display: none;
+  }
+  .top-actions {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .quest-pill {
+    height: 36px;
+    padding: 0 9px;
+    border-radius: 11px;
+    font-size: 11px;
+    gap: 4px;
+  }
+  .quest-icon {
+    font-size: 13px;
+  }
+  .icon-button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    border-radius: 11px;
+  }
+  .icon-button svg {
+    width: 17px;
+    height: 17px;
+  }
+  .tour-button {
+    height: 36px;
+    padding: 0 11px;
+    border-radius: 11px;
+    font-size: 11px;
+  }
+  .tour-button span {
+    margin-left: 4px;
+  }
+
+  /* 2. Location Pill (.world-label): Top-center below Topbar so bottom thumb zone is 100% clear */
+  .world-label {
+    top: calc(56px + env(safe-area-inset-top, 0px));
+    bottom: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 0;
+    max-width: calc(100vw - 104px);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    gap: 7px;
+    z-index: 3;
+  }
+  .label-rule {
+    min-width: 12px;
+  }
+  .pause-button {
+    top: calc(54px + env(safe-area-inset-top, 0px));
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+  }
+  .perf-pill {
+    display: none !important;
+  }
+  .controls-note {
+    display: none !important;
+  }
+
+  /* 3. Bottom 10-Section Room Dock (.room-nav): Smooth horizontal scroll, zero text overlap */
+  .room-nav {
+    left: 50%;
+    top: auto;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    width: calc(100vw - 20px);
+    max-width: 560px;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    padding: 6px 8px;
+    border-radius: 18px;
+    z-index: 5;
+  }
+  .room-link {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 60px;
+    min-height: 46px;
+    padding: 5px 10px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.1;
+    white-space: nowrap;
+    text-align: center;
+    scroll-snap-align: center;
+  }
+  .room-glyph {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+  }
+
+  /* 4. Ergonomic Touch Controls (.touch-controls): Clean separation above Room Dock */
+  .touch-controls {
+    position: absolute;
+    z-index: 4;
+    inset: auto 0 calc(76px + env(safe-area-inset-bottom, 0px)) 0;
+    height: 112px;
+    display: block;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .joystick {
+    left: 14px;
+    bottom: 2px;
+    width: 92px;
+    height: 92px;
+  }
+  .joystick:before {
+    inset: 15px;
+  }
+  .joystick:after {
+    inset: 33px;
+  }
+  #joystick-knob {
+    width: 34px;
+    height: 34px;
+  }
+  .touch-action {
+    right: 14px;
+    bottom: 4px;
+    min-width: 86px;
+    min-height: 46px;
+    padding: 0 16px;
+    border-radius: 14px;
+    font-size: 12.5px;
+  }
+  .touch-jump {
+    right: 22px;
+    bottom: 58px;
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    min-height: 46px;
+    font-size: 18px;
+  }
+
+  /* 5. Interaction Prompt & Toasts: Centered cleanly between/above controls */
+  .interaction-prompt {
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    max-width: calc(100vw - 236px);
+    padding: 7px 11px;
+    font-size: 11px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #prompt-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .inspect-toast {
+    bottom: calc(184px + env(safe-area-inset-bottom, 0px));
+    min-width: 0;
+    width: calc(100vw - 28px);
+    padding: 13px 15px;
+  }
+  .tour-toast {
+    top: calc(96px + env(safe-area-inset-top, 0px));
+    width: calc(100vw - 24px);
+    padding: 12px 14px 10px;
+  }
+
+  /* 6. Modals & Story Cards: Smooth bottom sheet above Room Dock, hiding background HUD clutter */
+  .cinematic-story-card,
+  .detail-panel,
+  .settings-panel {
+    left: 10px;
+    right: 10px;
+    top: auto;
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-width: none;
+    max-height: calc(100dvh - 138px);
+    padding: 18px 16px 15px;
+    border-radius: 20px;
+  }
+  #experience:has(.cinematic-story-card.is-visible, .detail-panel.is-visible, .settings-panel.is-visible) .touch-controls,
+  #experience:has(.cinematic-story-card.is-visible, .detail-panel.is-visible, .settings-panel.is-visible, .map-status-pill.is-visible) .world-label,
+  #experience:has(.cinematic-story-card.is-visible, .detail-panel.is-visible, .settings-panel.is-visible) .interaction-prompt,
+  #experience:has(.cinematic-story-card.is-visible, .detail-panel.is-visible, .settings-panel.is-visible) .pause-button {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* 7. World Map Markers & Status Pill on Mobile */
+  .map-status-pill {
+    top: calc(56px + env(safe-area-inset-top, 0px));
+    width: calc(100vw - 24px);
+    max-width: 420px;
+    padding: 6px 10px;
+    gap: 8px;
+  }
+  .world-marker {
+    padding: 4px 9px 4px 6px;
+    gap: 6px;
+    border-radius: 11px;
+  }
+  .marker-icon-box {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    font-size: 11px;
+  }
+  .marker-title {
+    font-size: 10.5px;
+  }
+  .marker-sub {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .tour-btn-prefix {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar {
+    padding-inline: 10px;
+    gap: 6px;
+  }
+  .brand {
+    font-size: 13px;
+    gap: 7px;
+  }
+  .brand-mark {
+    width: 31px;
+    height: 31px;
+    flex-basis: 31px;
+    font-size: 14px;
+    border-radius: 9px;
+  }
+  .brand small {
+    font-size: 8px;
+    letter-spacing: 0.03em;
+  }
+  .top-actions {
+    gap: 5px;
+  }
+  .quest-pill {
+    height: 34px;
+    padding: 0 8px;
+    font-size: 10.5px;
+  }
+  .icon-button {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    border-radius: 10px;
+  }
+  .tour-button {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 11px;
+    border-radius: 10px;
+  }
+
+  /* Responsive Architectural Domain Table: Stack rows cleanly on narrow phones */
+  .arch-domain-table thead {
+    display: none;
+  }
+  .arch-domain-table,
+  .arch-domain-table tbody,
+  .arch-domain-table tr,
+  .arch-domain-table td {
+    display: block;
+    width: 100%;
+  }
+  .arch-domain-table tr {
+    border-bottom: 1px solid #d0d7de;
+  }
+  .arch-domain-table tr:last-child {
+    border-bottom: 0;
+  }
+  .arch-domain-cell {
+    width: 100%;
+    padding: 8px 11px 5px !important;
+    background: #f6f8fa;
+    border-bottom: 1px solid #eaeef2 !important;
+  }
+  .arch-domain-table td + td {
+    border-left: 0;
+    padding: 8px 11px 10px !important;
+  }
+
+  .cinematic-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .cinematic-hint {
+    display: none;
+  }
+  .cinematic-footer-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .cinematic-next-btn,
+  .cinematic-done-btn {
+    flex: 1;
+    min-height: 42px;
+    text-align: center;
+  }
+}
+
+/* Mobile Landscape (e.g. 844x390) */
+@media (max-height: 500px) {
+  .topbar {
+    padding: 8px 14px;
+  }
+  .world-label {
+    top: 50px;
+    bottom: auto;
+    padding: 4px 10px;
+    font-size: 10px;
+  }
+  .room-nav {
+    left: 50%;
+    top: auto;
+    bottom: 8px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    width: auto;
+    max-width: calc(100vw - 250px);
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 5px 8px;
+    border-radius: 15px;
+  }
+  .room-link {
+    flex: 0 0 auto;
+    flex-direction: row;
+    min-width: auto;
+    min-height: 36px;
+    padding: 4px 10px;
+    gap: 6px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  .touch-controls {
+    position: absolute;
+    inset: auto 0 8px 0;
+    height: 96px;
+    display: block;
+    pointer-events: none;
+  }
+  .joystick {
+    position: absolute;
+    left: 14px;
+    bottom: 4px;
+    width: 84px;
+    height: 84px;
+  }
+  .touch-action {
+    position: absolute;
+    right: 14px;
+    bottom: 4px;
+    min-width: 82px;
+    min-height: 42px;
+    padding: 0 14px;
+    border-radius: 14px;
+    background: #db553c;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .touch-jump {
+    position: absolute;
+    right: 20px;
+    bottom: 50px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 50%;
+    background: #fff8e9;
+    color: var(--ink);
+    font-size: 18px;
+    font-weight: 800;
+  }
+  .cinematic-story-card,
+  .detail-panel,
+  .settings-panel {
+    top: 50px;
+    bottom: 56px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-height: calc(100dvh - 108px);
+    transform: none !important;
+    padding: 14px 18px;
+  }
+}
+
+
