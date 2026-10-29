@@ -18,10 +18,11 @@ function addFurnitureCollider(world, RAPIER, staticBodies, position, halfExtents
 }
 
 export function createRoomInteriors(building, interactionPoints, openDetailsCallback, world, RAPIER, staticBodies) {
-  // 8 Grand Themed Rooms across Ground Floor (y = 0) and Lantai 2 (y = 5.2)
-  // Matching Vicky's World Map:
-  // Lantai 1: Project Gallery, Living Room, Home Office, Garasi
-  // Lantai 2: Master Bedroom, Bathroom, Library Nook, Creative Studio
+  // 9 Bespoke Architectural Pavilions across Ground Floor (y = 0) and Lantai 2 (y = 5.2)
+  // Designed to embody the exact LinkedIn & GitHub portfolio sequence:
+  // 01 About Me -> 02 Work Experience -> 03 Education -> 04 Volunteering ->
+  // 05 Licenses & Certifications -> 06 Projects -> 07 Architectural Domain & Tooling ->
+  // 08 GitHub Contributions -> 09 Contact
   const roomSpecs = [
     // --- LANTAI 1 (GROUND FLOOR, y = 0.0) ---
     { id: 'about', x: 0.0, y: 0.0, z: -2.0, title: 'About Me', subtitle: '01 · M. VICKY MOSAFAN', accent: palette.coral, rugMat: materials.carpetPersian },
@@ -31,8 +32,8 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
     { id: 'contact', x: 0.0, y: 0.0, z: -11.8, title: 'Let’s Connect', subtitle: '09 · LINKEDIN & GITHUB', accent: palette.coral, rugMat: materials.terraceTiles },
 
     // --- LANTAI 2 (SECOND FLOOR, y = 5.2m) ---
-    { id: 'bedroom', x: -11.0, y: 5.2, z: -2.0, title: 'Education', subtitle: '03 · ACADEMIC HONORS', accent: palette.bluePastel, rugMat: materials.carpetBauhaus },
-    { id: 'bathroom', x: 0.0, y: 5.2, z: -2.0, title: 'Volunteering', subtitle: '04 · LEADERSHIP & COMMUNITY', accent: palette.mintSage, rugMat: materials.bathroomTile },
+    { id: 'bedroom', x: -11.0, y: 5.2, z: -2.0, title: 'Education', subtitle: '03 · ACADEMIC HONORS', accent: palette.bluePastel, rugMat: materials.carpetPersian },
+    { id: 'bathroom', x: 0.0, y: 5.2, z: -2.0, title: 'Volunteering', subtitle: '04 · LEADERSHIP & COMMUNITY', accent: palette.mintSage, rugMat: materials.carpetBauhaus },
     { id: 'experience', x: 10.75, y: 5.2, z: -2.0, title: 'Work Experience', subtitle: '02 · LINKEDIN CAREER', accent: palette.yellowSun, rugMat: materials.carpetPersian },
     { id: 'process', x: 21.0, y: 5.2, z: -2.0, title: 'GitHub Activity', subtitle: '08 · 1,039 CONTRIBUTIONS', accent: palette.mintSage, rugMat: materials.mint },
   ];
@@ -40,28 +41,26 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
   for (let i = 0; i < roomSpecs.length; i += 1) {
     const spec = roomSpecs[i];
 
-    // Custom area rug for non-garage/bathroom spaces
-    if (spec.id !== 'garage' && spec.id !== 'bathroom' && spec.id !== 'contact' && spec.id !== 'about') {
-      const rugW = 8.4;
-      const rugD = 6.4;
+    // Custom area rug for all indoor non-garage pavilions
+    if (spec.id !== 'garage' && spec.id !== 'contact' && spec.id !== 'about') {
+      const rugW = spec.id === 'bathroom' ? 7.6 : 8.4;
+      const rugD = spec.id === 'bathroom' ? 6.0 : 6.4;
       addBox(building, [spec.x, spec.y + 0.02, spec.z], [rugW, 0.016, rugD], spec.rugMat, { receive: false, shadow: false });
     } else if (spec.id === 'about') {
-      // Grand central designer area rug defining the About Me Pavilion space
-      addBox(building, [-1.4, spec.y + 0.02, 1.7], [6.2, 0.016, 4.4], spec.rugMat, { receive: false, shadow: false });
+      // Grand central designer area rug defining the About Me Rotunda space
+      addBox(building, [-1.4, spec.y + 0.02, 1.7], [6.4, 0.016, 4.6], spec.rugMat, { receive: false, shadow: false });
     }
 
-    // Presentation Display Board Mounted on back wall of room (leaving center clear)
-    if (spec.id !== 'garage' && spec.id !== 'bathroom' && spec.id !== 'bedroom') {
-      createDisplayBoard(building, spec, world, RAPIER, staticBodies);
-    }
+    // Presentation Display Board mounted in every pavilion (all 9 sections)
+    createDisplayBoard(building, spec, world, RAPIER, staticBodies);
 
-    // Room-specific furnishings with physics colliders
+    // Bespoke architectural interior & thematic furniture with physics colliders
     buildRoomFurniture(building, spec, world, RAPIER, staticBodies);
 
     // Interactive glowing floor beacon placed conveniently in front/center of each room
     const isAbout = spec.id === 'about';
     const beaconX = isAbout ? -1.4 : spec.x;
-    const beaconZ = spec.id === 'contact' ? -11.8 : (spec.id === 'bathroom' ? -5.5 : (isAbout ? 1.7 : -1.5));
+    const beaconZ = spec.id === 'contact' ? -11.8 : (spec.id === 'bathroom' ? -2.2 : (isAbout ? 1.7 : -1.5));
     createFloorBeacon(building, beaconX, spec.y, beaconZ, spec.accent);
 
     // Register interaction point covering the full room bay
@@ -70,7 +69,7 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
       id: spec.id,
       title: roomInfo ? roomInfo.title : spec.subtitle,
       position: new THREE.Vector3(beaconX, spec.y + 0.9, beaconZ),
-      radius: spec.id === 'bathroom' ? 4.8 : 6.8,
+      radius: spec.id === 'bathroom' ? 5.6 : 6.8,
       action: () => openDetailsCallback(spec.id),
       getLabel: () => `Explore ${roomInfo ? roomInfo.title : spec.subtitle}`,
     });
@@ -105,13 +104,14 @@ function createFloorBeacon(parent, x, y, z, colorHex) {
 function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
   const { x, y, id, title, subtitle, accent } = room;
 
-  // Mount seamlessly on a solid structural wall
-  // For 'about' (About Me Room), mount on the dedicated solid West feature wall at x = -5.35, z = 1.7
-  // facing East into the spacious About Me pavilion salon.
   const isAbout = id === 'about';
   const bx = isAbout ? -5.35 : x;
   const by = y;
-  const bz = id === 'contact' ? -15.2 : (isAbout ? 1.7 : (id === 'experience' ? -7.12 : -7.8));
+  let bz = -7.8;
+  if (id === 'contact') bz = -15.2;
+  else if (isAbout) bz = 1.7;
+  else if (id === 'experience' || id === 'bedroom') bz = -7.08;
+  else if (id === 'bathroom' || id === 'garage' || id === 'process') bz = -7.45;
   const rotY = isAbout ? Math.PI * 0.5 : 0;
 
   const display = new THREE.Group();
@@ -121,25 +121,23 @@ function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
 
   // Architectural fluted acoustic timber slats & brass frame behind "About Me" board
   if (isAbout) {
-    // Acoustic dark wood panel (width 4.0m, height 3.8m)
-    addBox(display, [0, 2.5, -0.02], [4.0, 3.8, 0.04], materials.woodDark);
-    // Fluted decorative wooden slats on flanking sides
-    for (let s = -1.9; s <= 1.9; s += 0.2) {
-      if (Math.abs(s) > 1.55) {
+    addBox(display, [0, 2.5, -0.02], [4.2, 3.9, 0.04], materials.woodDark);
+    for (let s = -1.95; s <= 1.95; s += 0.2) {
+      if (Math.abs(s) > 1.52) {
         addBox(display, [s, 2.5, 0.02], [0.08, 3.8, 0.04], materials.woodLight);
       }
     }
-    // Brushed brass framing perimeter
-    addBox(display, [0, 4.42, 0.01], [4.06, 0.06, 0.06], materials.brass);
-    addBox(display, [0, 0.58, 0.01], [4.06, 0.06, 0.06], materials.brass);
-    addBox(display, [-2.02, 2.5, 0.01], [0.06, 3.8, 0.06], materials.brass);
-    addBox(display, [2.02, 2.5, 0.01], [0.06, 3.8, 0.06], materials.brass);
+    addBox(display, [0, 4.46, 0.01], [4.26, 0.06, 0.06], materials.brass);
+    addBox(display, [0, 0.56, 0.01], [4.26, 0.06, 0.06], materials.brass);
+    addBox(display, [-2.12, 2.5, 0.01], [0.06, 3.9, 0.06], materials.brass);
+    addBox(display, [2.12, 2.5, 0.01], [0.06, 3.9, 0.06], materials.brass);
   }
 
-  // Wall mounted plaque frame
-  const boardW = isAbout ? 3.0 : 3.6;
-  const boardH = isAbout ? 1.8 : 2.0;
-  addBox(display, [0, 2.7, 0.08], [boardW, boardH, 0.1], materials.woodDark);
+  // Wall mounted plaque frame with brushed brass trim
+  const boardW = isAbout ? 3.0 : (id === 'bathroom' ? 3.2 : 3.5);
+  const boardH = isAbout ? 1.8 : 1.95;
+  addBox(display, [0, 2.7, 0.06], [boardW + 0.12, boardH + 0.12, 0.06], materials.brass);
+  addBox(display, [0, 2.7, 0.09], [boardW, boardH, 0.08], materials.woodDark);
 
   // Canvas sign texture
   const signTex = createSignTexture(title, subtitle, accent, 512, 340);
@@ -154,8 +152,8 @@ function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
 
   // Twin brass picture lamps over board
   for (const lx of isAbout ? [-0.65, 0.65] : [0]) {
-    addBox(display, [lx, 2.7 + boardH * 0.5 + 0.12, 0.25], [isAbout ? 0.9 : boardW * 0.55, 0.06, 0.16], materials.brass);
-    addSphere(display, [lx, 2.7 + boardH * 0.5 + 0.04, 0.25], [0.14, 0.05, 0.14], materials.glow, { shadow: false });
+    addBox(display, [lx, 2.7 + boardH * 0.5 + 0.14, 0.25], [isAbout ? 0.9 : boardW * 0.55, 0.06, 0.16], materials.brass);
+    addSphere(display, [lx, 2.7 + boardH * 0.5 + 0.05, 0.25], [0.14, 0.05, 0.14], materials.glow, { shadow: false });
   }
 }
 
@@ -164,228 +162,297 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
 
   if (id === 'about') {
     // =========================================================================
-    // 1. CHAPTER 01: ABOUT ME — EXECUTIVE BIOGRAPHICAL PAVILION & ATRIUM
-    // Dedicated architectural room with monumental feature wall, career milestone
-    // pedestals, interactive paradigm crystal, and airy luxury seating
+    // 01 · ABOUT ME — EXECUTIVE BIOGRAPHICAL ROTUNDA & IDENTITY PAVILION
+    // Monumental feature wall, Flanking Identity Columns, 4 Pillars of Engineering
+    // Craft, Central Rotunda Table with 3D Estate Scale Model (Maquette), and
+    // Executive Lounge Suite
     // =========================================================================
 
     // Multi-tier Sculptural Ring Chandelier centered in About Me Pavilion (y = 4.6)
     const chandelier = new THREE.Group();
     chandelier.position.set(x - 1.4, y + 4.6, 1.7);
     parent.add(chandelier);
-    addCylinder(chandelier, [0, 0, 0], 1.6, 1.6, 0.1, materials.brass, { segments: 24 });
-    addCylinder(chandelier, [0, -0.04, 0], 1.5, 1.5, 0.06, materials.glow, { segments: 24, shadow: false });
-    addCylinder(chandelier, [0, 0.35, 0], 0.9, 0.9, 0.08, materials.brass, { segments: 20 });
-    addCylinder(chandelier, [0, 0.31, 0], 0.82, 0.82, 0.05, materials.glow, { segments: 20, shadow: false });
+    addCylinder(chandelier, [0, 0, 0], 1.65, 1.65, 0.1, materials.brass, { segments: 24 });
+    addCylinder(chandelier, [0, -0.04, 0], 1.54, 1.54, 0.06, materials.glow, { segments: 24, shadow: false });
+    addCylinder(chandelier, [0, 0.35, 0], 0.95, 0.95, 0.08, materials.brass, { segments: 20 });
+    addCylinder(chandelier, [0, 0.31, 0], 0.86, 0.86, 0.05, materials.glow, { segments: 20, shadow: false });
     for (let c = 0; c < 3; c += 1) {
       const angle = (c / 3) * Math.PI * 2;
       addCylinder(chandelier, [Math.cos(angle) * 1.5, 0.45, Math.sin(angle) * 1.5], 0.015, 0.015, 0.9, materials.brass);
     }
 
-    // --- FEATURE WALL EXHIBITION CONSOLE (Below "About Me" Display Board at x = -5.15, z = 1.7) ---
-    // Floating Walnut Credenza with Polished Italian Marble Top
-    addBox(parent, [x - 5.15, y + 0.45, 1.7], [0.44, 0.52, 3.2], materials.woodDark);
-    addBox(parent, [x - 5.14, y + 0.72, 1.7], [0.46, 0.04, 3.25], materials.stone);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 5.15, y + 0.45, 1.7], [0.25, 0.45, 1.65]);
+    // Flanking Illuminated Biographical Columns on West Wall (z = -0.35 and z = 3.75)
+    for (const cz of [-0.35, 3.75]) {
+      addBox(parent, [x - 5.18, y + 2.25, cz], [0.36, 4.3, 0.46], materials.woodDark);
+      addBox(parent, [x - 4.98, y + 2.25, cz], [0.04, 3.9, 0.08], materials.glow, { shadow: false });
+      addBox(parent, [x - 5.12, y + 1.0, cz], [0.38, 0.05, 0.48], materials.brass);
+      addSphere(parent, [x - 5.05, y + 1.25, cz], [0.11, 0.11, 0.11], materials.gold);
+    }
 
-    // Exhibition items on the console:
-    // 1. Executive Bio Plaque
-    addBox(parent, [x - 5.08, y + 0.88, 1.7], [0.06, 0.28, 0.85], materials.woodLight);
-    addBox(parent, [x - 5.04, y + 0.88, 1.7], [0.02, 0.24, 0.80], materials.brass);
-    // 2. Innovation Milestone Award in Gold
-    addCylinder(parent, [x - 5.08, y + 0.82, 2.5], 0.08, 0.10, 0.16, materials.brass, { segments: 14 });
-    addSphere(parent, [x - 5.08, y + 0.96, 2.5], [0.07, 0.07, 0.07], materials.gold);
-    // 3. Minimalist Ceramic Vase with Flora
-    addCylinder(parent, [x - 5.08, y + 0.84, 0.9], 0.09, 0.06, 0.20, materials.ceramicTeal, { segments: 14 });
-    addSphere(parent, [x - 5.08, y + 1.02, 0.9], [0.12, 0.16, 0.12], materials.foliageBright);
+    // --- FEATURE WALL EXHIBITION CONSOLE (Below "About Me" Display Board at x = -5.12, z = 1.7) ---
+    addBox(parent, [x - 5.12, y + 0.46, 1.7], [0.48, 0.54, 3.5], materials.woodDark);
+    addBox(parent, [x - 5.10, y + 0.75, 1.7], [0.52, 0.05, 3.56], materials.stone);
+    addBox(parent, [x - 4.86, y + 0.46, 1.7], [0.02, 0.48, 3.4], materials.brass);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 5.12, y + 0.45, 1.7], [0.28, 0.45, 1.78]);
 
-    // --- 4 ARCHITECTURAL PILLARS OF VICKY'S CRAFT ---
-    // 4 Sleek Low Gallery Plinths framing the About Me pavilion space (x = -3.2, z = [2.9, 2.1, 1.3, 0.5])
+    // Signature Biographical Artifacts on Credenza:
+    // 1. Center: Golden Developer Architecture Crest (<VM/>) on Stepped Marble Plinth
+    addBox(parent, [x - 5.05, y + 0.84, 1.7], [0.24, 0.12, 0.58], materials.stoneWarm);
+    addBox(parent, [x - 5.05, y + 0.96, 1.7], [0.08, 0.24, 0.46], materials.gold);
+    addSphere(parent, [x - 5.05, y + 1.16, 1.7], [0.09, 0.09, 0.09], materials.glow, { shadow: false });
+    // 2. North: Innovation Milestone Star Trophy in Gold
+    addCylinder(parent, [x - 5.06, y + 0.84, 2.65], 0.10, 0.12, 0.18, materials.brass, { segments: 14 });
+    addSphere(parent, [x - 5.06, y + 1.02, 2.65], [0.09, 0.14, 0.09], materials.gold);
+    // 3. South: Sculptural Teal Ceramic Bonsai Planter
+    addCylinder(parent, [x - 5.06, y + 0.85, 0.75], 0.12, 0.09, 0.20, materials.ceramicTeal, { segments: 14 });
+    addSphere(parent, [x - 5.06, y + 1.04, 0.75], [0.16, 0.12, 0.16], materials.foliageBright);
+
+    // --- 4 ARCHITECTURAL PILLARS OF VICKY'S CRAFT (SOLID, Backend, Frontend/3D, AI SDLC) ---
     const pillars = [
-      { z: 2.9, mat: materials.blue },
-      { z: 2.1, mat: materials.mint },
-      { z: 1.3, mat: materials.coral },
-      { z: 0.5, mat: materials.gold },
+      { z: 3.05, mat: materials.blue, cap: materials.brass },
+      { z: 2.15, mat: materials.emerald, cap: materials.gold },
+      { z: 1.25, mat: materials.coral, cap: materials.brass },
+      { z: 0.35, mat: materials.gold, cap: materials.gold },
     ];
     for (const p of pillars) {
-      // Fluted pedestal base
-      addBox(parent, [x - 3.2, y + 0.38, p.z], [0.38, 0.76, 0.38], materials.woodWarm);
-      addBox(parent, [x - 3.2, y + 0.77, p.z], [0.42, 0.03, 0.42], materials.brass);
-      // Floating glowing discipline crystal prism
-      addSphere(parent, [x - 3.2, y + 0.95, p.z], [0.09, 0.09, 0.09], p.mat);
-      addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.2, y + 0.45, p.z], [0.22, 0.45, 0.22]);
+      addBox(parent, [x - 3.35, y + 0.42, p.z], [0.40, 0.84, 0.40], materials.woodWarm);
+      addBox(parent, [x - 3.35, y + 0.86, p.z], [0.46, 0.04, 0.46], p.cap);
+      addSphere(parent, [x - 3.35, y + 1.04, p.z], [0.11, 0.14, 0.11], p.mat);
+      addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.35, y + 0.45, p.z], [0.24, 0.45, 0.24]);
     }
 
-    // --- CENTRAL PARADIGM PEDESTAL & INTERACTIVE BEACON ---
-    // In the center of the About Me zone (x = -1.4, z = 1.7)
-    addCylinder(parent, [x - 1.4, y + 0.42, 1.7], 0.38, 0.42, 0.84, materials.stone, { segments: 18 });
-    addCylinder(parent, [x - 1.4, y + 0.85, 1.7], 0.44, 0.44, 0.04, materials.brass, { segments: 18 });
-    // Floating rotating crystal
-    addSphere(parent, [x - 1.4, y + 1.10, 1.7], [0.14, 0.18, 0.14], materials.glow, { shadow: false });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 1.4, y + 0.45, 1.7], [0.42, 0.45, 0.42]);
+    // --- CENTRAL IDENTITY ROTUNDA TABLE WITH 3D ARCHITECTURAL MAQUETTE OF VICKY'S ESTATE ---
+    // Circular Italian Marble & Brushed Brass Rotunda Table at [x - 1.4, z = 1.7]
+    const rotunda = new THREE.Group();
+    rotunda.position.set(x - 1.4, y, 1.7);
+    parent.add(rotunda);
+    addCylinder(rotunda, [0, 0.32, 0], 0.42, 0.52, 0.64, materials.woodDark, { segments: 20 });
+    addCylinder(rotunda, [0, 0.66, 0], 0.88, 0.88, 0.06, materials.stone, { segments: 24 });
+    addCylinder(rotunda, [0, 0.695, 0], 0.90, 0.90, 0.02, materials.brass, { segments: 24 });
+    // Miniature 3D Architectural Scale Model (Maquette) of the Mansion on top of the Rotunda Table!
+    addBox(rotunda, [0, 0.72, 0], [1.15, 0.03, 0.85], materials.foliageMid); // Mini estate lawn
+    addBox(rotunda, [-0.36, 0.74, 0.08], [0.24, 0.02, 0.36], materials.poolWater, { shadow: false }); // Mini pool
+    addBox(rotunda, [0.06, 0.82, -0.04], [0.58, 0.18, 0.32], materials.wall); // Mini mansion body
+    addBox(rotunda, [0.06, 0.93, -0.04], [0.64, 0.06, 0.38], materials.roof); // Mini slate roof
+    for (const mcx of [-0.10, -0.03, 0.03, 0.10]) {
+      addCylinder(rotunda, [0.06 + mcx, 0.82, 0.14], 0.012, 0.012, 0.18, materials.column, { segments: 8 });
+    }
+    addSphere(rotunda, [0.06, 1.08, -0.04], [0.08, 0.08, 0.08], materials.glow, { shadow: false });
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 1.4, y + 0.48, 1.7], [0.88, 0.48, 0.88]);
 
-    // --- AIRY EXECUTIVE LOUNGE SEATING (Oriented towards About Me Showcase) ---
-    // Pair of Bauhaus/Barcelona style armchairs on East side of rug facing West towards the About Me wall
-    for (const cz of [-0.65, 0.65]) {
+    // --- EXECUTIVE BIOGRAPHICAL LOUNGE SUITE (Oriented West toward About Me Feature Wall) ---
+    // Pair of Sculpted Terracotta & Brushed-Brass Lounge Armchairs at x = +0.55
+    for (const cz of [-0.85, 0.85]) {
       const arm = new THREE.Group();
-      arm.position.set(x + 1.6, y, 1.7 + cz);
-      arm.rotation.y = Math.PI; // Face West towards About Me feature wall
+      arm.position.set(x + 0.55, y, 1.7 + cz);
+      arm.rotation.y = Math.PI;
       parent.add(arm);
-      // Sleek low cantilevered chrome frame
-      addBox(arm, [0, 0.16, 0], [0.85, 0.04, 0.75], materials.carChrome);
-      // Deep leather seat cushion
-      addBox(arm, [0, 0.38, 0.02], [0.82, 0.38, 0.72], materials.terracotta);
-      // Angled backrest
-      addBox(arm, [0.34, 0.75, 0.02], [0.12, 0.52, 0.72], materials.terracotta, { rotation: [0, 0, -0.15] });
-      // Throw cushion
-      addBox(arm, [0.22, 0.65, 0.02], [0.12, 0.32, 0.38], cz > 0 ? materials.cushionYellow : materials.cushionMint);
-      addFurnitureCollider(world, RAPIER, staticBodies, [x + 1.6, y + 0.45, 1.7 + cz], [0.45, 0.45, 0.42]);
+      addBox(arm, [0, 0.16, 0], [0.88, 0.05, 0.82], materials.brass);
+      addBox(arm, [0, 0.40, 0], [0.84, 0.38, 0.78], materials.terracotta);
+      addBox(arm, [0.34, 0.78, 0], [0.14, 0.54, 0.78], materials.terracotta, { rotation: [0, 0, -0.14] });
+      addBox(arm, [0.02, 0.58, -0.36], [0.80, 0.24, 0.10], materials.woodDark);
+      addBox(arm, [0.02, 0.58, 0.36], [0.80, 0.24, 0.10], materials.woodDark);
+      addBox(arm, [0.20, 0.66, 0], [0.14, 0.32, 0.40], cz > 0 ? materials.cushionYellow : materials.cushionMint);
+      addFurnitureCollider(world, RAPIER, staticBodies, [x + 0.55, y + 0.45, 1.7 + cz], [0.46, 0.45, 0.44]);
     }
 
-    // Low Sculpted Walnut & Glass Cocktail Table between lounge chairs and central beacon
-    addCylinder(parent, [x + 0.7, y + 0.28, 1.7], 0.48, 0.48, 0.06, materials.woodDark, { segments: 18 });
-    addCylinder(parent, [x + 0.7, y + 0.14, 1.7], 0.12, 0.16, 0.26, materials.brass, { segments: 14 });
-    addSphere(parent, [x + 0.7, y + 0.36, 1.7], [0.08, 0.08, 0.08], materials.ceramicTeal);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 0.7, y + 0.20, 1.7], [0.48, 0.20, 0.48]);
-
-    // Architectural Fig Palm Tree in Corner (x = -4.8, z = 3.3)
-    addCylinder(parent, [x - 4.8, y + 0.45, 3.3], 0.38, 0.28, 0.9, materials.ceramicTerracotta, { segments: 16 });
+    // Architectural Fig Tree in Corner (x = -4.6, z = 3.2)
+    addCylinder(parent, [x - 4.6, y + 0.45, 3.2], 0.38, 0.28, 0.9, materials.ceramicTerracotta, { segments: 16 });
     for (let i = 0; i < 7; i += 1) {
       const angle = (i / 7) * Math.PI * 2;
-      addSphere(parent, [x - 4.8 + Math.cos(angle) * 0.38, y + 1.35 + (i % 2) * 0.18, 3.3 + Math.sin(angle) * 0.38], [0.36, 0.22, 0.36], materials.foliageBright);
+      addSphere(parent, [x - 4.6 + Math.cos(angle) * 0.38, y + 1.35 + (i % 2) * 0.18, 3.2 + Math.sin(angle) * 0.38], [0.36, 0.22, 0.36], materials.foliageBright);
     }
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.8, y + 0.55, 3.3], [0.4, 0.55, 0.4]);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.6, y + 0.55, 3.2], [0.4, 0.55, 0.4]);
 
-    // --- REAR LOUNGE & MEDIA ATRIUM ZONE (z = -6.0, Near Garden Veranda Doors) ---
-    // Wall-Mounted 85" OLED TV and credenza on the rear solid wall (x - 5.35, z = -6.0)
+    // Rear Media Wall on West Partition (x = -5.35, z = -6.0)
     const mediaWall = new THREE.Group();
     mediaWall.position.set(x - 5.35, y + 2.2, -6.0);
     mediaWall.rotation.y = Math.PI * 0.5;
     parent.add(mediaWall);
     addBox(mediaWall, [0, 0, 0], [2.6, 1.5, 0.06], materials.metalDark);
     addBox(mediaWall, [0, 0, 0.04], [2.48, 1.38, 0.02], materials.artLandscape, { shadow: false });
-
-    // Floating walnut media credenza
     addBox(parent, [x - 5.15, y + 0.42, -6.0], [0.42, 0.42, 2.4], materials.woodDark);
     addBox(parent, [x - 5.14, y + 0.64, -6.0], [0.40, 0.02, 2.3], materials.stone);
     addFurnitureCollider(world, RAPIER, staticBodies, [x - 5.15, y + 0.45, -6.0], [0.25, 0.45, 1.25]);
   } else if (id === 'projects') {
     // =========================================================================
-    // 2. PROJECT GALLERY (Lantai 1 Left, x = -11.0, y = 0.0, z = -2.0)
-    // 3 Large Illuminated Digital Showcase Screens on back wall, gallery bench,
-    // museum pedestals with holographic artifacts, spotlight track
+    // 06 · PROJECTS — FLAGSHIP SOFTWARE & AI PRODUCT EXPO PAVILION
+    // Panorama Product Wall, AI/RAG Vector Graph Hologram Kiosk, FinTech Bullish
+    // Candlestick Kiosk, Healthcare/Enterprise SaaS Wall, and Museum Viewing Bench
     // =========================================================================
 
-    // 3 Large Illuminated Project Wall Showcases (2 flanking the central display board on back wall, 1 on West wall)
-    const showcases = [
-      { pos: [x - 3.5, y + 2.6, z - 5.7], rotY: 0, title: 'Destino Copytrade', mat: materials.screenCode },
-      { pos: [x + 3.5, y + 2.6, z - 5.7], rotY: 0, title: 'Posyandu Digital', mat: materials.screenGlow },
-      { pos: [x - 4.75, y + 2.6, z - 1.8], rotY: Math.PI * 0.5, title: 'IntelliChat AI', mat: materials.screenCad },
-    ];
+    // Architectural Acoustic Backdrop Slats flanking the central Featured Projects board on back wall
+    for (const side of [-1, 1]) {
+      addBox(parent, [x + side * 3.5, y + 2.55, z - 5.76], [2.75, 3.6, 0.05], materials.woodDark);
+      addBox(parent, [x + side * 3.5, y + 4.38, z - 5.74], [2.82, 0.06, 0.08], materials.brass);
+    }
 
+    // 3 Illuminated 4K Product Showcase Screens (2 flanking the central display board, 1 on West wall)
+    const showcases = [
+      { pos: [x - 3.5, y + 2.6, z - 5.68], rotY: 0, mat: materials.screenCode, accentMat: materials.coral },
+      { pos: [x + 3.5, y + 2.6, z - 5.68], rotY: 0, mat: materials.screenGlow, accentMat: materials.emeraldBright },
+      { pos: [x - 4.75, y + 2.6, z - 1.8], rotY: Math.PI * 0.5, mat: materials.screenTerminal, accentMat: materials.gold },
+    ];
     for (const sc of showcases) {
       const frame = new THREE.Group();
       frame.position.set(sc.pos[0], sc.pos[1], sc.pos[2]);
       frame.rotation.y = sc.rotY;
       parent.add(frame);
-      // Modern beveled black frame
-      addBox(frame, [0, 0, 0], [2.8, 1.9, 0.1], materials.metalDark);
-      // Glowing showcase screen
-      addBox(frame, [0, 0, 0.06], [2.6, 1.7, 0.03], sc.mat, { shadow: false });
-      // Brass title plaque below screen
-      addBox(frame, [0, -1.1, 0.06], [1.6, 0.18, 0.04], materials.brass);
-      // Top picture spotlight
-      addBox(frame, [0, 1.15, 0.2], [1.2, 0.06, 0.14], materials.brass);
-      addSphere(frame, [0, 1.08, 0.2], [0.1, 0.04, 0.1], materials.glow, { shadow: false });
+      addBox(frame, [0, 0, 0], [2.55, 1.75, 0.08], materials.metalDark);
+      addBox(frame, [0, 0, 0.05], [2.38, 1.58, 0.02], sc.mat, { shadow: false });
+      addBox(frame, [0, -1.04, 0.05], [1.6, 0.16, 0.04], materials.brass);
+      addBox(frame, [0, -1.04, 0.08], [1.4, 0.06, 0.02], sc.accentMat, { shadow: false });
+      addBox(frame, [0, 1.08, 0.18], [1.1, 0.06, 0.14], materials.brass);
+      addSphere(frame, [0, 1.02, 0.18], [0.1, 0.04, 0.1], materials.glow, { shadow: false });
     }
 
-    // Upholstered Gallery Center Bench in Navy Velvet
-    addBox(parent, [x, y + 0.45, z + 0.5], [3.2, 0.42, 1.2], materials.cushionBlue);
-    addBox(parent, [x - 1.2, y + 0.2, z + 0.5], [0.16, 0.4, 1.1], materials.woodDark);
-    addBox(parent, [x + 1.2, y + 0.2, z + 0.5], [0.16, 0.4, 1.1], materials.woodDark);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.35, z + 0.5], [1.6, 0.35, 0.65]);
-
-    // 2 Museum Pedestals positioned deeper in the gallery flanking showcase screens (leaving entrance wide open)
-    for (const px of [-3.4, 3.4]) {
-      const ped = new THREE.Group();
-      ped.position.set(x + px, y, z - 3.8);
-      parent.add(ped);
-      addBox(ped, [0, 0.55, 0], [1.1, 1.1, 1.1], materials.woodWarm);
-      addBox(ped, [0, 1.12, 0], [1.2, 0.08, 1.2], materials.woodDark);
-      addBox(ped, [0, 1.75, 0], [1.05, 1.15, 1.05], materials.glass);
-      // Rotating core artifact
-      if (px < 0) {
-        addSphere(ped, [0, 1.75, 0], [0.28, 0.35, 0.28], materials.blueSky, { shadow: false });
-        addCylinder(ped, [0, 1.75, 0], 0.45, 0.45, 0.03, materials.brass, { rotation: [0.35, 0, 0.35] });
-      } else {
-        addBox(ped, [0, 1.75, 0], [0.36, 0.36, 0.36], materials.coral, { shadow: false, rotation: [0.2, 0.4, 0] });
-      }
-      addFurnitureCollider(world, RAPIER, staticBodies, [x + px, y + 0.9, z - 3.8], [0.6, 0.9, 0.6]);
+    // West Island Kiosk (x - 3.3, z - 3.4): Beyond-RAG ASI & Hybrid Vector Retrieval Hologram Pod
+    const ragPod = new THREE.Group();
+    ragPod.position.set(x - 3.3, y, z - 3.4);
+    parent.add(ragPod);
+    addCylinder(ragPod, [0, 0.12, 0], 0.85, 0.92, 0.24, materials.woodDark, { segments: 16 });
+    addCylinder(ragPod, [0, 0.58, 0], 0.56, 0.64, 0.72, materials.stone, { segments: 16 });
+    addCylinder(ragPod, [0, 0.96, 0], 0.68, 0.68, 0.06, materials.brass, { segments: 16 });
+    // Floating 3D Hybrid Retrieval Vector Graph Sculpture (Core + Orbital Rings + Knowledge Nodes)
+    addSphere(ragPod, [0, 1.52, 0], [0.22, 0.22, 0.22], materials.blueSky, { shadow: false });
+    addCylinder(ragPod, [0, 1.52, 0], 0.48, 0.48, 0.025, materials.brass, { rotation: [0.42, 0, 0.32], segments: 18 });
+    addCylinder(ragPod, [0, 1.52, 0], 0.44, 0.44, 0.025, materials.gold, { rotation: [-0.38, 0, -0.45], segments: 18 });
+    for (let n = 0; n < 4; n += 1) {
+      const a = (n / 4) * Math.PI * 2 + 0.4;
+      addSphere(ragPod, [Math.cos(a) * 0.44, 1.52 + (n % 2 === 0 ? 0.14 : -0.14), Math.sin(a) * 0.44], [0.07, 0.07, 0.07], n % 2 === 0 ? materials.coral : materials.glow, { shadow: false });
     }
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.3, y + 0.85, z - 3.4], [0.75, 0.85, 0.75]);
 
-    // Potted olive tree in front left corner
-    addCylinder(parent, [x - 4.2, y + 0.45, z + 2.8], 0.45, 0.35, 0.9, materials.ceramicTerracotta, { segments: 16 });
-    for (let i = 0; i < 6; i += 1) {
-      const angle = (i / 6) * Math.PI * 2;
-      addSphere(parent, [x - 4.2 + Math.cos(angle) * 0.4, y + 1.45, z + 2.8 + Math.sin(angle) * 0.4], [0.35, 0.24, 0.35], materials.foliageMid);
+    // East Island Kiosk (x + 3.3, z - 3.4): Destino Copytrade & MQL5 Algo-Trading Bullish Candlestick Pod
+    const algoPod = new THREE.Group();
+    algoPod.position.set(x + 3.3, y, z - 3.4);
+    parent.add(algoPod);
+    addCylinder(algoPod, [0, 0.12, 0], 0.85, 0.92, 0.24, materials.woodDark, { segments: 16 });
+    addCylinder(algoPod, [0, 0.58, 0], 0.56, 0.64, 0.72, materials.stone, { segments: 16 });
+    addCylinder(algoPod, [0, 0.96, 0], 0.68, 0.68, 0.06, materials.brass, { segments: 16 });
+    // 3D Ascending Financial Candlestick Chart Sculpture on top of the pod!
+    const candles = [
+      { dx: -0.32, h: 0.28, y0: 1.22, mat: materials.emerald },
+      { dx: -0.16, h: 0.22, y0: 1.28, mat: materials.coral },
+      { dx: 0.0, h: 0.36, y0: 1.38, mat: materials.emeraldBright },
+      { dx: 0.16, h: 0.30, y0: 1.50, mat: materials.emerald },
+      { dx: 0.32, h: 0.42, y0: 1.66, mat: materials.gold },
+    ];
+    for (const c of candles) {
+      addCylinder(algoPod, [c.dx, c.y0, 0], 0.015, 0.015, c.h + 0.18, materials.brass, { segments: 8 });
+      addBox(algoPod, [c.dx, c.y0, 0], [0.10, c.h, 0.10], c.mat);
     }
+    addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.3, y + 0.85, z - 3.4], [0.75, 0.85, 0.75]);
+
+    // West Wall Console Table below the 3rd Showcase Screen (x - 4.4, z - 1.8)
+    addBox(parent, [x - 4.4, y + 0.48, z - 1.8], [0.65, 0.52, 2.6], materials.woodDark);
+    addBox(parent, [x - 4.38, y + 0.76, z - 1.8], [0.68, 0.04, 2.66], materials.stone);
+    addBox(parent, [x - 4.35, y + 0.92, z - 2.3], [0.36, 0.26, 0.52], materials.wall); // Mini Posyandu clinic model
+    addBox(parent, [x - 4.35, y + 1.08, z - 2.3], [0.42, 0.06, 0.58], materials.coral);
+    addBox(parent, [x - 4.35, y + 0.90, z - 1.2], [0.32, 0.24, 0.45], materials.screenGlow, { shadow: false });
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.4, y + 0.5, z - 1.8], [0.38, 0.5, 1.35]);
+
+    // Upholstered Gallery Center Bench in Navy Velvet & Brushed Brass
+    addBox(parent, [x, y + 0.46, z + 0.5], [3.2, 0.36, 1.15], materials.navy);
+    addBox(parent, [x, y + 0.25, z + 0.5], [3.26, 0.06, 1.20], materials.brass);
+    addBox(parent, [x - 1.25, y + 0.14, z + 0.5], [0.18, 0.28, 1.05], materials.woodDark);
+    addBox(parent, [x + 1.25, y + 0.14, z + 0.5], [0.18, 0.28, 1.05], materials.woodDark);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.35, z + 0.5], [1.65, 0.35, 0.65]);
   } else if (id === 'skills') {
     // =========================================================================
-    // 3. HOME OFFICE (Lantai 1 Right, x = 10.75, y = 0.0, z = -2.0)
-    // Developer battle station: Solid wood desk facing forward (+Z), triple glowing screens,
-    // ergonomic mesh chair, custom PC tower with RGB, architecture whiteboard on back wall
+    // 07 · ARCHITECTURAL DOMAIN & CORE TECHNOLOGIES & TOOLING
+    // 6-Domain Matrix Wall, Principal Architect 4-Monitor Battle Station,
+    // Dual Enterprise Backend & Vector Database Server Racks, and Blueprint Wall
     // =========================================================================
 
-    // Executive Developer Desk in warm oak facing forward (+Z)
-    addBox(parent, [x, y + 0.95, z - 1.4], [4.6, 0.16, 1.6], materials.woodWarm);
-    addBox(parent, [x - 2.1, y + 0.48, z - 1.4], [0.22, 0.95, 1.4], materials.metalDark);
-    addBox(parent, [x + 2.1, y + 0.48, z - 1.4], [0.22, 0.95, 1.4], materials.metalDark);
-    // Desk mat
-    addBox(parent, [x, y + 1.04, z - 1.3], [3.2, 0.02, 1.1], materials.ink);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.55, z - 1.4], [2.3, 0.55, 0.85]);
-
-    // Triple Curved Monitor Setup mounted on desk arms facing forward (+Z)
-    const monitorConfigs = [
-      { dx: -1.2, rotY: 0.22, mat: materials.screenTerminal },
-      { dx: 0.0, rotY: 0.0, mat: materials.screenCode },
-      { dx: 1.2, rotY: -0.22, mat: materials.screenCad },
+    // 6 Architectural Domain Pillars flanking the central Display Board on Back Wall (z = -7.68)
+    // Matching the 6 rows: Languages, Frontend, Backend, Databases, AI Tooling, DevOps
+    const domainPillarSpecs = [
+      { dx: -3.8, dy: 3.4, colorMat: materials.blue },
+      { dx: -3.8, dy: 2.5, colorMat: materials.screenGlow },
+      { dx: -3.8, dy: 1.6, colorMat: materials.emerald },
+      { dx: 3.8, dy: 3.4, colorMat: materials.navy },
+      { dx: 3.8, dy: 2.5, colorMat: materials.coral },
+      { dx: 3.8, dy: 1.6, colorMat: materials.gold },
     ];
-
-    for (const mc of monitorConfigs) {
-      const mon = new THREE.Group();
-      mon.position.set(x + mc.dx, y + 1.62, z - 1.7);
-      mon.rotation.y = mc.rotY;
-      parent.add(mon);
-      addBox(mon, [0, 0, 0], [1.14, 0.74, 0.08], materials.metalDark);
-      addBox(mon, [0, 0, 0.045], [1.06, 0.66, 0.02], mc.mat, { shadow: false });
-      addCylinder(mon, [0, -0.44, 0], 0.05, 0.05, 0.36, materials.metalDark);
-      addBox(mon, [0, -0.6, 0], [0.38, 0.04, 0.28], materials.metalDark);
+    for (const side of [-1, 1]) {
+      addBox(parent, [x + side * 3.8, y + 2.5, z - 5.74], [1.9, 3.4, 0.08], materials.woodDark);
+      addBox(parent, [x + side * 3.8, y + 4.24, z - 5.72], [1.98, 0.06, 0.12], materials.brass);
+    }
+    for (const dp of domainPillarSpecs) {
+      addBox(parent, [x + dp.dx, y + dp.dy, z - 5.66], [1.65, 0.62, 0.06], materials.metalDark);
+      addBox(parent, [x + dp.dx, y + dp.dy, z - 5.62], [1.52, 0.48, 0.03], dp.colorMat);
+      addSphere(parent, [x + dp.dx - 0.62, y + dp.dy, z - 5.58], [0.06, 0.06, 0.06], materials.glow, { shadow: false });
     }
 
-    // High-End Custom PC Tower with RGB on desk right side
-    const pc = new THREE.Group();
-    pc.position.set(x + 1.9, y + 1.42, z - 1.4);
-    parent.add(pc);
-    addBox(pc, [0, 0, 0], [0.45, 0.72, 0.82], materials.metalDark);
-    addBox(pc, [-0.23, 0, 0], [0.02, 0.68, 0.78], materials.glass);
-    addBox(pc, [-0.05, 0.1, 0], [0.3, 0.25, 0.5], materials.screenGlow, { shadow: false });
+    // Executive Principal Architect Desk in Warm Oak & Brushed Steel facing forward (+Z)
+    addBox(parent, [x, y + 0.95, z - 1.4], [4.8, 0.14, 1.65], materials.woodWarm);
+    addBox(parent, [x, y + 0.87, z - 1.4], [4.84, 0.04, 1.68], materials.brass);
+    addBox(parent, [x - 2.15, y + 0.46, z - 1.4], [0.22, 0.92, 1.45], materials.metalDark);
+    addBox(parent, [x + 2.15, y + 0.46, z - 1.4], [0.22, 0.92, 1.45], materials.metalDark);
+    addBox(parent, [x, y + 1.03, z - 1.3], [3.4, 0.02, 1.1], materials.ink);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.55, z - 1.4], [2.4, 0.55, 0.85]);
 
-    // Ergonomic High-Back Mesh Chair in front of desk
+    // 4-Monitor Principal Architect Array (Triple Curved + 4th Overhead Telemetry Screen)
+    const monitorConfigs = [
+      { dx: -1.22, dy: 1.48, rotY: 0.24, rotX: 0, mat: materials.screenTerminal },
+      { dx: 0.0, dy: 1.48, rotY: 0.0, rotX: 0, mat: materials.screenCode },
+      { dx: 1.22, dy: 1.48, rotY: -0.24, rotX: 0, mat: materials.screenCad },
+      { dx: 0.0, dy: 2.12, rotY: 0.0, rotX: 0.18, mat: materials.screenTerminal },
+    ];
+    for (const mc of monitorConfigs) {
+      const mon = new THREE.Group();
+      mon.position.set(x + mc.dx, y + mc.dy, z - 1.72);
+      mon.rotation.set(mc.rotX, mc.rotY, 0);
+      parent.add(mon);
+      addBox(mon, [0, 0, 0], [1.14, 0.62, 0.07], materials.metalDark);
+      addBox(mon, [0, 0, 0.042], [1.06, 0.54, 0.02], mc.mat, { shadow: false });
+    }
+    addCylinder(parent, [x, y + 1.52, z - 1.82], 0.045, 0.045, 1.15, materials.metalDark);
+
+    // Custom Liquid-Cooled Glass Workstation Tower on right side of desk
+    const pc = new THREE.Group();
+    pc.position.set(x + 1.98, y + 1.38, z - 1.4);
+    parent.add(pc);
+    addBox(pc, [0, 0, 0], [0.44, 0.72, 0.82], materials.metalDark);
+    addBox(pc, [-0.23, 0, 0], [0.02, 0.68, 0.78], materials.glass);
+    addBox(pc, [-0.05, 0.1, 0], [0.28, 0.25, 0.5], materials.screenGlow, { shadow: false });
+
+    // Ergonomic High-Back Architect Chair in front of desk
     const chair = new THREE.Group();
-    chair.position.set(x, y, z - 0.2);
+    chair.position.set(x, y, z - 0.15);
     parent.add(chair);
-    // Base & casters
     addCylinder(chair, [0, 0.1, 0], 0.38, 0.38, 0.06, materials.metalDark, { segments: 16 });
     addCylinder(chair, [0, 0.32, 0], 0.05, 0.05, 0.38, materials.brass);
-    // Seat cushion
     addBox(chair, [0, 0.55, 0], [0.75, 0.12, 0.75], materials.metalDark);
-    // Mesh backrest
     addBox(chair, [0, 1.15, -0.34], [0.68, 1.05, 0.08], materials.metalDark);
-    // Headrest
-    addBox(chair, [0, 1.75, -0.34], [0.42, 0.22, 0.08], materials.metalDark);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.6, z - 0.2], [0.42, 0.6, 0.42]);
+    addBox(chair, [0, 1.75, -0.34], [0.42, 0.22, 0.08], materials.brass);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.6, z - 0.15], [0.42, 0.6, 0.42]);
 
-    // System Architecture Whiteboard on East Partition Wall (leaving back wall clear for Display Board)
+    // West Wall (x - 4.45, z - 2.2): Dual Enterprise Backend & Vector Database Server Racks
+    // Representing Node.js / NestJS / Laravel + PostgreSQL / MySQL / MongoDB / Supabase Vector
+    for (const rz of [-3.2, -1.5]) {
+      const rack = new THREE.Group();
+      rack.position.set(x - 4.45, y + 1.4, z + rz);
+      parent.add(rack);
+      addBox(rack, [0, 0, 0], [0.95, 2.8, 1.15], materials.metalDark);
+      addBox(rack, [0.48, 0, 0], [0.02, 2.6, 1.02], materials.glass);
+      for (let by = -1.0; by <= 1.0; by += 0.34) {
+        addBox(rack, [0.06, by, 0], [0.78, 0.22, 0.96], materials.ink);
+        addBox(rack, [0.46, by, -0.32], [0.02, 0.05, 0.18], by > 0 ? materials.emeraldBright : materials.screenGlow, { shadow: false });
+        addSphere(rack, [0.46, by, 0.32], [0.03, 0.03, 0.03], materials.gold, { shadow: false });
+      }
+      addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.45, y + 1.4, z + rz], [0.52, 1.4, 0.62]);
+    }
+    // 3D Relational & Vector Database Cylinder Stack next to Server Racks (x - 4.35, z + 0.2)
+    for (let tier = 0; tier < 3; tier += 1) {
+      const ty = y + 0.32 + tier * 0.42;
+      addCylinder(parent, [x - 4.35, ty, z + 0.2], 0.46, 0.46, 0.32, tier === 2 ? materials.emerald : materials.blue, { segments: 18 });
+      addCylinder(parent, [x - 4.35, ty + 0.17, z + 0.2], 0.48, 0.48, 0.03, materials.brass, { segments: 18 });
+    }
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.35, y + 0.7, z + 0.2], [0.5, 0.7, 0.5]);
+
+    // East Partition Wall (x + 5.05, z - 1.5): System Architecture Blueprint Whiteboard
     const wb = new THREE.Group();
     wb.position.set(x + 5.05, y + 2.6, z - 1.5);
     wb.rotation.y = -Math.PI * 0.5;
@@ -395,296 +462,465 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
     addBox(wb, [0, -0.95, 0.08], [2.8, 0.04, 0.12], materials.metalDark);
   } else if (id === 'garage') {
     // =========================================================================
-    // 4. GARASI (Lantai 1 Far-Right, x = 21.0, y = 0.0, z = -2.0)
-    // BMW M-Series sports car parked inside, polished dark epoxy floor with guides,
-    // rolling red tool chest, workbench with vise, tool pegboard, wall hung sports bike
+    // 05 · LICENSES & CERTIFICATIONS — EXECUTIVE CREDENTIAL VAULT & BMW M4 SHOWROOM
+    // Hall of 6 Gold-Framed Certification Plaques, 2 Glass Credential Trophy
+    // Cabinets, Illuminated Showroom Turntable Podium, and BMW M4 Competition
     // =========================================================================
 
-    // Painted garage parking boundary guide lines
-    addBox(parent, [x - 1.4, y + 0.008, z - 0.5], [0.14, 0.01, 5.2], materials.trim, { shadow: false });
-    addBox(parent, [x + 1.4, y + 0.008, z - 0.5], [0.14, 0.01, 5.2], materials.trim, { shadow: false });
-    addBox(parent, [x, y + 0.008, z - 3.1], [2.94, 0.01, 0.14], materials.trim, { shadow: false });
+    // Illuminated Circular Marble & Brass Showroom Turntable Podium beneath the BMW M4
+    addCylinder(parent, [x, y + 0.02, z - 0.5], 2.72, 2.78, 0.04, materials.brass, { segments: 32, shadow: false });
+    addCylinder(parent, [x, y + 0.045, z - 0.5], 2.58, 2.58, 0.03, materials.stone, { segments: 32, shadow: false, receive: false });
+    addCylinder(parent, [x, y + 0.012, z - 0.5], 2.82, 2.82, 0.015, materials.glow, { segments: 32, shadow: false });
 
-    // Stylized BMW M-Series Sports Coupe centered inside garage
-    buildSportsCar(parent, x, y, z - 0.5);
+    // Stylized BMW M4 Competition Coupe centered on the showroom turntable
+    buildSportsCar(parent, x, y + 0.05, z - 0.5);
     addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.75, z - 0.5], [1.15, 0.75, 2.3]);
 
-    // Red Rolling Heavy-Duty Tool Chest against West partition wall
-    const toolChest = new THREE.Group();
-    toolChest.position.set(x - 3.8, y + 0.65, z - 3.8);
-    parent.add(toolChest);
-    addBox(toolChest, [0, 0, 0], [1.4, 1.3, 0.75], materials.coral);
-    for (let d = -0.45; d <= 0.45; d += 0.22) {
-      addBox(toolChest, [0, d, 0.39], [1.25, 0.16, 0.04], materials.metalDark);
-      addBox(toolChest, [0, d, 0.42], [0.35, 0.04, 0.04], materials.carChrome);
+    // Back Wall (z = -7.5): Hall of Verified Credentials & 6 Gold-Framed Certification Plaques
+    // Flanking the central "05 · VERIFIED CREDENTIALS — Licenses & Certifications" board
+    addBox(parent, [x, y + 2.5, z - 5.68], [8.6, 4.2, 0.12], materials.woodEspresso);
+    addBox(parent, [x, y + 4.62, z - 5.64], [8.7, 0.08, 0.18], materials.brass);
+    addBox(parent, [x, y + 0.42, z - 5.64], [8.7, 0.08, 0.18], materials.brass);
+
+    const certCoords = [
+      [-3.15, 3.45], [-3.15, 2.35], [-3.15, 1.25],
+      [3.15, 3.45], [3.15, 2.35], [3.15, 1.25],
+    ];
+    for (let c = 0; c < certCoords.length; c += 1) {
+      const [cx, cy] = certCoords[c];
+      // Brushed gold frame + dark velvet certificate mat + ivory parchment + golden seal
+      addBox(parent, [x + cx, y + cy, z - 5.56], [1.85, 0.86, 0.06], materials.gold);
+      addBox(parent, [x + cx, y + cy, z - 5.52], [1.72, 0.74, 0.03], materials.navy);
+      addBox(parent, [x + cx, y + cy, z - 5.49], [1.48, 0.54, 0.02], materials.cream);
+      addCylinder(parent, [x + cx + 0.52, y + cy - 0.12, z - 5.47], 0.09, 0.09, 0.02, materials.gold, { rotation: [Math.PI * 0.5, 0, 0], segments: 12 });
+      addBox(parent, [x + cx - 0.15, y + cy + 0.08, z - 5.47], [0.85, 0.06, 0.015], c % 2 === 0 ? materials.coral : materials.blue, { shadow: false });
     }
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.8, y + 0.65, z - 3.8], [0.72, 0.65, 0.4]);
 
-    // Mechanic Workbench on back wall (z = -7.4)
-    addBox(parent, [x, y + 0.95, z - 5.2], [3.8, 0.14, 1.2], materials.metalDark);
-    addBox(parent, [x - 1.6, y + 0.45, z - 5.2], [0.2, 0.9, 1.0], materials.metalDark);
-    addBox(parent, [x + 1.6, y + 0.45, z - 5.2], [0.2, 0.9, 1.0], materials.metalDark);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.5, z - 5.2], [1.95, 0.5, 0.6]);
-
-    // Tool Pegboard on wall above bench with hanging tools & task lamp
-    addBox(parent, [x, y + 2.2, z - 5.7], [3.8, 1.6, 0.08], materials.woodEspresso);
-    addBox(parent, [x, y + 2.5, z - 5.62], [3.2, 0.04, 0.04], materials.carChrome);
-    for (let wx = -1.2; wx <= 1.2; wx += 0.38) {
-      addBox(parent, [x + wx, y + 2.22, z - 5.62], [0.06, 0.36, 0.03], materials.carChrome);
+    // West & East Showroom Walls: 2 Tall Illuminated Glass Credential & Trophy Cabinets
+    for (const side of [-1, 1]) {
+      const cab = new THREE.Group();
+      cab.position.set(x + side * 4.15, y, z - 2.8);
+      cab.rotation.y = side < 0 ? Math.PI * 0.5 : -Math.PI * 0.5;
+      parent.add(cab);
+      addBox(cab, [0, 1.45, 0], [2.2, 2.9, 0.65], materials.woodDark);
+      addBox(cab, [0, 2.92, 0], [2.28, 0.08, 0.72], materials.brass);
+      for (const sy of [0.85, 1.55, 2.25]) {
+        addBox(cab, [0, sy, 0.04], [2.04, 0.04, 0.56], materials.brass);
+        // Golden Certification Trophies & Cloud Architecture Cubes on shelves
+        addCylinder(cab, [-0.55, sy + 0.18, 0.06], 0.11, 0.14, 0.28, materials.gold, { segments: 14 });
+        addSphere(cab, [0, sy + 0.22, 0.06], [0.13, 0.13, 0.13], sy > 1.5 ? materials.glow : materials.blueSky, { shadow: false });
+        addBox(cab, [0.55, sy + 0.18, 0.06], [0.24, 0.28, 0.06], materials.coral);
+      }
+      addBox(cab, [0, 1.45, 0.33], [2.06, 2.7, 0.02], materials.glass);
+      addFurnitureCollider(world, RAPIER, staticBodies, [x + side * 4.15, y + 1.45, z - 2.8], [0.4, 1.45, 1.15]);
     }
-    // Heavy metal vise on bench
-    addBox(parent, [x - 1.2, y + 1.15, z - 4.9], [0.35, 0.28, 0.35], materials.metalDark);
-
-    // Wall-Mounted Sports Road Bicycle hung on East wall (x = 25.5)
-    const bike = new THREE.Group();
-    bike.position.set(x + 4.4, y + 2.2, z - 0.5);
-    bike.rotation.y = -Math.PI * 0.5;
-    parent.add(bike);
-    // Wheels
-    addCylinder(bike, [-0.85, 0, 0], 0.45, 0.45, 0.05, materials.carRubber, { rotation: [0, 0, Math.PI * 0.5] });
-    addCylinder(bike, [0.85, 0, 0], 0.45, 0.45, 0.05, materials.carRubber, { rotation: [0, 0, Math.PI * 0.5] });
-    // Frame tubes (cyan sport color)
-    addCylinder(bike, [0, 0.25, 0], 0.03, 0.03, 1.2, materials.blueSky, { rotation: [0, 0, 0.35] });
-    addCylinder(bike, [0, 0.1, 0], 0.03, 0.03, 1.1, materials.blueSky, { rotation: [0, 0, -0.45] });
-    // Handlebars & seat
-    addBox(bike, [0.75, 0.6, 0], [0.06, 0.1, 0.45], materials.metalDark);
-    addBox(bike, [-0.25, 0.65, 0], [0.26, 0.06, 0.14], materials.metalDark);
   } else if (id === 'bedroom') {
     // =========================================================================
-    // 5. MASTER BEDROOM (Lantai 2 Left, x = -11.0, y = 5.2, z = -2.0)
-    // King-size platform bed centered against back wall, warm wood headboard panel with
-    // sconces, designer bedside nightstands with lamps, plush duvet, wardrobe
+    // 03 · EDUCATION — UNIVERSITY ACADEMIC HALL & RRF THESIS LAB
+    // (Lantai 2 Left, x = -11.0, y = 5.2, z = -2.0)
+    // Grand Academic Honors Colonnade & Bookcase Wall, Cum Laude GPA 3.94/4.00
+    // Mortarboard Toga & Diploma Pedestal, Weighted RRF Thesis Research Desk & Whiteboard
     // =========================================================================
 
-    const bed = new THREE.Group();
-    bed.position.set(x, y, z - 3.4);
-    parent.add(bed);
+    // 1. Grand University Honors Colonnade & Bookcase Wall on Back Wall (z = -7.3)
+    const acadWall = new THREE.Group();
+    acadWall.position.set(x, y, z - 5.3);
+    parent.add(acadWall);
 
-    // Warm vertical wood headboard feature wall on back wall (z = -7.7)
-    addBox(bed, [0, 2.2, -1.9], [6.2, 4.4, 0.1], materials.woodWarm);
-    // Padded upholstered backrest
-    addBox(bed, [0, 1.35, -1.75], [3.6, 1.5, 0.25], materials.bedLinenDark);
-    // Platform bed frame
-    addBox(bed, [0, 0.25, 0], [3.4, 0.45, 3.6], materials.woodDark);
-    // Thick mattress
-    addBox(bed, [0, 0.65, 0.1], [3.1, 0.42, 3.2], materials.bedLinen);
-    // Crisp white duvet & folded dark throw blanket
-    addBox(bed, [0, 0.75, 0.4], [3.15, 0.22, 2.4], materials.bedLinenDark);
-    // Fluffy pillows
-    addBox(bed, [-0.85, 0.95, -1.0], [1.0, 0.22, 0.55], materials.bedLinen);
-    addBox(bed, [0.85, 0.95, -1.0], [1.0, 0.22, 0.55], materials.bedLinen);
-    addBox(bed, [0, 0.92, -0.85], [0.65, 0.2, 0.35], materials.cushionYellow);
-
-    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.6, z - 3.4], [1.8, 0.6, 1.9]);
-
-    // Bedside Nightstands flanking King Bed
-    for (const side of [-1, 1]) {
-      const nx = x + side * 2.4;
-      const nz = z - 5.0;
-      addBox(parent, [nx, y + 0.45, nz], [0.85, 0.85, 0.75], materials.woodWarm);
-      // Designer bedside lamp with warm glow
-      addCylinder(parent, [nx, y + 0.92, nz], 0.16, 0.16, 0.03, materials.brass);
-      addCylinder(parent, [nx, y + 1.15, nz], 0.02, 0.02, 0.42, materials.brass);
-      addCylinder(parent, [nx, y + 1.35, nz], 0.24, 0.28, 0.35, materials.cream, { segments: 16 });
-      addSphere(parent, [nx, y + 1.32, nz], [0.08, 0.08, 0.08], materials.glow, { shadow: false });
-      addFurnitureCollider(world, RAPIER, staticBodies, [nx, y + 0.45, nz], [0.45, 0.45, 0.4]);
+    addBox(acadWall, [0, 2.4, -0.1], [8.8, 4.8, 0.25], materials.woodDark);
+    addBox(acadWall, [0, 4.72, 0.05], [9.0, 0.16, 0.42], materials.brass);
+    // Classical Academic Fluted Columns framing the central 03 · Education display board
+    for (const cx of [-4.1, -2.05, 2.05, 4.1]) {
+      addCylinder(acadWall, [cx, 2.35, 0.12], 0.16, 0.18, 4.6, materials.cream, { segments: 12 });
+      addBox(acadWall, [cx, 0.12, 0.12], [0.44, 0.24, 0.44], materials.brass);
+      addBox(acadWall, [cx, 4.58, 0.12], [0.44, 0.22, 0.44], materials.brass);
     }
+    // Left & Right Academic Wing Bookshelves with batched hardcover reference volumes
+    const eduBooks = new BatchCollector();
+    const eduPalette = [materials.navy, materials.terracotta, materials.emerald, materials.gold, materials.blueSky, materials.coral];
+    for (const side of [-1, 1]) {
+      const wingX = side * 3.08;
+      for (const sy of [0.85, 1.65, 2.45, 3.25, 4.05]) {
+        addBox(acadWall, [wingX, sy, 0.08], [1.75, 0.06, 0.38], materials.woodWarm);
+        for (let b = -0.72; b <= 0.72; b += 0.24) {
+          const seed = Math.abs(Math.sin(b * 19.3 + sy * 7.1 + side));
+          const bh = 0.38 + seed * 0.18;
+          eduBooks.addBox(
+            [wingX + b, sy + 0.03 + bh * 0.5, 0.1],
+            [0.18, bh, 0.28],
+            eduPalette[Math.abs(Math.round(b * 10 + sy * 3)) % eduPalette.length]
+          );
+        }
+      }
+    }
+    eduBooks.build(acadWall, false);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 2.4, z - 5.3], [4.4, 2.4, 0.35]);
 
-    // Wardrobe / Closet Cabinet against West wall (x = -16.0)
-    addBox(parent, [x - 4.4, y + 2.2, z - 1.5], [1.2, 4.4, 3.4], materials.woodDark);
-    addBox(parent, [x - 3.75, y + 2.2, z - 1.5], [0.08, 4.2, 3.2], materials.woodWarm);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.4, y + 2.2, z - 1.5], [0.65, 2.2, 1.75]);
+    // 2. Cum Laude GPA 3.94/4.00 Graduation & Diploma Monument Pedestal (Left, x - 2.3, z - 2.3)
+    const gradPod = new THREE.Group();
+    gradPod.position.set(x - 2.3, y, z - 2.3);
+    parent.add(gradPod);
 
-    // Designer lounge accent chair facing forward
-    const loungeChair = new THREE.Group();
-    loungeChair.position.set(x + 3.2, y, z + 0.5);
-    loungeChair.rotation.y = -0.4;
-    parent.add(loungeChair);
-    addBox(loungeChair, [0, 0.42, 0], [1.0, 0.42, 1.0], materials.cushionBlue);
-    addBox(loungeChair, [0, 0.95, -0.4], [1.0, 0.65, 0.22], materials.cushionBlue);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.2, y + 0.5, z + 0.5], [0.55, 0.5, 0.55]);
+    addCylinder(gradPod, [0, 0.08, 0], 1.15, 1.25, 0.16, materials.woodDark, { segments: 16 });
+    addCylinder(gradPod, [0, 0.18, 0], 1.02, 1.05, 0.05, materials.gold, { segments: 16 });
+    addCylinder(gradPod, [0, 0.68, 0], 0.52, 0.62, 0.96, materials.ceramic, { segments: 16 });
+    addCylinder(gradPod, [0, 1.18, 0], 0.68, 0.64, 0.08, materials.brass, { segments: 16 });
+
+    // 3D Graduation Mortarboard Cap (Topi Toga Wisuda) with Golden Tassel
+    addCylinder(gradPod, [-0.15, 1.28, 0.05], 0.22, 0.20, 0.14, materials.navy, { segments: 12 });
+    addBox(gradPod, [-0.15, 1.37, 0.05], [0.58, 0.04, 0.58], materials.navy, { rotation: [0.06, Math.PI * 0.25, 0] });
+    addSphere(gradPod, [-0.15, 1.40, 0.05], [0.04, 0.04, 0.04], materials.gold, { shadow: false, lowPoly: true });
+    addBox(gradPod, [0.08, 1.33, 0.18], [0.04, 0.18, 0.04], materials.gold, { rotation: [0, 0, -0.35] });
+
+    // Rolled Cum Laude Diploma Scroll tied with Crimson Ribbon + Golden GPA 3.94 Star Trophy
+    addCylinder(gradPod, [0.22, 1.27, 0.18], 0.05, 0.05, 0.42, materials.cream, { rotation: [0, 0.4, Math.PI * 0.5], segments: 10 });
+    addCylinder(gradPod, [0.22, 1.27, 0.18], 0.056, 0.056, 0.06, materials.coral, { rotation: [0, 0.4, Math.PI * 0.5], segments: 10 });
+    addCylinder(gradPod, [0.18, 1.38, -0.18], 0.09, 0.12, 0.32, materials.gold, { segments: 12 });
+    addSphere(gradPod, [0.18, 1.60, -0.18], [0.12, 0.12, 0.12], materials.glow, { shadow: false, lowPoly: true });
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 2.3, y + 0.85, z - 2.3], [1.1, 0.85, 1.1]);
+
+    // 3. Weighted RRF Thesis & Academic Research Desk (Right, x + 2.1, z - 2.1)
+    const thesisDesk = new THREE.Group();
+    thesisDesk.position.set(x + 2.1, y, z - 2.1);
+    parent.add(thesisDesk);
+
+    addBox(thesisDesk, [0, 0.88, 0], [2.8, 0.1, 1.35], materials.woodWarm);
+    addBox(thesisDesk, [0, 0.94, 0], [2.84, 0.03, 1.39], materials.brass);
+    addBox(thesisDesk, [-1.2, 0.44, 0], [0.22, 0.88, 1.15], materials.woodDark);
+    addBox(thesisDesk, [1.2, 0.44, 0], [0.22, 0.88, 1.15], materials.woodDark);
+    // Dual Thesis Analysis Monitors (Dense Vector + BM25 Lexical Fusion)
+    for (const mx of [-0.58, 0.42]) {
+      addBox(thesisDesk, [mx, 1.36, -0.28], [0.95, 0.58, 0.06], materials.metalDark);
+      addBox(thesisDesk, [mx, 1.36, -0.24], [0.89, 0.52, 0.02], mx < 0 ? materials.screenCode : materials.screenGlow, { shadow: false });
+      addCylinder(thesisDesk, [mx, 1.02, -0.3], 0.04, 0.05, 0.22, materials.metalDark);
+    }
+    // Brass & Sky-Blue Academic Terrestrial Globe on right corner of desk
+    addCylinder(thesisDesk, [1.05, 0.98, 0.15], 0.14, 0.16, 0.05, materials.brass, { segments: 12 });
+    addCylinder(thesisDesk, [1.05, 1.16, 0.15], 0.02, 0.02, 0.34, materials.brass);
+    addSphere(thesisDesk, [1.05, 1.24, 0.15], [0.18, 0.18, 0.18], materials.blueSky, { lowPoly: true });
+    // Stacked Thesis Manuscripts
+    addBox(thesisDesk, [-1.05, 0.99, 0.2], [0.36, 0.08, 0.46], materials.navy);
+    addBox(thesisDesk, [-1.03, 1.06, 0.2], [0.34, 0.06, 0.44], materials.gold);
+    // Scholar Ergonomic Leather Chair
+    addBox(thesisDesk, [-0.08, 0.5, 0.95], [0.74, 0.12, 0.72], materials.terracotta);
+    addBox(thesisDesk, [-0.08, 1.05, 1.28], [0.70, 0.98, 0.12], materials.terracotta);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x + 2.1, y + 0.75, z - 1.9], [1.45, 0.75, 1.1]);
+
+    // 4. Weighted RRF Formula & Hybrid Architecture Whiteboard on West Wall (x - 4.78, z - 1.5)
+    const wb = new THREE.Group();
+    wb.position.set(x - 4.78, y + 2.2, z - 1.5);
+    wb.rotation.y = Math.PI * 0.5;
+    parent.add(wb);
+    addBox(wb, [0, 0, 0], [3.2, 1.85, 0.08], materials.brass);
+    addBox(wb, [0, 0, 0.05], [3.04, 1.68, 0.03], materials.ceramic);
+    // 3D Diagram nodes on whiteboard (BM25 + pgvector -> Weighted RRF -> Cross-Encoder Rerank)
+    addBox(wb, [-0.95, 0.32, 0.08], [0.68, 0.34, 0.03], materials.blueSky);
+    addBox(wb, [-0.95, -0.28, 0.08], [0.68, 0.34, 0.03], materials.emerald);
+    addBox(wb, [0.0, 0.02, 0.08], [0.76, 0.42, 0.04], materials.gold);
+    addBox(wb, [0.95, 0.02, 0.08], [0.68, 0.38, 0.03], materials.coral);
   } else if (id === 'bathroom') {
     // =========================================================================
-    // 6. MASTER BATHROOM (Lantai 2 Center, x = 0.0, y = 5.2, z = -2.0)
-    // Directly above Living Room! Luxurious modern spa bathroom:
-    // Freestanding oval soaking tub in center, walk-in glass shower cabin on left,
-    // double floating vanity counter with illuminated mirror on right
+    // 04 · VOLUNTEERING — COMMUNITY IMPACT, CODING WORKSHOP & HIMAFORSI MEDIATECH HUB
+    // (Lantai 2 Center, x = 0.0, y = 5.2, z = -2.0)
+    // Community Leadership Stage & Dual Interactive Teaching Screens, Guest Speaker
+    // Lectern, "RTIK Goes to School" Student Coding Workshop Tables, HIMAFORSI Camera Rig
     // =========================================================================
 
-    // Freestanding Modern Oval Soaking Bathtub in West Spa Wing (x = -3.7, z = -1.8)
-    const tub = new THREE.Group();
-    tub.position.set(x - 3.7, y + 0.42, z + 0.2);
-    parent.add(tub);
-    // Outer porcelain oval body
-    addCylinder(tub, [0, 0, 0], 1.25, 0.95, 0.84, materials.ceramic, { segments: 24 });
-    // Inner tub recess with clear spa water
-    addCylinder(tub, [0, 0.15, 0], 1.1, 0.85, 0.6, materials.ceramic, { segments: 24 });
-    addCylinder(tub, [0, 0.18, 0], 1.05, 0.8, 0.05, materials.poolWater, { segments: 24, shadow: false });
-    // Floor-mounted chrome freestanding tub filler & hand shower
-    addCylinder(parent, [x - 2.45, y + 0.55, z + 0.2], 0.03, 0.03, 1.1, materials.chrome);
-    addBox(parent, [x - 2.55, y + 1.05, z + 0.2], [0.22, 0.05, 0.05], materials.chrome);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.7, y + 0.45, z + 0.2], [1.3, 0.45, 1.0]);
+    // 1. Community Leadership Backdrop & Dual Interactive Teaching Screens on Back Wall (z = -7.3)
+    const volWall = new THREE.Group();
+    volWall.position.set(x, y, z - 5.3);
+    parent.add(volWall);
 
-    // Walk-in Glass Shower Cabin in Rear-West Corner (x = -3.7, z = -4.4)
-    const showerX = x - 3.7;
-    const showerZ = z - 4.4;
-    // Shower tray plinth
-    addBox(parent, [showerX, y + 0.08, showerZ], [2.2, 0.16, 2.2], materials.ceramic);
-    // Clear glass shower partition panels
-    addBox(parent, [showerX + 1.05, y + 2.1, showerZ], [0.06, 4.0, 2.2], materials.glass);
-    addBox(parent, [showerX, y + 2.1, showerZ + 1.05], [2.1, 4.0, 0.06], materials.glass);
-    // Chrome ceiling rain showerhead & mixer
-    addCylinder(parent, [showerX, y + 3.8, showerZ], 0.22, 0.22, 0.04, materials.chrome);
-    addCylinder(parent, [showerX, y + 4.0, showerZ], 0.025, 0.025, 0.4, materials.chrome);
-    addFurnitureCollider(world, RAPIER, staticBodies, [showerX, y + 2.0, showerZ], [1.15, 2.0, 1.15]);
-
-    // Floating Double Vanity Counter with Illuminated Mirror on Bathroom Back Wall
-    const vanityX = x - 0.4;
-    const vanityZ = z - 4.4;
-    // Wood vanity cabinet
-    addBox(parent, [vanityX, y + 0.85, vanityZ], [3.0, 0.48, 1.0], materials.woodDark);
-    addBox(parent, [vanityX, y + 1.1, vanityZ], [3.1, 0.08, 1.05], materials.ceramic);
-    // Twin ceramic vessel sinks & chrome faucets
-    for (const vx of [-0.75, 0.75]) {
-      addCylinder(parent, [vanityX + vx, y + 1.22, vanityZ], 0.3, 0.24, 0.18, materials.ceramic, { segments: 16 });
-      addCylinder(parent, [vanityX + vx, y + 1.38, vanityZ - 0.32], 0.03, 0.03, 0.32, materials.chrome);
+    addBox(volWall, [0, 0.12, 0.65], [8.6, 0.24, 1.8], materials.woodWarm);
+    addBox(volWall, [0, 0.25, 1.52], [8.64, 0.04, 0.08], materials.brass);
+    // Left & Right Interactive Classroom Display Screens flanking 04 · Volunteering board
+    for (const side of [-1, 1]) {
+      const sx = side * 3.1;
+      addBox(volWall, [sx, 2.35, 0.08], [2.1, 1.35, 0.1], materials.metalDark);
+      addBox(volWall, [sx, 2.35, 0.14], [1.96, 1.22, 0.02], side < 0 ? materials.screenCode : materials.screenGlow, { shadow: false });
+      addBox(volWall, [sx, 2.35, 0.02], [2.24, 1.48, 0.04], materials.brass);
     }
-    // Large illuminated mirror on back wall
-    addBox(parent, [vanityX, y + 2.5, vanityZ - 0.52], [2.8, 1.8, 0.06], materials.mirror);
-    addBox(parent, [vanityX, y + 2.5, vanityZ - 0.54], [3.0, 2.0, 0.02], materials.glow, { shadow: false });
-    addFurnitureCollider(world, RAPIER, staticBodies, [vanityX, y + 0.7, vanityZ], [1.55, 0.7, 0.55]);
 
-    // Luxury rolled bath towels in woven basket
-    addCylinder(parent, [x + 2.4, y + 0.22, z + 1.2], 0.32, 0.26, 0.42, materials.bark, { segments: 14 });
-    addSphere(parent, [x + 2.4, y + 0.45, z + 1.2], [0.26, 0.15, 0.26], materials.cream);
+    // 2. Guest Speaker Lectern / Podium ("Guru Tamu SMK Muhammadiyah 5 Kepanjen")
+    const lectern = new THREE.Group();
+    lectern.position.set(x + 1.65, y + 0.24, z - 4.15);
+    lectern.rotation.y = -0.25;
+    parent.add(lectern);
+    addBox(lectern, [0, 0.58, 0], [0.78, 1.16, 0.56], materials.woodDark);
+    addBox(lectern, [0, 1.18, 0.04], [0.88, 0.08, 0.68], materials.woodWarm, { rotation: [0.22, 0, 0] });
+    addBox(lectern, [0, 0.78, 0.29], [0.52, 0.42, 0.03], materials.gold);
+    addCylinder(lectern, [0.18, 1.32, -0.05], 0.015, 0.015, 0.28, materials.chrome, { rotation: [0.3, 0, 0] });
+    addFurnitureCollider(world, RAPIER, staticBodies, [x + 1.65, y + 0.85, z - 4.15], [0.55, 0.85, 0.5]);
+
+    // 3. "RTIK Goes to School" Collaborative Student Coding Workshop Tables (Cleared from right staircase)
+    for (const tx of [-1.35, 0.85]) {
+      const wTable = new THREE.Group();
+      wTable.position.set(x + tx, y, z - 1.3);
+      parent.add(wTable);
+
+      addBox(wTable, [0, 0.78, 0], [1.85, 0.08, 1.1], materials.cream);
+      addBox(wTable, [0, 0.83, 0], [1.89, 0.03, 1.14], materials.woodWarm);
+      addCylinder(wTable, [-0.75, 0.39, -0.4], 0.05, 0.05, 0.78, materials.metalDark);
+      addCylinder(wTable, [0.75, 0.39, -0.4], 0.05, 0.05, 0.78, materials.metalDark);
+      addCylinder(wTable, [-0.75, 0.39, 0.4], 0.05, 0.05, 0.78, materials.metalDark);
+      addCylinder(wTable, [0.75, 0.39, 0.4], 0.05, 0.05, 0.78, materials.metalDark);
+
+      // Student Coding Laptops on Workshop Table
+      for (const lx of [-0.46, 0.46]) {
+        addBox(wTable, [lx, 0.85, -0.08], [0.42, 0.025, 0.30], materials.chrome);
+        addBox(wTable, [lx, 1.02, -0.22], [0.42, 0.28, 0.025], materials.metalDark, { rotation: [-0.2, 0, 0] });
+        addBox(wTable, [lx, 1.02, -0.205], [0.38, 0.24, 0.01], lx < 0 ? materials.screenCode : materials.screenGlow, {
+          rotation: [-0.2, 0, 0],
+          shadow: false,
+        });
+      }
+      // Workshop Collaborative Stools
+      for (const stx of [-0.48, 0.48]) {
+        addCylinder(wTable, [stx, 0.48, 0.75], 0.22, 0.22, 0.08, stx < 0 ? materials.emerald : materials.coral, { segments: 12 });
+        addCylinder(wTable, [stx, 0.24, 0.75], 0.04, 0.06, 0.46, materials.metalDark);
+      }
+      addFurnitureCollider(world, RAPIER, staticBodies, [x + tx, y + 0.55, z - 1.2], [0.98, 0.55, 0.85]);
+    }
+
+    // 4. HIMAFORSI MediaTech Cinema Camera Rig, Softbox Key Light & Editing Station (West Wing)
+    const camRig = new THREE.Group();
+    camRig.position.set(x - 2.85, y, z - 2.1);
+    camRig.rotation.y = 0.45;
+    parent.add(camRig);
+    // Tripod legs & center column
+    addCylinder(camRig, [0, 0.65, 0], 0.04, 0.28, 1.3, materials.metalDark, { segments: 8 });
+    // Cinema Broadcast Camera Body, Matte Box Lens & Top Handle
+    addBox(camRig, [0, 1.38, 0], [0.28, 0.26, 0.46], materials.ink);
+    addCylinder(camRig, [0, 1.38, 0.32], 0.11, 0.09, 0.24, materials.metalDark, { rotation: [Math.PI * 0.5, 0, 0], segments: 12 });
+    addBox(camRig, [0, 1.38, 0.45], [0.26, 0.22, 0.06], materials.brass);
+    addBox(camRig, [0.22, 1.44, -0.05], [0.18, 0.12, 0.03], materials.screenGlow, { shadow: false });
+
+    // Studio LED Softbox Key Light next to Camera Rig
+    const softbox = new THREE.Group();
+    softbox.position.set(x - 3.65, y, z - 3.3);
+    softbox.rotation.y = 0.55;
+    parent.add(softbox);
+    addCylinder(softbox, [0, 0.85, 0], 0.03, 0.24, 1.7, materials.metalDark, { segments: 8 });
+    addBox(softbox, [0, 1.78, 0.05], [0.75, 0.55, 0.18], materials.ink, { rotation: [0.15, 0, 0] });
+    addBox(softbox, [0, 1.78, 0.15], [0.68, 0.48, 0.02], materials.glow, { rotation: [0.15, 0, 0], shadow: false });
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.2, y + 0.9, z - 2.6], [0.85, 0.9, 1.0]);
   } else if (id === 'experience') {
     // =========================================================================
-    // 7. LIBRARY NOOK (Lantai 2 Mid-Right, x = 10.75, y = 5.2, z = -2.0)
-    // Floor-to-ceiling wooden bookshelves spanning back wall packed with colorful books,
-    // cozy teal velvet reading sofa with cushions, brass arc reading lamp, side table
+    // 02 · WORK EXPERIENCE — CORPORATE CAREER TIMELINE HALL & FINTECH COMMAND CENTER
+    // (Lantai 2 Mid-Right, x = 10.75, y = 5.2, z = -2.0)
+    // 5-Role LinkedIn Chronological Career Wall (Destino Copytrade, MQL5 Algo Trading,
+    // Posyandu UNMUH, PT. Antosa Architect, Bank Mandiri), FinTech Trading Desk & Enterprise Table
     // =========================================================================
 
-    // Floor-to-ceiling Bookshelf Spanning the Back Wall (z = -7.5)
-    const shelf = new THREE.Group();
-    shelf.position.set(x, y, z - 5.4);
-    parent.add(shelf);
+    // 1. 5-Role Chronological LinkedIn Career Wall on Back Wall (z = -7.3)
+    const careerWall = new THREE.Group();
+    careerWall.position.set(x, y, z - 5.3);
+    parent.add(careerWall);
 
-    // Outer dark wood shelving frame
-    addBox(shelf, [0, 2.4, 0], [7.8, 4.8, 0.5], materials.woodDark);
-    for (let sy = 0.8; sy <= 4.2; sy += 0.8) {
-      addBox(shelf, [0, sy, 0.02], [7.6, 0.06, 0.48], materials.woodWarm);
+    addBox(careerWall, [0, 2.4, -0.12], [8.8, 4.8, 0.22], materials.woodDark);
+    // Illuminated Horizontal Golden Career Timeline Rail across full width
+    addBox(careerWall, [0, 4.35, 0.04], [8.4, 0.08, 0.08], materials.gold);
+    addBox(careerWall, [0, 4.35, 0.09], [8.2, 0.03, 0.02], materials.glow, { shadow: false });
+    for (const nodeX of [-3.6, -2.2, 0, 2.2, 3.6]) {
+      addSphere(careerWall, [nodeX, 4.35, 0.11], [0.09, 0.09, 0.09], materials.gold, { shadow: false, lowPoly: true });
     }
 
-    // Rows of Colorful Hardcover Books (batched into single draw call per color, no shadow overhead)
-    const bookColors = [materials.coral, materials.yellowSun, materials.blueSky, materials.mint, materials.pinkRose, materials.woodDark];
-    const bookBatch = new BatchCollector();
-    for (let row = 0; row < 5; row += 1) {
-      const by = 0.95 + row * 0.8;
-      for (let bx = -3.4; bx <= 3.4; bx += 0.32) {
-        if (Math.abs(bx) < 2.0 && row >= 1 && row <= 3) continue;
-        const seed = Math.abs(Math.sin(bx * 13.7 + row * 5.3));
-        const bookH = 0.42 + seed * 0.18;
-        const bookW = 0.18 + (seed % 0.1) * 0.8;
-        bookBatch.addBox(
-          [bx, by - 0.24 + bookH * 0.5, 0.05],
-          [bookW, bookH, 0.36],
-          bookColors[Math.abs(Math.round(bx * 7 + row)) % bookColors.length]
-        );
-      }
+    // 4 Illuminated Corporate Role Showcase Bays flanking the central 02 · Work Experience board
+    const roleBays = [
+      { bx: -3.2, by: 2.95, accent: materials.emeraldBright, screen: materials.screenGlow }, // Destino Copytrade
+      { bx: -3.2, by: 1.35, accent: materials.gold, screen: materials.screenCode },          // MQL5 Algo Trading
+      { bx: 3.2, by: 2.95, accent: materials.coral, screen: materials.screenGlow },          // Posyandu UNMUH
+      { bx: 3.2, by: 1.35, accent: materials.blueSky, screen: materials.screenCad },         // PT. Antosa & Bank Mandiri
+    ];
+    for (const bay of roleBays) {
+      addBox(careerWall, [bay.bx, bay.by, 0.05], [1.95, 1.25, 0.12], materials.ink);
+      addBox(careerWall, [bay.bx, bay.by, 0.01], [2.08, 1.36, 0.06], materials.brass);
+      addBox(careerWall, [bay.bx, bay.by + 0.52, 0.12], [1.82, 0.10, 0.03], bay.accent);
+      addBox(careerWall, [bay.bx, bay.by - 0.06, 0.12], [1.78, 0.92, 0.02], bay.screen, { shadow: false });
     }
-    bookBatch.build(shelf, false);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 2.4, z - 5.4], [3.9, 2.4, 0.35]);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 2.4, z - 5.3], [4.4, 2.4, 0.3]);
 
-    // Cozy Loveseat / Reading Sofa in Teal/Mint Velvet facing forward (+Z)
-    const sofa = new THREE.Group();
-    sofa.position.set(x, y, z - 0.8);
-    parent.add(sofa);
-    addBox(sofa, [0, 0.45, 0], [2.8, 0.45, 1.2], materials.mint);
-    addBox(sofa, [0, 1.0, -0.45], [2.8, 0.7, 0.3], materials.mint);
-    addBox(sofa, [-1.3, 0.68, 0], [0.25, 0.55, 1.2], materials.mint);
-    addBox(sofa, [1.3, 0.68, 0], [0.25, 0.55, 1.2], materials.mint);
-    addBox(sofa, [-0.65, 0.8, -0.2], [0.42, 0.38, 0.2], materials.cushionYellow, { rotation: [0.1, 0.15, 0] });
-    addBox(sofa, [0.65, 0.8, -0.2], [0.42, 0.38, 0.2], materials.cushionCoral, { rotation: [0.1, -0.15, 0] });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.55, z - 0.8], [1.45, 0.55, 0.65]);
+    // 2. FinTech & MQL5 Algorithmic Copytrading Command Desk (Left, x - 2.3, z - 2.1)
+    const fintechDesk = new THREE.Group();
+    fintechDesk.position.set(x - 2.3, y, z - 2.1);
+    parent.add(fintechDesk);
 
-    // Brass Arc Floor Lamp curving over reading sofa
-    const lamp = new THREE.Group();
-    lamp.position.set(x - 2.2, y, z - 0.8);
-    parent.add(lamp);
-    addCylinder(lamp, [0, 0.04, 0], 0.36, 0.36, 0.08, materials.brass, { segments: 16 });
-    addCylinder(lamp, [0, 1.6, 0], 0.03, 0.03, 3.2, materials.brass);
-    addCylinder(lamp, [0.55, 3.2, 0], 0.03, 0.03, 1.2, materials.brass, { rotation: [0, 0, Math.PI * 0.45] });
-    addCylinder(lamp, [1.1, 2.8, 0], 0.22, 0.28, 0.25, materials.brass, { segments: 16 });
-    addSphere(lamp, [1.1, 2.7, 0], [0.1, 0.1, 0.1], materials.glow, { shadow: false });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 2.2, y + 0.8, z - 0.8], [0.35, 0.8, 0.35]);
+    addBox(fintechDesk, [0, 0.88, 0], [2.5, 0.1, 1.25], materials.woodDark);
+    addBox(fintechDesk, [0, 0.94, 0], [2.54, 0.03, 1.29], materials.brass);
+    addBox(fintechDesk, [-1.05, 0.44, 0], [0.2, 0.88, 1.1], materials.metalDark);
+    addBox(fintechDesk, [1.05, 0.44, 0], [0.2, 0.88, 1.1], materials.metalDark);
+    // Triple MetaTrader 5 / Destino Copytrade Curved Displays
+    for (const [idx, mx] of [-0.78, 0, 0.78].entries()) {
+      const rotY = idx === 0 ? 0.25 : idx === 2 ? -0.25 : 0;
+      const mz = idx === 1 ? -0.28 : -0.18;
+      addBox(fintechDesk, [mx, 1.34, mz], [0.74, 0.52, 0.05], materials.metalDark, { rotation: [0, rotY, 0] });
+      addBox(fintechDesk, [mx, 1.34, mz + 0.03], [0.68, 0.46, 0.02], idx === 1 ? materials.screenCode : materials.screenGlow, {
+        rotation: [0, rotY, 0],
+        shadow: false,
+      });
+    }
+    // 3D Bullish Financial Candlestick Sculpture on corner of desk
+    for (let c = 0; c < 4; c += 1) {
+      const ch = 0.16 + c * 0.07;
+      addBox(fintechDesk, [-0.95 + c * 0.12, 0.95 + ch * 0.5, 0.32], [0.07, ch, 0.07], c === 1 ? materials.coral : materials.emeraldBright);
+    }
+    // Executive Trading Chair
+    addBox(fintechDesk, [0, 0.5, 0.88], [0.72, 0.12, 0.7], materials.navy);
+    addBox(fintechDesk, [0, 1.05, 1.2], [0.68, 0.96, 0.12], materials.navy);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 2.3, y + 0.75, z - 1.9], [1.3, 0.75, 1.05]);
 
-    // Round oak side table with steaming coffee mug
-    addCylinder(parent, [x + 2.0, y + 0.38, z - 0.4], 0.45, 0.45, 0.06, materials.woodDark, { segments: 16 });
-    addCylinder(parent, [x + 2.0, y + 0.18, z - 0.4], 0.06, 0.06, 0.36, materials.woodDark);
-    addCylinder(parent, [x + 2.0, y + 0.48, z - 0.4], 0.08, 0.07, 0.12, materials.ceramic, { segments: 12 });
+    // 3. Enterprise & Posyandu Architecture Table (Right, x + 2.3, z - 2.1)
+    const entTable = new THREE.Group();
+    entTable.position.set(x + 2.3, y, z - 2.1);
+    parent.add(entTable);
+
+    addBox(entTable, [0, 0.88, 0], [2.5, 0.1, 1.25], materials.ceramic);
+    addBox(entTable, [0, 0.94, 0], [2.54, 0.03, 1.29], materials.brass);
+    addBox(entTable, [-1.05, 0.44, 0], [0.2, 0.88, 1.1], materials.woodWarm);
+    addBox(entTable, [1.05, 0.44, 0], [0.2, 0.88, 1.1], materials.woodWarm);
+    // PT. Antosa Architect 3D Building Blueprint Scale Model on Left Half
+    addBox(entTable, [-0.55, 0.97, 0], [0.95, 0.04, 0.78], materials.blueSky);
+    addBox(entTable, [-0.65, 1.16, -0.05], [0.36, 0.34, 0.36], materials.cream);
+    addBox(entTable, [-0.32, 1.10, 0.08], [0.28, 0.22, 0.32], materials.woodWarm);
+    addBox(entTable, [-0.65, 1.35, -0.05], [0.42, 0.05, 0.42], materials.terracotta);
+    // Posyandu UNMUH Clinical Health Telemetry & Bank Mandiri Mobile Kiosk on Right Half
+    addBox(entTable, [0.58, 1.32, -0.2], [0.92, 0.56, 0.06], materials.metalDark);
+    addBox(entTable, [0.58, 1.32, -0.16], [0.86, 0.50, 0.02], materials.screenGlow, { shadow: false });
+    addBox(entTable, [0.58, 0.98, 0.25], [0.24, 0.04, 0.42], materials.ink);
+    addBox(entTable, [0.58, 1.005, 0.25], [0.20, 0.01, 0.36], materials.blueSky, { shadow: false });
+    addFurnitureCollider(world, RAPIER, staticBodies, [x + 2.3, y + 0.75, z - 2.1], [1.3, 0.75, 0.75]);
+
+    // 4. Executive Career Lounge Bench in Foreground Center (x, z + 0.55)
+    const bench = new THREE.Group();
+    bench.position.set(x, y, z + 0.55);
+    parent.add(bench);
+    addBox(bench, [0, 0.42, 0], [2.4, 0.36, 0.9], materials.terracotta);
+    addBox(bench, [0, 0.2, 0], [2.44, 0.08, 0.94], materials.brass);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.42, z + 0.55], [1.25, 0.42, 0.5]);
   } else if (id === 'process') {
     // =========================================================================
-    // 8. CREATIVE STUDIO (Lantai 2 Far-Right, x = 21.0, y = 5.2, z = -2.0)
-    // Creator workstation facing forward (+Z): Dual screens, studio monitors, electric guitar
-    // on floor stand, synthesizer keyboard, acoustic foam wall panels
+    // 08 · GITHUB CONTRIBUTIONS — 3D GITHUB CONTRIBUTION OBSERVATORY & DEVOPS HUB
+    // (Lantai 2 Far-Right, x = 21.0, y = 5.2, z = -2.0)
+    // Monumental 3D GitHub Contribution Heatmap Wall (1,039 Contributions in green/emerald
+    // tiles), Open-Source DevOps Command Desk, and 6-Stage Deterministic SDLC Pipeline Console
     // =========================================================================
 
-    // Creator Desk in dark walnut facing forward (+Z)
-    addBox(parent, [x, y + 0.95, z - 2.2], [3.8, 0.14, 1.5], materials.woodDark);
-    addBox(parent, [x - 1.7, y + 0.48, z - 2.2], [0.2, 0.95, 1.3], materials.metalDark);
-    addBox(parent, [x + 1.7, y + 0.48, z - 2.2], [0.2, 0.95, 1.3], materials.metalDark);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.55, z - 2.2], [1.95, 0.55, 0.8]);
+    // 1. Monumental 3D GitHub Contribution Heatmap Wall on Back Wall (z = -7.5)
+    const ghWall = new THREE.Group();
+    ghWall.position.set(x, y, z - 5.5);
+    parent.add(ghWall);
 
-    // Dual Widescreen Creative Monitors on Desk
-    for (const sx of [-0.75, 0.75]) {
-      addBox(parent, [x + sx, y + 1.62, z - 2.4], [1.2, 0.76, 0.08], materials.metalDark);
-      addBox(parent, [x + sx, y + 1.62, z - 2.35], [1.12, 0.68, 0.02], sx < 0 ? materials.screenDAW : materials.screenCad, { shadow: false });
-    }
+    addBox(ghWall, [0, 2.4, -0.08], [8.2, 4.7, 0.16], materials.ink);
+    addBox(ghWall, [0, 4.72, 0.02], [8.4, 0.12, 0.28], materials.emeraldBright);
 
-    // Studio Near-Field Audio Monitors (Speakers) on desk
-    for (const spx of [-1.55, 1.55]) {
-      addBox(parent, [x + spx, y + 1.35, z - 2.2], [0.32, 0.48, 0.32], materials.metalDark);
-      addCylinder(parent, [x + spx, y + 1.38, z - 2.02], 0.09, 0.09, 0.04, materials.yellowSun, { rotation: [Math.PI * 0.5, 0, 0] });
-    }
-
-    // 49-Key Synthesizer Keyboard on pull-out desk shelf
-    addBox(parent, [x, y + 0.88, z - 1.6], [2.2, 0.08, 0.45], materials.ink);
-    addBox(parent, [x, y + 0.94, z - 1.55], [2.1, 0.03, 0.32], materials.cream);
-
-    // Electric Guitar on Floor Stand on right side of desk (x = 23.4)
-    const guitarGroup = new THREE.Group();
-    guitarGroup.position.set(x + 2.5, y, z - 1.2);
-    guitarGroup.rotation.y = -0.35;
-    parent.add(guitarGroup);
-    // Guitar stand
-    addCylinder(guitarGroup, [0, 0.04, 0], 0.28, 0.28, 0.08, materials.metalDark, { segments: 12 });
-    addCylinder(guitarGroup, [0, 0.55, 0], 0.025, 0.025, 1.1, materials.metalDark);
-    // Guitar solid contoured body (Cherry Red)
-    addBox(guitarGroup, [0, 0.6, 0.08], [0.55, 0.75, 0.1], materials.coral);
-    addBox(guitarGroup, [0, 0.88, 0.08], [0.42, 0.35, 0.08], materials.coral);
-    // Maple neck & headstock with chrome tuning pegs
-    addBox(guitarGroup, [0, 1.35, 0.08], [0.12, 0.95, 0.06], materials.woodLight);
-    addBox(guitarGroup, [0, 1.88, 0.08], [0.16, 0.24, 0.05], materials.woodDark);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 2.5, y + 0.7, z - 1.2], [0.4, 0.7, 0.4]);
-
-    // Studio Ergonomic Mesh Chair
-    addBox(parent, [x, y + 0.52, z - 0.9], [0.72, 0.12, 0.72], materials.metalDark);
-    addBox(parent, [x, y + 1.1, z - 1.22], [0.65, 1.0, 0.08], materials.metalDark);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.6, z - 0.9], [0.4, 0.6, 0.4]);
-
-    // Acoustic Foam Wall Panels on Back Wall (z = -7.7), placed around display board without clipping
-    for (let ax = -3.2; ax <= 3.2; ax += 1.2) {
-      for (let ay = 2.0; ay <= 4.2; ay += 1.1) {
-        if (Math.abs(ax) < 2.0 && ay < 4.0) continue;
-        addBox(parent, [x + ax, y + ay, z - 5.7], [0.95, 0.9, 0.06], materials.acousticFoam);
+    // Batched 3D GitHub Contribution Grid Tiles surrounding the central 08 · GitHub board
+    const ghBatch = new BatchCollector();
+    const ghLevels = [materials.stone, materials.mint, materials.emerald, materials.emeraldBright];
+    for (let col = -14; col <= 14; col += 1) {
+      const gx = col * 0.26;
+      for (let row = 0; row < 11; row += 1) {
+        const gy = 0.72 + row * 0.34;
+        // Leave central window open for the 08 · GitHub Contributions display board
+        if (Math.abs(gx) < 1.95 && gy > 1.05 && gy < 3.65) continue;
+        const hash = Math.abs(Math.sin(col * 12.9898 + row * 78.233));
+        const lvl = hash > 0.78 ? 3 : hash > 0.52 ? 2 : hash > 0.28 ? 1 : 0;
+        const depth = 0.06 + lvl * 0.045;
+        ghBatch.addBox([gx, gy, depth * 0.5], [0.21, 0.26, depth], ghLevels[lvl]);
       }
     }
+    ghBatch.build(ghWall, false);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 2.4, z - 5.5], [4.1, 2.4, 0.25]);
+
+    // 2. Open-Source & CI/CD DevOps Command Desk (Left-Center, x - 1.1, z - 2.1)
+    const devopsDesk = new THREE.Group();
+    devopsDesk.position.set(x - 1.1, y, z - 2.1);
+    parent.add(devopsDesk);
+
+    addBox(devopsDesk, [0, 0.92, 0], [3.2, 0.12, 1.35], materials.woodDark);
+    addBox(devopsDesk, [0, 0.99, 0], [3.24, 0.03, 1.39], materials.emeraldBright);
+    addBox(devopsDesk, [-1.4, 0.46, 0], [0.22, 0.92, 1.2], materials.metalDark);
+    addBox(devopsDesk, [1.4, 0.46, 0], [0.22, 0.92, 1.2], materials.metalDark);
+    // Dual Widescreen GitHub Actions & PR Review Monitors
+    for (const sx of [-0.72, 0.72]) {
+      addBox(devopsDesk, [sx, 1.52, -0.25], [1.22, 0.74, 0.07], materials.metalDark);
+      addBox(devopsDesk, [sx, 1.52, -0.20], [1.14, 0.66, 0.02], sx < 0 ? materials.screenCode : materials.screenGlow, { shadow: false });
+      addCylinder(devopsDesk, [sx, 1.08, -0.28], 0.04, 0.05, 0.24, materials.metalDark);
+    }
+    // Mechanical Keyboard & Green Commit Streak Status Bar
+    addBox(devopsDesk, [0, 1.02, 0.22], [0.72, 0.03, 0.24], materials.ink);
+    addBox(devopsDesk, [0, 1.04, 0.22], [0.66, 0.015, 0.18], materials.emeraldBright, { shadow: false });
+    // Ergonomic Developer Chair
+    addBox(devopsDesk, [0, 0.52, 0.95], [0.74, 0.12, 0.72], materials.ink);
+    addBox(devopsDesk, [0, 1.08, 1.28], [0.68, 0.98, 0.12], materials.emerald);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 1.1, y + 0.75, z - 1.9], [1.65, 0.75, 1.1]);
+
+    // 3. 6-Stage Deterministic SDLC Pipeline Console (Right, x + 2.35, z - 2.0)
+    const sdlc = new THREE.Group();
+    sdlc.position.set(x + 2.35, y, z - 2.0);
+    parent.add(sdlc);
+
+    addBox(sdlc, [0, 0.52, 0], [1.65, 1.04, 1.1], materials.ink);
+    addBox(sdlc, [0, 1.06, 0], [1.72, 0.06, 1.16], materials.brass);
+    // 6 Glowing 3D SDLC Stage Pillars (01 Discovery -> 06 Observability)
+    const stageMats = [materials.blueSky, materials.gold, materials.emeraldBright, materials.coral, materials.glow, materials.emerald];
+    for (let s = 0; s < 6; s += 1) {
+      const sx = -0.62 + s * 0.25;
+      const sh = 0.24 + s * 0.06;
+      addBox(sdlc, [sx, 1.09 + sh * 0.5, 0], [0.16, sh, 0.36], stageMats[s]);
+    }
+    addFurnitureCollider(world, RAPIER, staticBodies, [x + 2.35, y + 0.75, z - 2.0], [0.9, 0.75, 0.65]);
   } else if (id === 'contact') {
-    // Rear Terrace Patio Furniture (y = 0.0, z = -11.8)
-    addBox(parent, [x, y + 0.38, z], [3.2, 0.4, 1.4], materials.woodWarm);
-    addBox(parent, [x - 1.8, y + 0.45, z], [1.0, 0.42, 1.0], materials.cushionMint);
-    addBox(parent, [x + 1.8, y + 0.45, z], [1.0, 0.42, 1.0], materials.cushionMint);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.45, z], [2.4, 0.45, 0.8]);
+    // =========================================================================
+    // 09 · CONTACT — EXECUTIVE VIP NETWORKING PAVILION & GARDEN VERANDA
+    // (Rear Terrace, x = 0.0, y = 0.0, z = -11.8)
+    // Architectural Wood-Slat Backdrop, Symmetrical Teak & Cream VIP Lounge Sofas,
+    // Marble & Brass Coffee Table with Golden Connection Sculpture & Lantern Pillars
+    // =========================================================================
+
+    // Symmetrical VIP Lounge Sofas flanking the Rear Terrace
+    for (const side of [-1, 1]) {
+      const vipSofa = new THREE.Group();
+      vipSofa.position.set(x + side * 2.55, y, z + 0.15);
+      vipSofa.rotation.y = side < 0 ? Math.PI * 0.5 : -Math.PI * 0.5;
+      parent.add(vipSofa);
+
+      addBox(vipSofa, [0, 0.22, 0], [2.2, 0.28, 0.95], materials.woodDark);
+      addBox(vipSofa, [0, 0.44, 0.04], [2.04, 0.2, 0.84], materials.cream);
+      addBox(vipSofa, [0, 0.82, -0.36], [2.04, 0.56, 0.2], materials.cream);
+      addBox(vipSofa, [-0.98, 0.58, 0], [0.2, 0.48, 0.92], materials.woodWarm);
+      addBox(vipSofa, [0.98, 0.58, 0], [0.2, 0.48, 0.92], materials.woodWarm);
+      addBox(vipSofa, [-0.55, 0.66, -0.14], [0.42, 0.34, 0.18], materials.terracotta);
+      addBox(vipSofa, [0.55, 0.66, -0.14], [0.42, 0.34, 0.18], materials.emerald);
+      addFurnitureCollider(world, RAPIER, staticBodies, [x + side * 2.55, y + 0.55, z + 0.15], [0.55, 0.55, 1.15]);
+    }
+
+    // Central Marble & Brass Networking Table with Golden Envelope / Connection Sculpture
+    addBox(parent, [x, y + 0.38, z + 0.15], [2.1, 0.08, 1.1], materials.ceramic);
+    addBox(parent, [x, y + 0.43, z + 0.15], [2.16, 0.03, 1.16], materials.brass);
+    addBox(parent, [x - 0.8, y + 0.19, z + 0.15], [0.16, 0.38, 0.85], materials.woodDark);
+    addBox(parent, [x + 0.8, y + 0.19, z + 0.15], [0.16, 0.38, 0.85], materials.woodDark);
+    // 3D Golden Communication & Global Networking Sculpture on Table Center
+    addCylinder(parent, [x, y + 0.48, z + 0.15], 0.24, 0.28, 0.06, materials.woodDark, { segments: 12 });
+    addBox(parent, [x, y + 0.68, z + 0.15], [0.52, 0.34, 0.08], materials.gold, { rotation: [0, 0.35, 0] });
+    addSphere(parent, [x, y + 0.95, z + 0.15], [0.12, 0.12, 0.12], materials.glow, { shadow: false, lowPoly: true });
+    addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.45, z + 0.15], [1.15, 0.45, 0.65]);
+
+    // Architectural Wood-Slat & Brass Pavilion Backdrop behind the 09 · Contact Display Board (z = -15.35)
+    addBox(parent, [x, y + 2.2, z - 3.55], [4.6, 4.2, 0.16], materials.woodDark);
+    addBox(parent, [x, y + 4.34, z - 3.48], [4.8, 0.12, 0.34], materials.brass);
+    for (const side of [-1, 1]) {
+      addCylinder(parent, [x + side * 2.15, y + 2.15, z - 3.42], 0.12, 0.14, 4.1, materials.brass, { segments: 10 });
+    }
+
+    // Warm Illuminated Garden Lantern Pillars flanking the Contact Board
+    for (const side of [-1, 1]) {
+      const lx = x + side * 2.65;
+      const lz = z - 1.55;
+      addBox(parent, [lx, y + 0.65, lz], [0.36, 1.3, 0.36], materials.woodDark);
+      addBox(parent, [lx, y + 1.34, lz], [0.42, 0.08, 0.42], materials.brass);
+      addBox(parent, [lx, y + 1.56, lz], [0.26, 0.36, 0.26], materials.glow, { shadow: false });
+      addBox(parent, [lx, y + 1.78, lz], [0.44, 0.08, 0.44], materials.brass);
+    }
   }
 }
 

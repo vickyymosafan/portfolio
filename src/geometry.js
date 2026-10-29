@@ -5,7 +5,7 @@ import { getBatchFamilyForMaterial, vertexColorFamilies } from './materials.js';
 export const sharedGeometries = {
   box: new THREE.BoxGeometry(1, 1, 1),
   flatBox: new THREE.BoxGeometry(1, 1, 1),
-  heroSphere: new THREE.SphereGeometry(1, 10, 8),
+  heroSphere: new THREE.SphereGeometry(1, 8, 6),
   sphere: new THREE.SphereGeometry(1, 6, 4),
   lowSphere: new THREE.SphereGeometry(1, 5, 3),
   tinySphere: new THREE.SphereGeometry(1, 4, 2),
@@ -23,7 +23,8 @@ const cylinderCache = new Map([
 ]);
 
 function getSharedCylinder(segments, avgRadius = 0.2) {
-  if (avgRadius <= 0.08) return sharedGeometries.thinCylinder;
+  if (avgRadius <= 0.14) return sharedGeometries.thinCylinder;
+  if (avgRadius <= 0.36) return sharedGeometries.cylinder;
   const clamped = Math.min(8, Math.max(4, segments || 6));
   if (!cylinderCache.has(clamped)) {
     const cyl = new THREE.CylinderGeometry(1, 1, 1, clamped);
@@ -95,7 +96,8 @@ export function addBox(parent, position, size, surface, options = {}) {
 }
 
 export function addSphere(parent, position, size, surface, options = {}) {
-  const geo = options.lowPoly ? sharedGeometries.lowSphere : sharedGeometries.heroSphere;
+  const maxDim = Math.max(size[0], size[1], size[2]);
+  const geo = options.lowPoly || maxDim <= 0.18 ? sharedGeometries.lowSphere : sharedGeometries.heroSphere;
   const mesh = new THREE.Mesh(geo, surface);
   mesh.position.set(...position);
   mesh.scale.set(...size);

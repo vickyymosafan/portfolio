@@ -2413,9 +2413,18 @@ async function init() {
     const sectionParam = urlParams.get('section');
     if (sectionParam && portfolio.content[sectionParam]) {
       if (!started) startExperience();
-      setRoom(sectionParam, { teleport: true, open: true });
-      if (cinematicDirector && cinematicDirector.isActive()) {
+      const openCard = urlParams.get('card') !== '0';
+      setRoom(sectionParam, { teleport: true, open: openCard });
+      if (openCard && cinematicDirector && cinematicDirector.isActive()) {
         cinematicDirector.skipToContent();
+      }
+      if (!openCard) {
+        const rm = portfolio.rooms.find((r) => r.id === sectionParam);
+        if (rm?.cameraShot) {
+          teleportCameraOverride = { cam: rm.cameraShot.pos, target: rm.cameraShot.target };
+          camera.position.set(...rm.cameraShot.pos);
+          camera.lookAt(...rm.cameraShot.target);
+        }
       }
     }
     const camParam = urlParams.get('cam');

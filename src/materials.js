@@ -155,6 +155,11 @@ export const materials = {
   bark: std(palette.woodDark, 0.8, { map: textures.wood }),
 
   // Accents & Furnishings
+  terracotta: std(palette.terracotta, 0.68, { map: textures.fabric }),
+  gold: std(0xe5b53b, 0.22, { metalness: 0.85 }),
+  emerald: std(0x2ea043, 0.55),
+  emeraldBright: std(0x56d364, 0.50),
+  navy: std(palette.blueNavy, 0.68, { map: textures.fabric }),
   coral: std(palette.coral, 0.74, { map: textures.fabric }),
   blue: std(palette.blueSky, 0.72, { map: textures.fabric }),
   bluePastel: std(palette.bluePastel, 0.72, { map: textures.fabric }),
