@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { materials, palette } from './materials.js';
+import { materials, palette, vertexColorFamilies } from './materials.js';
 import { addBox, addCylinder, addSphere, BatchCollector } from './geometry.js';
 
 /**
@@ -49,12 +49,6 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
     batch.addBox([lx, 5.9, 30.2], [0.12, 0.12, 2.5], materials.metalDark, { rotation: [0.18, 0, 0] });
     batch.addBox([lx, 5.75, 31.4], [0.38, 0.14, 0.95], materials.metalDark);
     batch.addBox([lx, 5.68, 31.4], [0.28, 0.04, 0.75], materials.glow, { shadow: false });
-
-    const roadLight = new THREE.SpotLight(0xfff4db, 1.8, 18.0, Math.PI * 0.28, 0.45);
-    roadLight.position.set(lx, 5.6, 31.4);
-    roadLight.target.position.set(lx, 0, 35.5);
-    securityGroup.add(roadLight);
-    securityGroup.add(roadLight.target);
 
     const poleBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(lx, 3.0, 29.0));
     world.createCollider(RAPIER.ColliderDesc.cylinder(3.0, 0.3), poleBody);
@@ -142,13 +136,6 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
     });
     batch.addSphere([px, 3.86, pz], [0.05, 0.05, 0.05], materials.estateGateGold);
 
-    // Warm lantern light
-    if (addLight) {
-      const pLight = new THREE.PointLight(0xffe299, 1.1, 7.5, 1.8);
-      pLight.position.set(px, 3.45, pz);
-      securityGroup.add(pLight);
-    }
-
     // Physics collider
     const pBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(px, 1.5, pz));
     world.createCollider(RAPIER.ColliderDesc.cuboid(0.5, 1.5, 0.5), pBody);
@@ -192,15 +179,10 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
       batch.addSphere([fx + 0.18, 0.72, planterZ + 0.08], [0.1, 0.1, 0.1], materials.flowerYellow);
     }
 
-    // Mini ground uplight spotlighting wall panel at night
+    // Mini ground uplight fixture on wall panel
     if (width >= 3.0) {
       batch.addCylinder([midX, 0.55, planterZ + 0.15], 0.04, 0.05, 0.12, materials.carriageLanternMetal);
       batch.addSphere([midX, 0.62, planterZ + 0.15], [0.05, 0.05, 0.05], materials.glow, { shadow: false });
-      const uplight = new THREE.SpotLight(0xffdfa8, 1.2, 5.0, Math.PI * 0.3, 0.6);
-      uplight.position.set(midX, 0.65, planterZ + 0.15);
-      uplight.target.position.set(midX, 1.8, z);
-      securityGroup.add(uplight);
-      securityGroup.add(uplight.target);
     }
 
     // Physics collider
@@ -246,11 +228,6 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
   for (const lx of [-1.8, 1.8]) {
     batch.addBox([monMidX + lx, 0.45, monPlanterZ + 0.28], [0.18, 0.14, 0.18], materials.brass);
     batch.addSphere([monMidX + lx, 0.52, monPlanterZ + 0.28], [0.08, 0.08, 0.08], materials.glow, { shadow: false });
-    const signLight = new THREE.SpotLight(0xffeaad, 1.8, 6.0, Math.PI * 0.32, 0.5);
-    signLight.position.set(monMidX + lx, 0.55, monPlanterZ + 0.28);
-    signLight.target.position.set(monMidX + lx * 0.5, 1.8, monZ + 0.45);
-    securityGroup.add(signLight);
-    securityGroup.add(signLight.target);
   }
 
   // Monument physics collider
@@ -326,10 +303,6 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
       segments: 4,
       rotation: [0, Math.PI * 0.25, 0],
     });
-
-    const pierLight = new THREE.PointLight(0xffe6a3, 1.6, 9.5, 1.8);
-    pierLight.position.set(gpx, 4.3, monZ);
-    securityGroup.add(pierLight);
 
     const pierBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(gpx, 2.0, monZ));
     world.createCollider(RAPIER.ColliderDesc.cuboid(0.66, 2.0, 0.66), pierBody);
@@ -456,20 +429,6 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
   batch.addBox([ghX + 0.9, 0.65, ghZ], [0.55, 0.1, 0.55], materials.leatherDark);
   batch.addBox([ghX + 0.9, 1.1, ghZ - 0.25], [0.5, 0.85, 0.1], materials.leatherDark);
 
-  // Warm interior ceiling illumination
-  const ghLight = new THREE.PointLight(0xffe2a3, 1.6, 7.5, 1.8);
-  ghLight.position.set(ghX, 2.7, ghZ);
-  securityGroup.add(ghLight);
-
-  // Exterior soffit downlights under overhanging roof
-  for (const [ox, oz] of [[-1.8, 1.8], [1.8, 1.8], [-1.8, -1.8], [1.8, -1.8]]) {
-    const soffitLight = new THREE.SpotLight(0xfff1cf, 1.2, 5.0, Math.PI * 0.35, 0.4);
-    soffitLight.position.set(ghX + ox, 3.15, ghZ + oz);
-    soffitLight.target.position.set(ghX + ox, 0, ghZ + oz);
-    securityGroup.add(soffitLight);
-    securityGroup.add(soffitLight.target);
-  }
-
   // Guardhouse physics collider
   const ghBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(ghX, 1.6, ghZ));
   world.createCollider(RAPIER.ColliderDesc.cuboid((ghW + 0.4) * 0.5, 1.6, (ghD + 0.4) * 0.5), ghBody);
@@ -577,7 +536,15 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
     // Gold embossed security crest / emblem on front of cap
     gb.addBox([0, 2.34, 0.29], [0.09, 0.1, 0.03], materials.guardBadge);
 
-    gb.build(rig, true);
+    const gGeo = gb.toMergedGeometry();
+    if (gGeo) {
+      const gMesh = new THREE.Mesh(gGeo, vertexColorFamilies.matte);
+      gMesh.castShadow = true;
+      gMesh.receiveShadow = true;
+      gMesh.matrixAutoUpdate = false;
+      gMesh.updateMatrix();
+      rig.add(gMesh);
+    }
 
     // Physics collider
     const gBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(gx, 1.1, gz));

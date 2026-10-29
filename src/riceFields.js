@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { materials, palette } from './materials.js';
+import { materials, palette, vertexColorFamilies } from './materials.js';
 import { addBox, addCylinder, addSphere, BatchCollector } from './geometry.js';
 
 /**
@@ -51,8 +51,8 @@ export function createRiceFields(scene, world, RAPIER, staticBodies) {
     staticBodies.push(pBody);
 
     // Organic rows of rice plant clusters (rumpun padi)
-    const stepX = 1.35;
-    const stepZ = 1.4;
+    const stepX = 1.65;
+    const stepZ = 1.7;
     for (let rx = p.x - p.w * 0.5 + 1.2; rx <= p.x + p.w * 0.5 - 1.2; rx += stepX) {
       for (let rz = p.z - p.d * 0.5 + 1.2; rz <= p.z + p.d * 0.5 - 1.2; rz += stepZ) {
         // Vary between young vibrant green and golden ripening rice
@@ -60,16 +60,11 @@ export function createRiceFields(scene, world, RAPIER, staticBodies) {
         const mat = isMature ? materials.ricePlantGold : materials.ricePlantGreen;
         const plantH = isMature ? 0.72 : 0.55;
 
-        // Central cluster
-        batch.addCylinder([rx, p.waterY + plantH * 0.45, rz], 0.08, 0.28, plantH, mat, { segments: 6 });
-        // Splayed rice blades
+        // Central cluster & splayed blade
+        batch.addCylinder([rx, p.waterY + plantH * 0.45, rz], 0.08, 0.28, plantH, mat, { segments: 5 });
         batch.addCylinder([rx + 0.08, p.waterY + plantH * 0.45, rz], 0.04, 0.18, plantH * 0.9, mat, {
           rotation: [0.15, 0, 0.2],
-          segments: 5,
-        });
-        batch.addCylinder([rx - 0.08, p.waterY + plantH * 0.45, rz], 0.04, 0.18, plantH * 0.9, mat, {
-          rotation: [-0.15, 0, -0.2],
-          segments: 5,
+          segments: 4,
         });
       }
     }
@@ -288,7 +283,15 @@ export function createRiceFields(scene, world, RAPIER, staticBodies) {
   // Iron hoe blade
   fb.addBox([0, 0.22, 0.65], [0.24, 0.32, 0.04], materials.metalDark, { rotation: [-0.65, 0, 0] });
 
-  fb.build(fGroup, true);
+  const fGeo = fb.toMergedGeometry();
+  if (fGeo) {
+    const fMesh = new THREE.Mesh(fGeo, vertexColorFamilies.matte);
+    fMesh.castShadow = true;
+    fMesh.receiveShadow = true;
+    fMesh.matrixAutoUpdate = false;
+    fMesh.updateMatrix();
+    fGroup.add(fMesh);
+  }
 
   // Farmer physics collider
   const farmerBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(farmerX, 1.2, farmerZ));

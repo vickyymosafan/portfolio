@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { materials, palette } from './materials.js';
-import { addBox, addSphere, addCylinder, BatchCollector } from './geometry.js';
+import { materials, palette, vertexColorFamilies } from './materials.js';
+import { addBox, addSphere, addCylinder, BatchCollector, mergeSubtreeMeshes } from './geometry.js';
 
 export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlockers) {
   const building = new THREE.Group();
@@ -875,24 +875,25 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   roofBatch.addBox([cx, 11.8, cz], [1.4, 3.2, 1.4], materials.wainscot);
   roofBatch.addBox([cx, 13.5, cz], [1.6, 0.2, 1.6], materials.stone);
   roofBatch.addCylinder([cx, 13.9, cz], 0.32, 0.38, 0.6, materials.terracotta, { segments: 12 });
-  roofBatch.build(roofGroup, true);
 
-  // Chimney animated smoke puffs
+  // Chimney smoke puffs merged into roofBatch
   for (let s = 0; s < 3; s += 1) {
-    const smokeMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      roughness: 0.9,
-      transparent: true,
-      opacity: 0.75 - s * 0.2,
-      depthWrite: false,
-    });
-    addSphere(
-      roofGroup,
+    roofBatch.addSphere(
       [cx + (s + 1) * 0.28, 14.5 + s * 0.8, cz + (s + 1) * 0.2],
       [0.42 + s * 0.18, 0.38 + s * 0.16, 0.42 + s * 0.18],
-      smokeMat,
+      materials.trim,
       { shadow: false }
     );
+  }
+  roofGroup.userData.isDynamic = true;
+  const rGeo = roofBatch.toMergedGeometry();
+  if (rGeo) {
+    const rMesh = new THREE.Mesh(rGeo, vertexColorFamilies.shingles);
+    rMesh.castShadow = true;
+    rMesh.receiveShadow = true;
+    rMesh.matrixAutoUpdate = false;
+    rMesh.updateMatrix();
+    roofGroup.add(rMesh);
   }
 
   // =========================================================================
@@ -979,6 +980,8 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
 
   const doorLeft = new THREE.Group();
   const doorRight = new THREE.Group();
+  doorLeft.userData.isDynamic = true;
+  doorRight.userData.isDynamic = true;
   doorLeft.position.set(-1.54, 0, 0.04);
   doorRight.position.set(1.54, 0, 0.04);
   frontFrame.add(doorLeft, doorRight);
@@ -989,8 +992,9 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
   addBox(doorLeft, [0.05, 1.65, 0], [0.10, 3.3, 0.08], frameMat);
   addBox(doorLeft, [1.49, 1.65, 0], [0.10, 3.3, 0.08], frameMat);
   addBox(doorLeft, [0.77, 1.65, 0], [1.38, 3.10, 0.04], materials.glass);
-  addCylinder(doorLeft, [1.38, 1.55, 0.06], [0.022, 0.85, 0.022], materials.brass);
-  addCylinder(doorLeft, [1.38, 1.55, -0.06], [0.022, 0.85, 0.022], materials.brass);
+  addCylinder(doorLeft, [1.38, 1.55, 0.06], 0.022, 0.022, 0.85, materials.brass);
+  addCylinder(doorLeft, [1.38, 1.55, -0.06], 0.022, 0.022, 0.85, materials.brass);
+  mergeSubtreeMeshes(doorLeft, false);
 
   // Right leaf (Full glass with sleek aluminum frame & brass handle)
   addBox(doorRight, [-0.77, 3.25, 0], [1.52, 0.10, 0.08], frameMat);
@@ -998,8 +1002,9 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
   addBox(doorRight, [-0.05, 1.65, 0], [0.10, 3.3, 0.08], frameMat);
   addBox(doorRight, [-1.49, 1.65, 0], [0.10, 3.3, 0.08], frameMat);
   addBox(doorRight, [-0.77, 1.65, 0], [1.38, 3.10, 0.04], materials.glass);
-  addCylinder(doorRight, [-1.38, 1.55, 0.06], [0.022, 0.85, 0.022], materials.brass);
-  addCylinder(doorRight, [-1.38, 1.55, -0.06], [0.022, 0.85, 0.022], materials.brass);
+  addCylinder(doorRight, [-1.38, 1.55, 0.06], 0.022, 0.022, 0.85, materials.brass);
+  addCylinder(doorRight, [-1.38, 1.55, -0.06], 0.022, 0.022, 0.85, materials.brass);
+  mergeSubtreeMeshes(doorRight, false);
 
   if (world && RAPIER && doorColliders) {
     for (const x of [-0.77, 0.77]) {
@@ -1113,6 +1118,8 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
   // Left & Right sliding door leaves (slight z-offset so they bypass smoothly)
   const rearDoorLeft = new THREE.Group();
   const rearDoorRight = new THREE.Group();
+  rearDoorLeft.userData.isDynamic = true;
+  rearDoorRight.userData.isDynamic = true;
   rearDoorLeft.position.set(-1.2, 0, -0.02);
   rearDoorRight.position.set(1.2, 0, 0.02);
   rearGroup.add(rearDoorLeft, rearDoorRight);
@@ -1123,8 +1130,9 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
   addBox(rearDoorLeft, [0, 0.06, 0], [2.38, 0.12, 0.08], frameMat);
   addBox(rearDoorLeft, [-1.15, 2.16, 0], [0.08, 4.24, 0.08], frameMat);
   addBox(rearDoorLeft, [1.15, 2.16, 0], [0.08, 4.24, 0.08], frameMat);
-  addCylinder(rearDoorLeft, [0.95, 1.8, 0.055], [0.024, 0.95, 0.024], materials.brass);
-  addCylinder(rearDoorLeft, [0.95, 1.8, -0.055], [0.024, 0.95, 0.024], materials.brass);
+  addCylinder(rearDoorLeft, [0.95, 1.8, 0.055], 0.024, 0.024, 0.95, materials.brass);
+  addCylinder(rearDoorLeft, [0.95, 1.8, -0.055], 0.024, 0.024, 0.95, materials.brass);
+  mergeSubtreeMeshes(rearDoorLeft, false);
 
   // Right sliding leaf (width 2.40m, height 4.22m, full glass)
   addBox(rearDoorRight, [0, 2.16, 0], [2.28, 4.12, 0.05], materials.glass);
@@ -1132,8 +1140,9 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
   addBox(rearDoorRight, [0, 0.06, 0], [2.38, 0.12, 0.08], frameMat);
   addBox(rearDoorRight, [-1.15, 2.16, 0], [0.08, 4.24, 0.08], frameMat);
   addBox(rearDoorRight, [1.15, 2.16, 0], [0.08, 4.24, 0.08], frameMat);
-  addCylinder(rearDoorRight, [-0.95, 1.8, 0.055], [0.024, 0.95, 0.024], materials.brass);
-  addCylinder(rearDoorRight, [-0.95, 1.8, -0.055], [0.024, 0.95, 0.024], materials.brass);
+  addCylinder(rearDoorRight, [-0.95, 1.8, 0.055], 0.024, 0.024, 0.95, materials.brass);
+  addCylinder(rearDoorRight, [-0.95, 1.8, -0.055], 0.024, 0.024, 0.95, materials.brass);
+  mergeSubtreeMeshes(rearDoorRight, false);
 
   // Dynamic Rapier static colliders for rear sliding doors (active when closed)
   const rearColliders = [];
@@ -1234,6 +1243,8 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
 
   const balconyDoorLeft = new THREE.Group();
   const balconyDoorRight = new THREE.Group();
+  balconyDoorLeft.userData.isDynamic = true;
+  balconyDoorRight.userData.isDynamic = true;
   balconyDoorLeft.position.set(-1.54, 0, 0.04);
   balconyDoorRight.position.set(1.54, 0, 0.04);
   balconyFrame.add(balconyDoorLeft, balconyDoorRight);
@@ -1246,6 +1257,7 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
   addBox(balconyDoorLeft, [0.77, 1.50, 0], [1.38, 2.80, 0.04], materials.glass);
   addCylinder(balconyDoorLeft, [1.38, 1.40, 0.06], 0.022, 0.022, 0.85, materials.brass);
   addCylinder(balconyDoorLeft, [1.38, 1.40, -0.06], 0.022, 0.022, 0.85, materials.brass);
+  mergeSubtreeMeshes(balconyDoorLeft, false);
 
   // Right leaf (Full glass with sleek aluminum frame & brass handle)
   addBox(balconyDoorRight, [-0.77, 2.95, 0], [1.52, 0.10, 0.08], frameMat);
@@ -1255,6 +1267,7 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
   addBox(balconyDoorRight, [-0.77, 1.50, 0], [1.38, 2.80, 0.04], materials.glass);
   addCylinder(balconyDoorRight, [-1.38, 1.40, 0.06], 0.022, 0.022, 0.85, materials.brass);
   addCylinder(balconyDoorRight, [-1.38, 1.40, -0.06], 0.022, 0.022, 0.85, materials.brass);
+  mergeSubtreeMeshes(balconyDoorRight, false);
 
   const balconyColliders = [];
   if (world && RAPIER) {

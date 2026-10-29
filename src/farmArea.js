@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { materials, palette } from './materials.js';
+import { materials, palette, vertexColorFamilies } from './materials.js';
 import { addBox, addCylinder, addSphere, BatchCollector } from './geometry.js';
 
 /**
@@ -73,10 +73,6 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
   batch.addCylinder([barnX, 3.8, barnZ + barnD * 0.5 + 0.45], 0.02, 0.02, 0.6, materials.metalDark, { rotation: [Math.PI * 0.35, 0, 0] });
   batch.addCylinder([barnX, 3.65, barnZ + barnD * 0.5 + 0.7], 0.06, 0.35, 0.15, materials.metalDark);
   batch.addSphere([barnX, 3.6, barnZ + barnD * 0.5 + 0.7], [0.08, 0.1, 0.08], materials.glow, { shadow: false });
-
-  const barnLight = new THREE.PointLight(0xffdfa0, 1.2, 8.0, 2.0);
-  barnLight.position.set(barnX, 3.6, barnZ + barnD * 0.5 + 0.7);
-  farmGroup.add(barnLight);
 
   // Barn physics collider
   const barnBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(barnX, barnH * 0.5 + 0.3, barnZ));
@@ -221,11 +217,7 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
 
     cb.build(cowRig, true);
 
-    // Separate head group for idle head bobbing
-    const headGroup = new THREE.Group();
-    headGroup.position.set(0, 1.45, 1.05);
-    cowRig.add(headGroup);
-
+    // Separate head group for idle head bobbing (merged into single InstancedMesh below)
     const hb = new BatchCollector();
     // Neck
     hb.addBox([0, 0.05, 0.2], [0.72, 0.75, 0.65], materials.cowWhite);
@@ -251,7 +243,7 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
     hb.addCylinder([-0.28, 0.74, 0.48], 0.03, 0.07, 0.28, materials.strawHat, { rotation: [0.15, 0, -0.35] });
     hb.addCylinder([0.28, 0.74, 0.48], 0.03, 0.07, 0.28, materials.strawHat, { rotation: [0.15, 0, 0.35] });
 
-    hb.build(headGroup, true);
+    const hGeo = hb.toMergedGeometry();
 
     // Physics collider
     const cowBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(cx, 0.85, cz));
@@ -260,7 +252,10 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
 
     return {
       group: cowRig,
-      head: headGroup,
+      hGeo,
+      cx,
+      cz,
+      rotY,
       clock: Math.random() * 10,
     };
   }
@@ -268,6 +263,22 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
   animatedCows.push(createHolsteinCow(pastX - 3.0, pastZ, 0.4));
   animatedCows.push(createHolsteinCow(pastX + 2.5, pastZ + 1.2, -0.8));
   animatedCows.push(createHolsteinCow(pastX, pastZ - 3.2, Math.PI * 0.9));
+
+  const npcDummy = new THREE.Object3D();
+  const cowHeadInstMesh = new THREE.InstancedMesh(animatedCows[0].hGeo, vertexColorFamilies.matte, animatedCows.length);
+  cowHeadInstMesh.userData.isDynamic = true;
+  farmGroup.add(cowHeadInstMesh);
+  animatedCows.forEach((c, idx) => {
+    if (idx > 0 && c.hGeo) c.hGeo.dispose();
+    c.idx = idx;
+    c.headX = c.cx + Math.sin(c.rotY) * 1.05;
+    c.headZ = c.cz + Math.cos(c.rotY) * 1.05;
+    npcDummy.position.set(c.headX, 1.45, c.headZ);
+    npcDummy.rotation.set(0.1, c.rotY, 0);
+    npcDummy.updateMatrix();
+    cowHeadInstMesh.setMatrixAt(idx, npcDummy.matrix);
+  });
+  cowHeadInstMesh.instanceMatrix.needsUpdate = true;
 
   // =========================================================================
   // 4. Chicken Coop & Chickens (x = -38.5, z = -25.0)
@@ -314,48 +325,40 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
   world.createCollider(RAPIER.ColliderDesc.cuboid(1.5, 1.2, 1.3), coopBody);
   staticBodies.push(coopBody);
 
-  // 4 Stylized Cartoon Chickens
-  function createChicken(kx, kz, rotY) {
-    const chkRig = new THREE.Group();
-    chkRig.position.set(kx, 0, kz);
-    chkRig.rotation.y = rotY;
-    farmGroup.add(chkRig);
+  // 4 Stylized Cartoon Chickens (InstancedMesh for single draw call)
+  const chkBatch = new BatchCollector();
+  chkBatch.addCylinder([-0.08, 0.14, 0], 0.02, 0.02, 0.28, materials.chickenBeak);
+  chkBatch.addCylinder([0.08, 0.14, 0], 0.02, 0.02, 0.28, materials.chickenBeak);
+  chkBatch.addSphere([0, 0.42, 0], [0.22, 0.24, 0.28], materials.chickenFeather);
+  chkBatch.addBox([0, 0.52, -0.22], [0.14, 0.22, 0.12], materials.chickenFeather, { rotation: [0.45, 0, 0] });
+  chkBatch.addSphere([-0.2, 0.42, 0], [0.06, 0.14, 0.18], materials.chickenFeather);
+  chkBatch.addSphere([0.2, 0.42, 0], [0.06, 0.14, 0.18], materials.chickenFeather);
+  chkBatch.addSphere([0, 0.62, 0.16], [0.14, 0.14, 0.14], materials.chickenFeather);
+  chkBatch.addBox([0, 0.78, 0.14], [0.04, 0.12, 0.18], materials.chickenComb);
+  chkBatch.addBox([0, 0.52, 0.28], [0.04, 0.08, 0.06], materials.chickenComb);
+  chkBatch.addCylinder([0, 0.62, 0.32], 0.01, 0.06, 0.12, materials.chickenBeak, { rotation: [Math.PI * 0.5, 0, 0] });
+  chkBatch.addSphere([-0.1, 0.65, 0.24], [0.025, 0.025, 0.025], materials.cowBlack);
+  chkBatch.addSphere([0.1, 0.65, 0.24], [0.025, 0.025, 0.025], materials.cowBlack);
+  const chkGeo = chkBatch.toMergedGeometry();
+  const chkInstMesh = new THREE.InstancedMesh(chkGeo, vertexColorFamilies.matte, 4);
+  chkInstMesh.castShadow = false;
+  chkInstMesh.receiveShadow = true;
+  chkInstMesh.userData.isDynamic = true;
+  farmGroup.add(chkInstMesh);
 
-    const cb = new BatchCollector();
-    // Yellow stick legs
-    cb.addCylinder([-0.08, 0.14, 0], 0.02, 0.02, 0.28, materials.chickenBeak);
-    cb.addCylinder([0.08, 0.14, 0], 0.02, 0.02, 0.28, materials.chickenBeak);
-    // Rounded egg-shaped white body
-    cb.addSphere([0, 0.42, 0], [0.22, 0.24, 0.28], materials.chickenFeather);
-    // Fluffy tail feathers pointing up
-    cb.addBox([0, 0.52, -0.22], [0.14, 0.22, 0.12], materials.chickenFeather, { rotation: [0.45, 0, 0] });
-    // Little wings on sides
-    cb.addSphere([-0.2, 0.42, 0], [0.06, 0.14, 0.18], materials.chickenFeather);
-    cb.addSphere([0.2, 0.42, 0], [0.06, 0.14, 0.18], materials.chickenFeather);
-    // Cute round head
-    cb.addSphere([0, 0.62, 0.16], [0.14, 0.14, 0.14], materials.chickenFeather);
-    // Bright red crown comb
-    cb.addBox([0, 0.78, 0.14], [0.04, 0.12, 0.18], materials.chickenComb);
-    // Red wattle under chin
-    cb.addBox([0, 0.52, 0.28], [0.04, 0.08, 0.06], materials.chickenComb);
-    // Yellow triangular beak
-    cb.addCylinder([0, 0.62, 0.32], 0.01, 0.06, 0.12, materials.chickenBeak, { rotation: [Math.PI * 0.5, 0, 0] });
-    // Beady black eyes
-    cb.addSphere([-0.1, 0.65, 0.24], [0.025, 0.025, 0.025], materials.cowBlack);
-    cb.addSphere([0.1, 0.65, 0.24], [0.025, 0.025, 0.025], materials.cowBlack);
-
-    cb.build(chkRig, true);
-
-    return {
-      group: chkRig,
-      clock: Math.random() * 10,
-    };
-  }
-
-  animatedChickens.push(createChicken(runX - 0.8, runZ - 0.5, 0.5));
-  animatedChickens.push(createChicken(runX + 0.8, runZ + 0.6, -1.2));
-  animatedChickens.push(createChicken(runX + 1.2, runZ - 0.8, 2.1));
-  animatedChickens.push(createChicken(runX - 0.2, runZ + 0.9, -0.4));
+  const chickenSpecs = [
+    [runX - 0.8, runZ - 0.5, 0.5],
+    [runX + 0.8, runZ + 0.6, -1.2],
+    [runX + 1.2, runZ - 0.8, 2.1],
+    [runX - 0.2, runZ + 0.9, -0.4],
+  ];
+  chickenSpecs.forEach(([kx, kz, rotY], idx) => {
+    npcDummy.position.set(kx, 0, kz);
+    npcDummy.rotation.set(0, rotY, 0);
+    npcDummy.updateMatrix();
+    chkInstMesh.setMatrixAt(idx, npcDummy.matrix);
+    animatedChickens.push({ idx, kx, kz, rotY, clock: idx * 2.3 });
+  });
 
   // =========================================================================
   // 5. Aquaculture Fish Ponds & Swimming Fish (x: [-24.0, -14.0], z: [-29.0, -21.0])
@@ -395,41 +398,33 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
   world.createCollider(RAPIER.ColliderDesc.cuboid(pondW * 0.5, 0.35, pondD * 0.5), pondBody);
   staticBodies.push(pondBody);
 
-  // 6 Stylized Swimming Koi / Fish in the ponds
-  function createFish(westSide = true) {
-    const fGroup = new THREE.Group();
-    farmGroup.add(fGroup);
+  // 6 Stylized Swimming Koi / Fish in the ponds (InstancedMesh for single draw call)
+  const fb = new BatchCollector();
+  fb.addSphere([0, 0, 0], [0.12, 0.15, 0.38], materials.yellowSun);
+  fb.addBox([0, 0, -0.38], [0.02, 0.22, 0.18], materials.coral);
+  fb.addBox([0.14, 0, 0.05], [0.14, 0.02, 0.1], materials.coral, { rotation: [0, 0.3, 0] });
+  fb.addBox([-0.14, 0, 0.05], [0.14, 0.02, 0.1], materials.coral, { rotation: [0, -0.3, 0] });
+  const fishGeo = fb.toMergedGeometry();
+  const fishInstMesh = new THREE.InstancedMesh(fishGeo, vertexColorFamilies.matte, 6);
+  fishInstMesh.userData.isDynamic = true;
+  farmGroup.add(fishInstMesh);
 
-    const fb = new BatchCollector();
-    // Sleek orange/gold fish body
-    fb.addSphere([0, 0, 0], [0.12, 0.15, 0.38], materials.yellowSun);
-    // Tail fin
-    fb.addBox([0, 0, -0.38], [0.02, 0.22, 0.18], materials.coral);
-    // Side fins
-    fb.addBox([0.14, 0, 0.05], [0.14, 0.02, 0.1], materials.coral, { rotation: [0, 0.3, 0] });
-    fb.addBox([-0.14, 0, 0.05], [0.14, 0.02, 0.1], materials.coral, { rotation: [0, -0.3, 0] });
-
-    fb.build(fGroup, false);
-
+  for (let i = 0; i < 6; i += 1) {
+    const westSide = i < 3;
     const centerX = westSide ? pondX - 2.4 : pondX + 2.4;
     const centerZ = pondZ;
-    const radiusX = 1.4 + Math.random() * 0.5;
-    const radiusZ = 2.0 + Math.random() * 0.6;
-    const speed = 0.8 + Math.random() * 0.4;
-
-    return {
-      group: fGroup,
-      centerX,
-      centerZ,
-      radiusX,
-      radiusZ,
-      speed,
-      angle: Math.random() * Math.PI * 2,
-    };
+    const radiusX = 1.4 + (i % 3) * 0.22;
+    const radiusZ = 2.0 + (i % 3) * 0.25;
+    const speed = 0.85 + (i % 3) * 0.15;
+    const angle = (i / 6) * Math.PI * 2;
+    const fx = centerX + Math.cos(angle) * radiusX;
+    const fz = centerZ + Math.sin(angle) * radiusZ;
+    npcDummy.position.set(fx, 0.35, fz);
+    npcDummy.rotation.set(0, -angle + Math.PI * 0.5, 0);
+    npcDummy.updateMatrix();
+    fishInstMesh.setMatrixAt(i, npcDummy.matrix);
+    animatedFish.push({ idx: i, centerX, centerZ, radiusX, radiusZ, speed, angle });
   }
-
-  for (let i = 0; i < 3; i += 1) animatedFish.push(createFish(true));
-  for (let i = 0; i < 3; i += 1) animatedFish.push(createFish(false));
 
   // =========================================================================
   // 6. Farm Worker NPC (Peternak in Overalls & Straw Hat)
@@ -473,7 +468,15 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
     wb.addCylinder([px, 2.22, 0.25], 0.015, 0.015, 0.32, materials.chrome);
   }
 
-  wb.build(wGroup, true);
+  const wGeo = wb.toMergedGeometry();
+  if (wGeo) {
+    const wMesh = new THREE.Mesh(wGeo, vertexColorFamilies.matte);
+    wMesh.castShadow = true;
+    wMesh.receiveShadow = true;
+    wMesh.matrixAutoUpdate = false;
+    wMesh.updateMatrix();
+    wGroup.add(wMesh);
+  }
 
   // Farmer physics collider
   const fBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(workerX, 1.0, workerZ));
@@ -487,26 +490,38 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
   return {
     group: farmGroup,
     update: (delta) => {
-      // 1. Animate cows (gentle breathing & head grazing)
+      // 1. Animate cows (gentle breathing & head grazing via InstancedMesh)
       for (const c of animatedCows) {
         c.clock += delta;
-        c.head.rotation.x = Math.sin(c.clock * 1.2) * 0.15 + 0.1;
-        c.head.rotation.y = Math.sin(c.clock * 0.5) * 0.08;
+        const rx = Math.sin(c.clock * 1.2) * 0.15 + 0.1;
+        const ry = c.rotY + Math.sin(c.clock * 0.5) * 0.08;
+        npcDummy.position.set(c.headX, 1.45, c.headZ);
+        npcDummy.rotation.set(rx, ry, 0);
+        npcDummy.updateMatrix();
+        cowHeadInstMesh.setMatrixAt(c.idx, npcDummy.matrix);
       }
-      // 2. Animate chickens (frequent quick pecks)
+      cowHeadInstMesh.instanceMatrix.needsUpdate = true;
+      // 2. Animate chickens (frequent quick pecks via InstancedMesh)
       for (const chk of animatedChickens) {
         chk.clock += delta;
-        chk.group.rotation.x = Math.sin(chk.clock * 4.5) > 0.4 ? 0.35 : 0;
+        const peck = Math.sin(chk.clock * 4.5) > 0.4 ? 0.35 : 0;
+        npcDummy.position.set(chk.kx, 0, chk.kz);
+        npcDummy.rotation.set(peck, chk.rotY, 0);
+        npcDummy.updateMatrix();
+        chkInstMesh.setMatrixAt(chk.idx, npcDummy.matrix);
       }
-      // 3. Animate swimming fish (swimming in elliptical paths)
+      chkInstMesh.instanceMatrix.needsUpdate = true;
+      // 3. Animate swimming fish (swimming in elliptical paths via InstancedMesh)
       for (const f of animatedFish) {
         f.angle += delta * f.speed;
         const fx = f.centerX + Math.cos(f.angle) * f.radiusX;
         const fz = f.centerZ + Math.sin(f.angle) * f.radiusZ;
-        f.group.position.set(fx, 0.35 + Math.sin(f.angle * 2.0) * 0.04, fz);
-        // Face tangential velocity direction
-        f.group.rotation.y = -f.angle + Math.PI * 0.5;
+        npcDummy.position.set(fx, 0.35 + Math.sin(f.angle * 2.0) * 0.04, fz);
+        npcDummy.rotation.set(0, -f.angle + Math.PI * 0.5, 0);
+        npcDummy.updateMatrix();
+        fishInstMesh.setMatrixAt(f.idx, npcDummy.matrix);
       }
+      fishInstMesh.instanceMatrix.needsUpdate = true;
       // 4. Farm worker idle
       if (farmWorker) {
         farmWorker.clock += delta;

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { portfolio } from './portfolio.js';
 import { materials, palette } from './materials.js';
-import { addBox, addSphere, addCylinder } from './geometry.js';
+import { addBox, addSphere, addCylinder, optimizeStaticScene } from './geometry.js';
 import {
   createCartoonTree,
   createCartoonBush,
@@ -258,11 +258,58 @@ const nextPhysicsPosition = { x: 0, y: 0, z: 0 };
 const rayHits = [];
 
 const qualityPresets = {
-  high: { pixelRatio: 1.5, shadows: true, shadowSize: 1536 },
-  medium: { pixelRatio: 1.15, shadows: true, shadowSize: 1024 },
-  low: { pixelRatio: 0.85, shadows: false, shadowSize: 0 },
-  mobile: { pixelRatio: 0.75, shadows: false, shadowSize: 0 },
+  high: {
+    pixelRatio: 1.25,
+    shadows: true,
+    shadowSize: 1024,
+    shadowType: THREE.PCFShadowMap,
+    shadowUpdateInterval: 2,
+    npcUpdateInterval: 1,
+    physicsSubsteps: 3,
+    cullDistance: 250,
+    fogNear: 95,
+    fogFar: 265,
+  },
+  medium: {
+    pixelRatio: 1.0,
+    shadows: true,
+    shadowSize: 512,
+    shadowType: THREE.BasicShadowMap,
+    shadowUpdateInterval: 4,
+    npcUpdateInterval: 2,
+    physicsSubsteps: 2,
+    cullDistance: 215,
+    fogNear: 85,
+    fogFar: 225,
+  },
+  low: {
+    pixelRatio: 0.8,
+    shadows: false,
+    shadowSize: 0,
+    shadowType: THREE.BasicShadowMap,
+    shadowUpdateInterval: 0,
+    npcUpdateInterval: 3,
+    physicsSubsteps: 2,
+    cullDistance: 180,
+    fogNear: 75,
+    fogFar: 185,
+  },
+  mobile: {
+    pixelRatio: 0.7,
+    shadows: false,
+    shadowSize: 0,
+    shadowType: THREE.BasicShadowMap,
+    shadowUpdateInterval: 0,
+    npcUpdateInterval: 3,
+    physicsSubsteps: 1,
+    cullDistance: 165,
+    fogNear: 68,
+    fogFar: 168,
+  },
 };
+let activeQualityKey = mobile ? 'mobile' : 'medium';
+let activePreset = qualityPresets[activeQualityKey];
+let frameCounter = 0;
 
 function createRenderer() {
   if (!('WebGL2RenderingContext' in window)) {
@@ -272,16 +319,17 @@ function createRenderer() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.08;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.0));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = !mobile;
-  renderer.shadowMap.type = THREE.PCFShadowMap; // Clean stylized shadows
+  renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.type = THREE.BasicShadowMap;
   renderer.domElement.tabIndex = 0;
   renderer.domElement.setAttribute('aria-label', '3D cartoon portfolio world. Use WASD to walk, mouse to look, and E to explore.');
   sceneHost.appendChild(renderer.domElement);
 
   const initialAspect = window.innerWidth / window.innerHeight;
-  camera = new THREE.PerspectiveCamera(initialAspect < 1.0 ? 64 : 48, initialAspect, 0.4, 250);
+  camera = new THREE.PerspectiveCamera(initialAspect < 1.0 ? 64 : 48, initialAspect, 0.4, 215);
   cameraController = new CameraController(camera, { cameraBlockers, yaw, pitch });
   return renderer;
 }
@@ -299,7 +347,7 @@ async function createScene() {
   const sun = new THREE.DirectionalLight(0xfff9e6, 2.5);
   sun.position.set(-18, 26, 20);
   sun.castShadow = !mobile;
-  sun.shadow.mapSize.set(mobile ? 512 : 2048, mobile ? 512 : 2048);
+  sun.shadow.mapSize.set(512, 512);
   sun.shadow.camera.left = -26;
   sun.shadow.camera.right = 26;
   sun.shadow.camera.top = 28;
@@ -318,32 +366,19 @@ async function createScene() {
   rimLight.castShadow = false;
   scene.add(rimLight);
 
-  // Strategic warm interior point lights centered in wide room bays with high ceiling fixtures
+  // Visible physical ceiling pendant fixtures in wide room bays (height 5.2m)
   const interiorLights = [
-    { pos: [-8.5, 3.8, -0.2], color: 0xffb566, intensity: 1.8, distance: 12, shade: materials.terracotta }, // Living room
-    { pos: [8.5, 3.8, -0.2], color: 0xffebad, intensity: 1.6, distance: 11, shade: materials.ceramicTeal },  // Office
-    { pos: [-8.5, 3.8, -8.3], color: 0xffe299, intensity: 1.6, distance: 11, shade: materials.brass },       // Library
-    { pos: [8.5, 3.8, -8.3], color: 0xfff0d0, intensity: 1.5, distance: 11, shade: materials.ceramic },     // Gallery
-    { pos: [-8.5, 3.8, -16.1], color: 0xffe6b0, intensity: 1.5, distance: 11, shade: materials.metalDark }, // Studio
-    { pos: [8.5, 3.8, -16.1], color: 0xffd588, intensity: 1.6, distance: 11, shade: materials.terracotta }, // Terrace
+    { pos: [-8.5, 3.8, -0.2], shade: materials.terracotta }, // Living room
+    { pos: [8.5, 3.8, -0.2], shade: materials.ceramicTeal },  // Office
+    { pos: [-8.5, 3.8, -8.3], shade: materials.brass },       // Library
+    { pos: [8.5, 3.8, -8.3], shade: materials.ceramic },     // Gallery
+    { pos: [-8.5, 3.8, -16.1], shade: materials.metalDark }, // Studio
+    { pos: [8.5, 3.8, -16.1], shade: materials.terracotta }, // Terrace
   ];
   for (const l of interiorLights) {
-    const pLight = new THREE.PointLight(l.color, l.intensity, l.distance, 1.5);
-    pLight.position.set(...l.pos);
-    scene.add(pLight);
-
-    // Visible physical ceiling pendant fixture near ceiling level (height 5.2m)
-    const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.45, 8), materials.metalDark);
-    cord.position.set(l.pos[0], 4.88, l.pos[2]);
-    scene.add(cord);
-
-    const shade = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.18, 16), l.shade);
-    shade.position.set(l.pos[0], 4.65, l.pos[2]);
-    scene.add(shade);
-
-    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 10), materials.glow);
-    bulb.position.set(l.pos[0], 4.55, l.pos[2]);
-    scene.add(bulb);
+    addCylinder(scene, [l.pos[0], 4.88, l.pos[2]], 0.015, 0.015, 0.45, materials.metalDark, { shadow: false });
+    addCylinder(scene, [l.pos[0], 4.65, l.pos[2]], 0.04, 0.28, 0.18, l.shade, { shadow: false });
+    addSphere(scene, [l.pos[0], 4.55, l.pos[2]], [0.08, 0.08, 0.08], materials.glow, { shadow: false });
   }
 
   // 1. Landscape Foundation & Lawns
@@ -483,6 +518,10 @@ async function createScene() {
   addDecorativeBackdrop(scene);
   await yieldToMain();
 
+  // 6. Global Static Scene Batching & Matrix Freeze
+  optimizeStaticScene(scene, cameraBlockers);
+  await yieldToMain();
+
   // Expose statistics for testing & harness
   window.__cv = {
     stats: () => ({
@@ -497,8 +536,6 @@ async function createScene() {
 
 function addDecorativeBackdrop(scene) {
   // Distant Horizon Rolling Hills (85m - 120m far out on the horizon)
-  // Low-profile, wide gentle rolling ridges providing a beautiful cartoon landscape
-  // without protruding into the garden fence (Taman) or crowding the rice field (Sawah).
   const hills = [
     // North Horizon (far behind Sawah & Farm)
     [-38, -108, 56, materials.foliageMid],
@@ -515,15 +552,13 @@ function addDecorativeBackdrop(scene) {
     [36, 108, 48, materials.foliageMid],
   ];
   for (const [hx, hz, hs, hMat] of hills) {
-    const hill = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), hMat);
-    // Submerged base (y = -hs * 0.32) with low-profile aspect (hs * 0.36)
-    // so only a soft, gentle rolling silhouette peak (~2m above ground) is visible far away
-    hill.position.set(hx, -hs * 0.32, hz);
-    hill.scale.set(hs, hs * 0.36, hs * 0.65);
-    scene.add(hill);
+    addSphere(scene, [hx, -hs * 0.32, hz], [hs, hs * 0.36, hs * 0.65], hMat, {
+      shadow: false,
+      receive: false,
+      lowPoly: true,
+    });
   }
 
-  const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 });
   // High-altitude cartoon cumulus clouds floating gracefully well above roofs, trees, and gazebos
   const clouds = [
     [-24, 26, -36, 2.8],
@@ -536,30 +571,61 @@ function addDecorativeBackdrop(scene) {
     const cloud = new THREE.Group();
     cloud.position.set(cx, cy, cz);
     scene.add(cloud);
-    addSphere(cloud, [0, 0, 0], [cs, cs * 0.55, cs * 0.55], cloudMat, { lowPoly: true });
-    addSphere(cloud, [-cs * 0.72, -0.1, 0.02], [cs * 0.65, cs * 0.42, cs * 0.42], cloudMat, { lowPoly: true });
-    addSphere(cloud, [cs * 0.68, -0.08, -0.02], [cs * 0.68, cs * 0.45, cs * 0.42], cloudMat, { lowPoly: true });
+    addSphere(cloud, [0, 0, 0], [cs, cs * 0.55, cs * 0.55], materials.trim, { shadow: false, receive: false, lowPoly: true });
+    addSphere(cloud, [-cs * 0.72, -0.1, 0.02], [cs * 0.65, cs * 0.42, cs * 0.42], materials.trim, { shadow: false, receive: false, lowPoly: true });
+    addSphere(cloud, [cs * 0.68, -0.08, -0.02], [cs * 0.68, cs * 0.45, cs * 0.42], materials.trim, { shadow: false, receive: false, lowPoly: true });
   }
 
   // Expanded sky hemisphere encompassing the distant horizon
   const sky = new THREE.Mesh(
-    new THREE.SphereGeometry(175, 24, 16),
+    new THREE.SphereGeometry(175, 12, 8),
     new THREE.MeshBasicMaterial({ color: 0xbfe0d5, side: THREE.BackSide })
   );
+  sky.userData.isDynamic = true;
+  sky.matrixAutoUpdate = false;
+  sky.updateMatrix();
   scene.add(sky);
 }
 
 function applyQuality(sceneRef, nextQuality, autoUpdate = true) {
   const selected = nextQuality === 'auto' ? (mobile ? 'mobile' : 'medium') : nextQuality;
   const preset = qualityPresets[selected] || qualityPresets.medium;
+  activeQualityKey = selected;
+  activePreset = preset;
+
   const dprLimit = Math.min(window.devicePixelRatio || 1, preset.pixelRatio, renderScale);
   renderer.setPixelRatio(dprLimit);
   renderer.setSize(window.innerWidth, window.innerHeight);
 
-  const shadowsOn = preset.shadows && !mobile;
+  const shadowsOn = Boolean(preset.shadows) && !mobile;
   renderer.shadowMap.enabled = shadowsOn;
-  if (sceneRef?.userData?.sun) {
-    sceneRef.userData.sun.castShadow = shadowsOn;
+  renderer.shadowMap.autoUpdate = false;
+  if (shadowsOn && renderer.shadowMap.type !== preset.shadowType) {
+    renderer.shadowMap.type = preset.shadowType;
+  }
+
+  const sun = sceneRef?.userData?.sun;
+  if (sun) {
+    sun.castShadow = shadowsOn;
+    if (shadowsOn && preset.shadowSize > 0) {
+      if (sun.shadow.mapSize.x !== preset.shadowSize) {
+        sun.shadow.mapSize.set(preset.shadowSize, preset.shadowSize);
+        if (sun.shadow.map) {
+          sun.shadow.map.dispose();
+          sun.shadow.map = null;
+        }
+      }
+      renderer.shadowMap.needsUpdate = true;
+    }
+  }
+
+  if (camera && preset.cullDistance) {
+    camera.far = preset.cullDistance;
+    camera.updateProjectionMatrix();
+  }
+  if (sceneRef?.fog && preset.fogNear && preset.fogFar) {
+    sceneRef.fog.near = preset.fogNear;
+    sceneRef.fog.far = preset.fogFar;
   }
 
   $('quality-label').textContent = `${nextQuality.toUpperCase()} · ${selected.toUpperCase()}`;
@@ -2015,28 +2081,51 @@ function animate(timestamp) {
     renderer.render(scene, camera);
     return;
   }
+  frameCounter += 1;
   const dt = Math.min(0.05, Math.max(0.001, (timestamp - (animate.lastTimestamp || timestamp)) / 1000));
   animate.lastTimestamp = timestamp;
   elapsed += dt;
   accumulator += Math.min(dt, 0.06);
 
   const fixedStep = 1 / 60;
+  const maxSubsteps = activePreset?.physicsSubsteps || 2;
   let substeps = 0;
-  while (accumulator >= fixedStep && substeps < 3) {
+  while (accumulator >= fixedStep && substeps < maxSubsteps) {
     updatePhysics(fixedStep);
     accumulator -= fixedStep;
     substeps += 1;
   }
-  if (substeps === 3 && accumulator > fixedStep) accumulator = fixedStep;
+  if (substeps === maxSubsteps && accumulator > fixedStep) accumulator = fixedStep;
 
   updateCharacterRig(characterRig, dt, elapsed, moveAmount, grounded);
   if (doorControls?.update) doorControls.update(dt);
   updateRoomFromPosition(timestamp);
   findInteraction();
   if (questSystem) questSystem.update(dt, elapsed, characterRig ? characterRig.character.position : null);
-  if (securityZone?.update) securityZone.update(dt);
-  if (farmZone?.update) farmZone.update(dt);
-  if (riceZone?.update) riceZone.update(dt);
+
+  const npcInterval = activePreset?.npcUpdateInterval || 1;
+  if (frameCounter % npcInterval === 0) {
+    const npcDt = dt * npcInterval;
+    const isLowSpec = activeQualityKey === 'low' || activeQualityKey === 'mobile';
+    if (securityZone?.update && (!isLowSpec || overviewMode || physZ > -2.0)) {
+      securityZone.update(npcDt);
+    }
+    if (farmZone?.update && (!isLowSpec || overviewMode || (physX < -4.0 && physZ < 0.0))) {
+      farmZone.update(npcDt);
+    }
+    if (riceZone?.update && (!isLowSpec || overviewMode || (physX > -12.0 && physZ < 0.0))) {
+      riceZone.update(npcDt);
+    }
+  }
+
+  if (
+    renderer.shadowMap.enabled &&
+    activePreset?.shadowUpdateInterval > 0 &&
+    frameCounter % activePreset.shadowUpdateInterval === 0 &&
+    (moveAmount > 0.01 || doorControls?.isBusy())
+  ) {
+    renderer.shadowMap.needsUpdate = true;
+  }
 
   if (tourActive && tourWaitingAtStop) {
     tourWaitTimer -= dt;
@@ -2190,7 +2279,29 @@ async function init() {
     window.__dispatchInteraction = dispatchInteraction;
     window.__interactionPoints = interactionPoints;
     window.__findInteraction = findInteraction;
-    // Pre-warm initial WebGL shader compilation and first frame presentation
+    window.__setQualityPreset = (nextQ) => {
+      quality = nextQ;
+      renderScale = 1;
+      applyQuality(scene, quality);
+      renderer.render(scene, camera);
+      renderer.render(scene, camera);
+      return window.__getQualityState();
+    };
+    window.__getQualityState = () => ({
+      quality,
+      activeQualityKey,
+      renderScale,
+      pixelRatio: renderer.getPixelRatio(),
+      shadowsEnabled: renderer.shadowMap.enabled,
+      shadowMapSize: scene.userData.sun?.shadow?.mapSize?.x || 0,
+      cullDistance: camera.far,
+      draws: renderer.info.render.calls,
+      triangles: renderer.info.render.triangles,
+      geometries: renderer.info.memory.geometries,
+      textures: renderer.info.memory.textures,
+    });
+    // Pre-warm initial WebGL shader compilation + shadow map pass, then settle steady-state frame
+    renderer.render(scene, camera);
     renderer.render(scene, camera);
     await yieldToMain();
 
@@ -2199,6 +2310,29 @@ async function init() {
     $('loading-screen').classList.add('is-hidden');
 
     bindEvents();
+    const urlParams = new URLSearchParams(window.location.search);
+    const qParam = urlParams.get('quality');
+    if (qParam && (qParam === 'auto' || qualityPresets[qParam])) {
+      quality = qParam;
+      renderScale = 1;
+      applyQuality(scene, quality);
+    }
+    if (urlParams.get('start') === '1') {
+      startExperience();
+    }
+    const camParam = urlParams.get('cam');
+    const targetParam = urlParams.get('target');
+    if (camParam && targetParam) {
+      const cCoords = camParam.split(',').map(Number);
+      const tCoords = targetParam.split(',').map(Number);
+      if (cCoords.length === 3 && tCoords.length === 3) {
+        teleportCameraOverride = { cam: cCoords, target: tCoords };
+        camera.position.set(cCoords[0], cCoords[1], cCoords[2]);
+        camera.lookAt(tCoords[0], tCoords[1], tCoords[2]);
+      }
+    }
+    renderer.render(scene, camera);
+    renderer.render(scene, camera);
     renderer.setAnimationLoop(animate);
     window.addEventListener('beforeunload', dispose, { once: true });
   } catch (error) {

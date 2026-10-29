@@ -255,10 +255,6 @@ export function createZenGarden(scene, world, RAPIER, staticBodies) {
     // Pagoda lantern roof
     batch.addCylinder([tx, 1.48, tz], 0.08, 0.75, 0.22, materials.stoneWarm, { segments: 4, rotation: [0, Math.PI * 0.25, 0] });
     batch.addSphere([tx, 1.64, tz], [0.08, 0.08, 0.08], materials.stoneWarm);
-
-    const toroLight = new THREE.PointLight(0xffdf99, 0.7, 4.5, 2.0);
-    toroLight.position.set(tx, 1.22, tz);
-    zenGroup.add(toroLight);
   }
 
   batch.build(zenGroup, true);

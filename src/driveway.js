@@ -82,11 +82,6 @@ export function createDriveway(scene, world, RAPIER, staticBodies) {
     );
   }
 
-  // Soft underwater fountain spotlight
-  const fountainLight = new THREE.PointLight(0x70d6ff, 1.4, 7.0, 1.8);
-  fountainLight.position.set(fountainX, 1.2, fountainZ);
-  driveGroup.add(fountainLight);
-
   // Fountain Physics Collider (solid stone basin + full-height central pillar to prevent any clipping/tembus)
   const fountainBody = world.createRigidBody(
     RAPIER.RigidBodyDesc.fixed().setTranslation(fountainX, 0, fountainZ)
@@ -171,10 +166,6 @@ export function createDriveway(scene, world, RAPIER, staticBodies) {
       batch.addBox([lx + sx, 3.1, lz], [0.26, 0.38, 0.26], materials.glass);
       batch.addSphere([lx + sx, 3.1, lz], [0.08, 0.12, 0.08], materials.glow, { shadow: false });
       batch.addCylinder([lx + sx, 3.35, lz], 0.02, 0.32, 0.12, materials.metalDark, { segments: 4, rotation: [0, Math.PI * 0.25, 0] });
-
-      const light = new THREE.PointLight(0xffdf99, 1.0, 6.0, 2.0);
-      light.position.set(lx + sx, 3.1, lz);
-      driveGroup.add(light);
     }
 
     // Street lamp pole collider

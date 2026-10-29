@@ -212,48 +212,67 @@ export class QuestSystem {
   }
 
   spawnCollectibles() {
+    const count = this.itemsConfig.length;
     const gemGeo = new THREE.OctahedronGeometry(0.24, 0);
-    const ringGeo = new THREE.RingGeometry(0.32, 0.45, 24);
+    const ringGeo = new THREE.RingGeometry(0.32, 0.45, 16);
 
-    for (const cfg of this.itemsConfig) {
-      const group = new THREE.Group();
-      group.position.set(...cfg.pos);
+    const gemMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.2,
+      metalness: 0.25,
+    });
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.45,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
 
-      // Main floating gem
-      const gemMat = new THREE.MeshStandardMaterial({
-        color: cfg.color,
-        roughness: 0.15,
-        metalness: 0.25,
-        emissive: cfg.color,
-        emissiveIntensity: 0.35,
-      });
-      const gem = new THREE.Mesh(gemGeo, gemMat);
-      gem.castShadow = true;
-      group.add(gem);
+    this.gemInstMesh = new THREE.InstancedMesh(gemGeo, gemMat, count);
+    this.gemInstMesh.castShadow = false;
+    this.gemInstMesh.userData.isDynamic = true;
+    this.ringInstMesh = new THREE.InstancedMesh(ringGeo, ringMat, count);
+    this.ringInstMesh.userData.isDynamic = true;
 
-      // Floor aura ring
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: cfg.color,
-        transparent: true,
-        opacity: 0.4,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-      });
-      const ring = new THREE.Mesh(ringGeo, ringMat);
-      ring.rotation.x = -Math.PI * 0.5;
-      ring.position.y = -cfg.pos[1] + 0.03;
-      group.add(ring);
+    this._dummy = new THREE.Object3D();
+    const colorObj = new THREE.Color();
 
-      this.scene.add(group);
+    for (let i = 0; i < count; i += 1) {
+      const cfg = this.itemsConfig[i];
+      colorObj.setHex(cfg.color);
+      this.gemInstMesh.setColorAt(i, colorObj);
+      this.ringInstMesh.setColorAt(i, colorObj);
+
+      this._dummy.position.set(cfg.pos[0], cfg.pos[1], cfg.pos[2]);
+      this._dummy.rotation.set(0, 0, 0);
+      this._dummy.scale.setScalar(1);
+      this._dummy.updateMatrix();
+      this.gemInstMesh.setMatrixAt(i, this._dummy.matrix);
+
+      this._dummy.position.set(cfg.pos[0], 0.03, cfg.pos[2]);
+      this._dummy.rotation.set(-Math.PI * 0.5, 0, 0);
+      this._dummy.scale.setScalar(1);
+      this._dummy.updateMatrix();
+      this.ringInstMesh.setMatrixAt(i, this._dummy.matrix);
+
       this.collectibles.push({
         ...cfg,
-        group,
-        gem,
-        ring,
+        index: i,
+        posVec: new THREE.Vector3(cfg.pos[0], cfg.pos[1], cfg.pos[2]),
+        rotY: 0,
+        rotZ: 0,
+        ringRotZ: 0,
+        scale: 1,
         baseY: cfg.pos[1],
         collected: false,
       });
     }
+
+    if (this.gemInstMesh.instanceColor) this.gemInstMesh.instanceColor.needsUpdate = true;
+    if (this.ringInstMesh.instanceColor) this.ringInstMesh.instanceColor.needsUpdate = true;
+    this.scene.add(this.gemInstMesh);
+    this.scene.add(this.ringInstMesh);
   }
 
   showToast(title, subtitle) {
@@ -312,28 +331,55 @@ export class QuestSystem {
   }
 
   update(dt, elapsed, playerPos) {
+    const dummy = this._dummy;
+    let matrixDirty = false;
+
     for (const item of this.collectibles) {
       if (item.collected) {
-        if (item.group.scale.x > 0.001) {
-          item.group.scale.multiplyScalar(Math.max(0, 1 - dt * 8.0));
+        if (item.scale > 0.001) {
+          item.scale = Math.max(0, item.scale * (1 - dt * 8.0));
+          dummy.position.copy(item.posVec);
+          dummy.rotation.set(0, item.rotY, item.rotZ);
+          dummy.scale.setScalar(item.scale);
+          dummy.updateMatrix();
+          this.gemInstMesh.setMatrixAt(item.index, dummy.matrix);
+
+          dummy.position.set(item.posVec.x, 0.03, item.posVec.z);
+          dummy.rotation.set(-Math.PI * 0.5, 0, item.ringRotZ);
+          dummy.scale.setScalar(item.scale);
+          dummy.updateMatrix();
+          this.ringInstMesh.setMatrixAt(item.index, dummy.matrix);
+          matrixDirty = true;
         }
         continue;
       }
 
       // Gentle floating bob & rotation
-      item.gem.rotation.y += dt * 1.8;
-      item.gem.rotation.z += dt * 0.9;
-      item.group.position.y = item.baseY + Math.sin(elapsed * 2.8 + item.baseY) * 0.08;
+      item.rotY += dt * 1.8;
+      item.rotZ += dt * 0.9;
+      item.posVec.y = item.baseY + Math.sin(elapsed * 2.8 + item.baseY) * 0.08;
+
+      dummy.position.copy(item.posVec);
+      dummy.rotation.set(0, item.rotY, item.rotZ);
+      dummy.scale.setScalar(1);
+      dummy.updateMatrix();
+      this.gemInstMesh.setMatrixAt(item.index, dummy.matrix);
 
       // Pulse floor ring
-      item.ring.rotation.z += dt * 0.6;
-      item.ring.scale.setScalar(1 + Math.sin(elapsed * 3.5) * 0.12);
+      item.ringRotZ += dt * 0.6;
+      const rScale = 1 + Math.sin(elapsed * 3.5) * 0.12;
+      dummy.position.set(item.posVec.x, 0.03, item.posVec.z);
+      dummy.rotation.set(-Math.PI * 0.5, 0, item.ringRotZ);
+      dummy.scale.setScalar(rScale);
+      dummy.updateMatrix();
+      this.ringInstMesh.setMatrixAt(item.index, dummy.matrix);
+      matrixDirty = true;
 
       // Check distance to player
       if (playerPos) {
-        const dx = playerPos.x - item.group.position.x;
-        const dy = playerPos.y - item.group.position.y;
-        const dz = playerPos.z - item.group.position.z;
+        const dx = playerPos.x - item.posVec.x;
+        const dy = playerPos.y - item.posVec.y;
+        const dz = playerPos.z - item.posVec.z;
         const distSq = dx * dx + dy * dy + dz * dz;
 
         if (distSq < 1.7 * 1.7) {
@@ -352,6 +398,11 @@ export class QuestSystem {
           }
         }
       }
+    }
+
+    if (matrixDirty) {
+      this.gemInstMesh.instanceMatrix.needsUpdate = true;
+      this.ringInstMesh.instanceMatrix.needsUpdate = true;
     }
   }
 

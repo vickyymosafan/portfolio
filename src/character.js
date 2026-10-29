@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { materials, palette } from './materials.js';
-import { addBox, addSphere, addCylinder } from './geometry.js';
+import { addBox, addSphere, addCylinder, mergeSubtreeMeshes } from './geometry.js';
 
 /**
  * Creates the stylized cartoon character rig with hierarchical articulation:
@@ -12,6 +12,7 @@ import { addBox, addSphere, addCylinder } from './geometry.js';
  */
 export function createCharacter(scene) {
   const character = new THREE.Group();
+  character.userData.isDynamic = true;
   scene.add(character);
   character.position.set(0, 1.12, 16.8);
 
@@ -64,6 +65,8 @@ export function createCharacter(scene) {
   addBox(bagGroup, [-0.03, 0.06, 0], [0.14, 0.22, 0.32], materials.leatherDark);
   // Brass buckle clasp
   addBox(bagGroup, [-0.07, -0.04, 0], [0.06, 0.1, 0.1], materials.brass, { shadow: false });
+  mergeSubtreeMeshes(torsoGroup, false, true);
+  const mergedBodyMesh = torsoGroup.children.find((c) => c.isMesh) || bodyMesh;
 
   // 3. Head & Face
   const headGroup = new THREE.Group();
@@ -96,14 +99,6 @@ export function createCharacter(scene) {
   addSphere(headGroup, [-0.38, 0.08, 0.18], [0.14, 0.25, 0.16], materials.hair, { rotation: [0.1, 0, 0.2] });
   addSphere(headGroup, [0.38, 0.08, 0.18], [0.14, 0.25, 0.16], materials.hair, { rotation: [0.1, 0, -0.2] });
 
-  // Dynamic Expressive Cowlick Tuft (ahoge) on top crown (has spring/sway animation)
-  const hairTuft = new THREE.Group();
-  hairTuft.position.set(-0.16, 0.44, 0.06);
-  hairTuft.rotation.set(0.15, 0.1, 0.35);
-  headGroup.add(hairTuft);
-  addSphere(hairTuft, [0, 0.1, 0], [0.11, 0.2, 0.11], materials.hair);
-  addSphere(hairTuft, [0.04, 0.24, 0.04], [0.08, 0.14, 0.08], materials.hair, { rotation: [0.2, 0, 0.2] });
-
   // Rosy Blush Cheeks
   addSphere(headGroup, [-0.25, -0.07, 0.36], [0.09, 0.05, 0.04], materials.skinBlush, { shadow: false });
   addSphere(headGroup, [0.25, -0.07, 0.36], [0.09, 0.05, 0.04], materials.skinBlush, { shadow: false });
@@ -130,12 +125,23 @@ export function createCharacter(scene) {
 
   // Warm Friendly Smile
   const smile = new THREE.Mesh(
-    new THREE.TorusGeometry(0.095, 0.017, 8, 18, Math.PI),
+    new THREE.TorusGeometry(0.095, 0.017, 6, 12, Math.PI),
     materials.ink
   );
   smile.position.set(0, -0.175, 0.395);
   smile.rotation.set(0, 0, Math.PI);
   headGroup.add(smile);
+
+  // Dynamic Expressive Cowlick Tuft (ahoge) on top crown
+  const hairTuft = new THREE.Group();
+  hairTuft.position.set(-0.16, 0.44, 0.06);
+  hairTuft.rotation.set(0.15, 0.1, 0.35);
+  headGroup.add(hairTuft);
+  addSphere(hairTuft, [0, 0.1, 0], [0.11, 0.2, 0.11], materials.hair);
+  addSphere(hairTuft, [0.04, 0.24, 0.04], [0.08, 0.14, 0.08], materials.hair, { rotation: [0.2, 0, 0.2] });
+
+  mergeSubtreeMeshes(headGroup, false, true);
+  const mergedHeadMesh = headGroup.children.find((c) => c.isMesh) || headMesh;
 
   // 4. Arms with Articulated Shoulder & Elbow Joints
   const leftArm = new THREE.Group();
@@ -147,21 +153,17 @@ export function createCharacter(scene) {
   // Left Forearm group
   const leftForearm = new THREE.Group();
   leftForearm.position.set(0, -0.28, 0);
-  leftArm.add(leftForearm);
 
   // Right Forearm group
   const rightForearm = new THREE.Group();
   rightForearm.position.set(0, -0.28, 0);
-  rightArm.add(rightForearm);
 
   // Left & Right Hands
   const leftHand = new THREE.Group();
-  leftHand.position.set(0, -0.26, 0);
-  leftForearm.add(leftHand);
+  leftHand.position.set(0, -0.28, 0);
 
   const rightHand = new THREE.Group();
-  rightHand.position.set(0, -0.26, 0);
-  rightForearm.add(rightHand);
+  rightHand.position.set(0, -0.28, 0);
 
   // Build arm geometry
   for (const [armGroup, forearmGroup, handGroup, side] of [
@@ -170,16 +172,18 @@ export function createCharacter(scene) {
   ]) {
     // Upper arm sweater sleeve
     addCylinder(armGroup, [0, -0.14, 0], 0.125, 0.115, 0.28, materials.tunic);
-    // Forearm sleeve
+    mergeSubtreeMeshes(armGroup, false, true);
+    armGroup.add(forearmGroup);
+
+    // Forearm sleeve & ribbed knitted cuff + hand merged into forearm bone
     addCylinder(forearmGroup, [0, -0.12, 0], 0.115, 0.105, 0.24, materials.tunic);
-    // Ribbed knitted sleeve cuff
     addCylinder(forearmGroup, [0, -0.24, 0], 0.115, 0.115, 0.06, materials.tunic);
-    // Hand palm
+    forearmGroup.add(handGroup);
     addSphere(handGroup, [0, -0.04, 0], [0.085, 0.1, 0.075], materials.skin);
-    // Stylized thumb angled inwards
     addSphere(handGroup, [side * 0.055, -0.02, 0.04], [0.038, 0.05, 0.038], materials.skin, {
       rotation: [0.3, side * 0.4, side * 0.3],
     });
+    mergeSubtreeMeshes(forearmGroup, false, true);
   }
 
   // 5. Legs with Articulated Hip, Knee, and Ankle/Foot Joints
@@ -192,20 +196,16 @@ export function createCharacter(scene) {
   // Knee joints (lower leg)
   const leftLowerLeg = new THREE.Group();
   leftLowerLeg.position.set(0, -0.3, 0);
-  leftLeg.add(leftLowerLeg);
 
   const rightLowerLeg = new THREE.Group();
   rightLowerLeg.position.set(0, -0.3, 0);
-  rightLeg.add(rightLowerLeg);
 
   // Sneaker / Shoes
   const leftShoe = new THREE.Group();
   leftShoe.position.set(0, -0.3, 0.05);
-  leftLowerLeg.add(leftShoe);
 
   const rightShoe = new THREE.Group();
   rightShoe.position.set(0, -0.3, 0.05);
-  rightLowerLeg.add(rightShoe);
 
   for (const [thighGroup, calfGroup, shoeGroup] of [
     [leftLeg, leftLowerLeg, leftShoe],
@@ -213,35 +213,34 @@ export function createCharacter(scene) {
   ]) {
     // Upper thigh trousers
     addCylinder(thighGroup, [0, -0.15, 0], 0.155, 0.145, 0.3, materials.trousers);
-    // Lower calf trousers
+    mergeSubtreeMeshes(thighGroup, false, true);
+    thighGroup.add(calfGroup);
+
+    // Lower calf trousers & cuff hem
     addCylinder(calfGroup, [0, -0.14, 0], 0.145, 0.135, 0.28, materials.trousers);
-    // Trouser cuff hem
     addCylinder(calfGroup, [0, -0.27, 0], 0.145, 0.145, 0.06, materials.trousers);
+    mergeSubtreeMeshes(calfGroup, false, true);
+    calfGroup.add(shoeGroup);
 
     // Designer Sneaker
-    // Leather upper
     addBox(shoeGroup, [0, 0.05, 0.02], [0.22, 0.13, 0.36], materials.sneakerCoral);
-    // Contrasting tongue & laces
     addBox(shoeGroup, [0, 0.09, 0.04], [0.14, 0.06, 0.2], materials.trim);
     addBox(shoeGroup, [0, 0.12, 0.06], [0.12, 0.02, 0.14], materials.trim);
-    // Rubber foxing bumper & midsole
     addBox(shoeGroup, [0, -0.03, 0.03], [0.24, 0.06, 0.39], materials.sneakerSole);
-    // Rubber outsole tread
     addBox(shoeGroup, [0, -0.065, 0.03], [0.245, 0.03, 0.4], materials.leatherDark);
-    // Rounded toe cap
     addSphere(shoeGroup, [0, 0.02, 0.18], [0.115, 0.08, 0.095], materials.sneakerSole);
-    // Heel counter accent
     addBox(shoeGroup, [0, 0.06, -0.14], [0.2, 0.09, 0.06], materials.trim);
+    mergeSubtreeMeshes(shoeGroup, false, true);
   }
 
   const rig = {
     character,
     shadow,
-    bodyMesh,
+    bodyMesh: mergedBodyMesh,
     torsoGroup,
     pelvisGroup,
     headGroup,
-    headMesh,
+    headMesh: mergedHeadMesh,
     hairTuft,
     leftArm,
     rightArm,
@@ -301,6 +300,8 @@ export function updateCharacterRig(rig, dt, elapsed, moveAmount, grounded) {
     rightArm,
     leftForearm,
     rightForearm,
+    leftHand,
+    rightHand,
     leftLeg,
     rightLeg,
     leftLowerLeg,

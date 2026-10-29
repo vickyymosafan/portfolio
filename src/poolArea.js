@@ -96,9 +96,6 @@ export function createPoolArea(scene, world, RAPIER, staticBodies) {
 
   // Underwater LED Pool Lights emitting cool blue glow
   for (const lz of [-3.5, 0, 3.5]) {
-    const light = new THREE.PointLight(0x48cae4, 1.2, 5.5, 2.0);
-    light.position.set(deckCenterX, -0.4, deckCenterZ + lz);
-    poolGroup.add(light);
     // Underwater fixture glass lens
     batch.addCylinder([deckCenterX - poolW * 0.5 + 0.05, -0.4, deckCenterZ + lz], 0.12, 0.12, 0.04, materials.chrome, { rotation: [0, 0, Math.PI * 0.5] });
     batch.addSphere([deckCenterX - poolW * 0.5 + 0.08, -0.4, deckCenterZ + lz], [0.08, 0.08, 0.08], materials.glow, { shadow: false });
