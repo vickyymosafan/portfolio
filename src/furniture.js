@@ -147,7 +147,9 @@ function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
     new THREE.PlaneGeometry(boardW - 0.2, boardH - 0.2),
     new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.45, metalness: 0.05 })
   );
-  signMesh.position.set(0, 2.7, 0.14);
+  signMesh.position.set(0, 2.7, 0.15);
+  signMesh.castShadow = false;
+  signMesh.receiveShadow = false;
   display.add(signMesh);
 
   // Twin brass picture lamps over board
@@ -667,10 +669,11 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
     addBox(parent, [x, y + 1.1, z - 1.22], [0.65, 1.0, 0.08], materials.metalDark);
     addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.6, z - 0.9], [0.4, 0.6, 0.4]);
 
-    // Acoustic Foam Wall Panels on Back Wall (z = -7.7)
-    for (let ax = -2.4; ax <= 2.4; ax += 1.2) {
-      for (let ay = 2.0; ay <= 4.0; ay += 1.0) {
-        addBox(parent, [x + ax, y + ay, z - 5.7], [0.95, 0.85, 0.08], materials.acousticFoam);
+    // Acoustic Foam Wall Panels on Back Wall (z = -7.7), placed around display board without clipping
+    for (let ax = -3.2; ax <= 3.2; ax += 1.2) {
+      for (let ay = 2.0; ay <= 4.2; ay += 1.1) {
+        if (Math.abs(ax) < 2.0 && ay < 4.0) continue;
+        addBox(parent, [x + ax, y + ay, z - 5.7], [0.95, 0.9, 0.06], materials.acousticFoam);
       }
     }
   } else if (id === 'contact') {

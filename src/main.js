@@ -275,13 +275,13 @@ function createRenderer() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = !mobile;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Stylized soft penumbra shadows
+  renderer.shadowMap.type = THREE.PCFShadowMap; // Clean stylized shadows
   renderer.domElement.tabIndex = 0;
   renderer.domElement.setAttribute('aria-label', '3D cartoon portfolio world. Use WASD to walk, mouse to look, and E to explore.');
   sceneHost.appendChild(renderer.domElement);
 
   const initialAspect = window.innerWidth / window.innerHeight;
-  camera = new THREE.PerspectiveCamera(initialAspect < 1.0 ? 64 : 48, initialAspect, 0.1, 350);
+  camera = new THREE.PerspectiveCamera(initialAspect < 1.0 ? 64 : 48, initialAspect, 0.4, 250);
   cameraController = new CameraController(camera, { cameraBlockers, yaw, pitch });
   return renderer;
 }
@@ -306,9 +306,9 @@ async function createScene() {
   sun.shadow.camera.bottom = -28;
   sun.shadow.camera.near = 1;
   sun.shadow.camera.far = 68;
-  sun.shadow.bias = -0.0001;
-  sun.shadow.normalBias = 0.035;
-  sun.shadow.radius = 3.2;
+  sun.shadow.bias = -0.00005;
+  sun.shadow.normalBias = 0.08;
+  sun.shadow.radius = 1.0;
   scene.add(sun);
   scene.userData.sun = sun;
 

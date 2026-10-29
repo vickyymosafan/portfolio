@@ -227,11 +227,11 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   // =========================================================================
 
   // 1. Structural Concrete Cantilever Balcony Slab (flush with Lantai 2 interior floor slab at y = 5.06)
-  addBox(building, [0, 5.06, 5.8], [13.4, 0.28, 4.0], materials.stone, { shadow: false, receive: true });
-  addColliderBox([0, 5.06, 5.8], [6.7, 0.14, 2.0]);
+  addBox(building, [0, 5.04, 5.8], [13.4, 0.24, 4.0], materials.stone, { shadow: false, receive: true });
+  addColliderBox([0, 5.04, 5.8], [6.7, 0.12, 2.0]);
 
-  // 2. Premium Weather-Resistant Outdoor Teak Wood Decking Planks (y = 5.21, top at 5.23)
-  addBox(building, [0, 5.21, 5.8], [13.1, 0.04, 3.8], materials.woodFloor, { shadow: false, receive: true });
+  // 2. Premium Weather-Resistant Outdoor Teak Wood Decking Planks (y = 5.21, top at 5.235, starting at z = 3.92)
+  addBox(building, [0, 5.21, 5.835], [13.1, 0.05, 3.83], materials.woodFloor, { shadow: false, receive: true });
 
   // 3. Lower Soffit & Ceiling Panel of Porch Entrance with Recessed Warm Lighting
   archBatch.addBox([0, 4.90, 5.8], [13.2, 0.14, 3.8], materials.woodWarm);
@@ -403,9 +403,9 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   archBatch.addBox([0, 0.04, -8.2], [5.0, 0.08, 0.24], materials.trim);
 
   // Rear Garden Veranda & Terrace (z = [-8.2, -15.5], x = [-10.0, 10.0])
-  addBox(building, [0, 0.04, -11.85], [20.0, 0.24, 7.3], materials.stone, { shadow: true, receive: true });
+  addBox(building, [0, 0.04, -11.85], [20.0, 0.20, 7.3], materials.stone, { shadow: true, receive: true });
   addColliderBox([0, 0.0, -11.85], [10.0, 0.16, 3.65]);
-  addBox(building, [0, 0.14, -11.85], [19.6, 0.04, 6.9], materials.terraceTiles, { shadow: false, receive: true });
+  addBox(building, [0, 0.16, -11.85], [19.6, 0.04, 6.9], materials.terraceTiles, { shadow: false, receive: true });
 
   // Rear descending stone steps
   for (let s = 0; s < 3; s += 1) {
@@ -443,12 +443,12 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
     addColliderBox([px, 5.2, 3.8], [0.325, 5.2, 0.325]);
   }
 
-  // Ground Floor Front Header Lintel Beams (framing the tops of Lantai 1 rooms, y = 4.8 to 5.2)
+  // Ground Floor Front Header Lintel Beams (framing the tops of Lantai 1 rooms, y = 4.75 to 4.92)
   for (const [x1, x2] of [[-16.5, -5.5], [5.5, 16.0], [16.0, 26.0]]) {
     const mx = (x1 + x2) * 0.5;
     const w = Math.abs(x2 - x1);
-    archBatch.addBox([mx, 4.95, 3.8], [w, 0.5, 0.45], materials.trim);
-    archBatch.addBox([mx, 4.65, 3.8], [w, 0.12, 0.5], materials.woodWarm);
+    archBatch.addBox([mx, 4.835, 3.8], [w, 0.17, 0.36], materials.trim);
+    archBatch.addBox([mx, 4.74, 3.8], [w, 0.04, 0.40], materials.woodWarm);
   }
 
   // Upper Floor Front Header Lintel Beams (framing the tops of Lantai 2 rooms, y = 9.8 to 10.4)
@@ -604,9 +604,12 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   addBox(building, [21.0, 5.06, -2.2], [10.0, 0.28, 12.0], materials.woodFloor, { shadow: false, receive: true });
   addColliderBox([21.0, 5.06, -2.2], [5.0, 0.14, 6.0]);
 
-  // Continuous Architectural Floor Fascia Beam along the front cutaway edge (z = 3.8, y = 5.06)
-  archBatch.addBox([4.75, 5.06, 3.85], [42.8, 0.32, 0.35], materials.woodWarm);
-  archBatch.addBox([4.75, 5.22, 3.87], [43.0, 0.08, 0.38], materials.trim);
+  // Architectural Floor Fascia Beam along the front cutaway edge (z = 3.88, y = 5.06)
+  // Split into West and East wings to cleanly bypass the central second-floor balcony door threshold
+  for (const [bx, bw] of [[-9.15, 14.7], [13.9, 24.2]]) {
+    archBatch.addBox([bx, 5.06, 3.88], [bw, 0.28, 0.32], materials.woodWarm);
+    archBatch.addBox([bx, 5.22, 3.89], [bw, 0.06, 0.34], materials.trim);
+  }
 
   // =========================================================================
   // 5B. FRONT ARCHITECTURAL GLASS FACADE (Upper Floor / Lantai 2, y: [5.25, 9.85])
@@ -630,7 +633,7 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   archBatch.addBox([0, 8.50, 3.8], [3.65, 0.18, 0.22], portalFrameMat);
   archBatch.addBox([-1.76, 6.85, 3.8], [0.18, 3.25, 0.22], portalFrameMat);
   archBatch.addBox([1.76, 6.85, 3.8], [0.18, 3.25, 0.22], portalFrameMat);
-  archBatch.addBox([0, 5.22, 3.8], [3.65, 0.06, 0.24], materials.brass); // Flush brass threshold
+  archBatch.addBox([0, 5.22, 3.8], [3.65, 0.06, 0.22], materials.brass); // Flush brass threshold (ends at z = 3.91)
 
   // Bay 3: Library Nook Front Glass (x: [5.85, 15.65])
   addGlassFacade(5.85, 15.65, 5.25, 9.85, 4);

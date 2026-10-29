@@ -212,17 +212,17 @@ export function createPoolArea(scene, world, RAPIER, staticBodies) {
   cabanaSofa.position.set(cabanaX, 0.18, cabanaZ);
   poolGroup.add(cabanaSofa);
   // Main back sofa bench
-  addBox(cabanaSofa, [0, 0.45, -0.9], [5.2, 0.6, 0.9], materials.woodDark);
-  addBox(cabanaSofa, [0, 0.85, -1.25], [5.2, 0.65, 0.25], materials.woodDark);
-  addBox(cabanaSofa, [0, 0.55, -0.85], [5.0, 0.2, 0.8], materials.cream);
+  addBox(cabanaSofa, [0, 0.16, -0.9], [5.2, 0.32, 0.9], materials.woodDark);
+  addBox(cabanaSofa, [0, 0.65, -1.25], [5.2, 0.66, 0.25], materials.woodDark);
+  addBox(cabanaSofa, [0, 0.41, -0.85], [5.0, 0.18, 0.8], materials.cream);
   // Side lounge return
-  addBox(cabanaSofa, [-2.0, 0.45, 0], [1.2, 0.6, 1.4], materials.woodDark);
-  addBox(cabanaSofa, [-2.0, 0.55, 0], [1.1, 0.2, 1.3], materials.cream);
+  addBox(cabanaSofa, [-2.0, 0.16, 0], [1.2, 0.32, 1.4], materials.woodDark);
+  addBox(cabanaSofa, [-2.0, 0.41, 0], [1.1, 0.18, 1.3], materials.cream);
 
   // Decorative throw cushions on cabana sofa
-  addBox(cabanaSofa, [-1.8, 0.75, -0.75], [0.42, 0.42, 0.18], materials.cushionCoral, { rotation: [0.1, 0.3, 0] });
-  addBox(cabanaSofa, [-0.5, 0.75, -0.75], [0.42, 0.42, 0.18], materials.cushionYellow, { rotation: [0.1, -0.2, 0] });
-  addBox(cabanaSofa, [1.5, 0.75, -0.75], [0.42, 0.42, 0.18], materials.mint, { rotation: [0.1, 0.15, 0] });
+  addBox(cabanaSofa, [-1.8, 0.65, -0.75], [0.38, 0.30, 0.18], materials.cushionCoral, { rotation: [0.1, 0.3, 0] });
+  addBox(cabanaSofa, [-0.5, 0.65, -0.75], [0.38, 0.30, 0.18], materials.cushionYellow, { rotation: [0.1, -0.2, 0] });
+  addBox(cabanaSofa, [1.5, 0.65, -0.75], [0.38, 0.30, 0.18], materials.mint, { rotation: [0.1, 0.15, 0] });
 
   // Cabana Low Teak Coffee Table
   batch.addBox([cabanaX + 0.5, 0.42, cabanaZ], [2.2, 0.38, 1.1], materials.woodWarm);
