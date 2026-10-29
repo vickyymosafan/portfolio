@@ -160,14 +160,14 @@ export class CinematicDirector {
 
     switch (room.id) {
       case 'about':
-        // Living room: Ground floor center (rx = 0, rz = 0.5)
-        camX = rx + 1.8;
-        camY = ry + 1.95;
-        camZ = rz + 2.6;
-        lookX = rx - 1.2;
-        lookY = ry + 1.9;
-        lookZ = rz - 3.0;
-        charFacing = -0.3;
+        // Living room: Ground floor center (rx = -1.4, rz = 1.7), looking West toward the About Me Feature Wall (x = -5.35, z = 1.7)
+        camX = rx + 2.6;
+        camY = ry + 1.35;
+        camZ = rz + 0.8;
+        lookX = -5.35;
+        lookY = ry + 1.15;
+        lookZ = 1.7;
+        charFacing = -Math.PI * 0.35;
         break;
 
       case 'skills':
@@ -193,57 +193,57 @@ export class CinematicDirector {
         break;
 
       case 'experience':
-        // Library nook: Upper floor right (rx = 10.5, ry = 5.2, rz = -1.5)
+        // Library nook: Upper floor right (rx = 10.5, ry = 6.32, rz = -1.5)
         camX = rx - 2.2;
-        camY = ry + 1.88;
+        camY = ry + 1.05;
         camZ = rz + 2.5;
-        lookX = rx + 1.4;
-        lookY = ry + 1.9;
-        lookZ = rz - 3.2;
+        lookX = rx + 0.8;
+        lookY = ry + 0.45;
+        lookZ = rz - 3.6;
         charFacing = 0.35;
         break;
 
       case 'process':
-        // Creative studio: Upper floor far right (rx = 21.0, ry = 5.2, rz = -1.5)
+        // Creative studio: Upper floor far right (rx = 21.0, ry = 6.32, rz = -1.5)
         camX = rx - 2.2;
-        camY = ry + 1.88;
+        camY = ry + 1.05;
         camZ = rz + 2.5;
-        lookX = rx + 1.4;
-        lookY = ry + 1.9;
-        lookZ = rz - 3.2;
+        lookX = rx + 0.8;
+        lookY = ry + 0.45;
+        lookZ = rz - 3.6;
         charFacing = 0.35;
         break;
 
       case 'garage':
-        // Private garage: Ground floor far right (rx = 21.0, rz = 0.5)
-        camX = rx - 2.5;
-        camY = ry + 1.9;
-        camZ = rz + 2.5;
-        lookX = rx + 1.2;
-        lookY = ry + 1.7;
-        lookZ = rz - 2.0;
+        // Private garage: Ground floor far right (rx = 20.5, rz = 2.0)
+        camX = rx - 2.4;
+        camY = ry + 1.45;
+        camZ = rz + 2.2;
+        lookX = rx + 0.6;
+        lookY = ry + 0.55;
+        lookZ = rz - 2.5;
         charFacing = 0.25;
         break;
 
       case 'bedroom':
-        // Master bedroom: Upper floor left (rx = -11.0, ry = 5.2, rz = -1.0)
+        // Master bedroom: Upper floor left (rx = -10.5, ry = 6.32, rz = -1.5)
         camX = rx + 2.2;
-        camY = ry + 1.88;
+        camY = ry + 1.05;
         camZ = rz + 2.5;
-        lookX = rx - 1.2;
-        lookY = ry + 1.85;
-        lookZ = rz - 2.8;
+        lookX = rx - 0.8;
+        lookY = ry + 0.45;
+        lookZ = rz - 3.4;
         charFacing = -0.3;
         break;
 
       case 'bathroom':
-        // Master bathroom: Upper floor center (rx = 0.0, ry = 5.2, rz = -1.0)
+        // Master bathroom: Upper floor center (rx = 0.0, ry = 6.32, rz = -1.5)
         camX = rx + 2.0;
-        camY = ry + 1.88;
-        camZ = rz + 2.5;
-        lookX = rx - 1.0;
-        lookY = ry + 1.85;
-        lookZ = rz - 2.5;
+        camY = ry + 1.05;
+        camZ = rz + 2.3;
+        lookX = rx - 0.8;
+        lookY = ry + 0.40;
+        lookZ = rz - 3.2;
         charFacing = -0.25;
         break;
 
@@ -512,6 +512,35 @@ export class CinematicDirector {
 
     card.append(hero);
 
+    // Ordered LinkedIn & GitHub Section Switcher Bar
+    if (portfolio.sectionOrder && portfolio.sectionOrder.length) {
+      const switcher = document.createElement('nav');
+      switcher.className = 'cinematic-section-switcher';
+      switcher.setAttribute('aria-label', 'LinkedIn & GitHub Portfolio Sections');
+
+      for (const sec of portfolio.sectionOrder) {
+        const pill = document.createElement('button');
+        pill.type = 'button';
+        pill.className = sec.id === sectionId ? 'section-pill is-active' : 'section-pill';
+        pill.innerHTML = `<span class="pill-step">${sec.step}</span><span>${sec.label}</span>`;
+        pill.addEventListener('click', () => {
+          if (sec.id === this.activeSection) return;
+          if (typeof window !== 'undefined' && typeof window.__setRoom === 'function') {
+            window.__setRoom(sec.id, { teleport: true, open: true });
+          } else {
+            this.startScene(sec.id, {
+              cameraDistance: this.savedCameraDistance,
+              yaw: this.savedYaw,
+              pitch: this.savedPitch,
+            });
+            this.skipToContent();
+          }
+        });
+        switcher.append(pill);
+      }
+      card.append(switcher);
+    }
+
     // Section-specific interactive body
     const body = document.createElement('div');
     body.className = 'cinematic-body';
@@ -520,22 +549,26 @@ export class CinematicDirector {
       case 'about':
         this.renderAboutBody(body, content);
         break;
-      case 'skills':
-        this.renderSkillsBody(body, content);
-        break;
       case 'experience':
         this.renderExperienceBody(body, content);
+        break;
+      case 'bedroom':
+        this.renderEducationBody(body, content);
+        break;
+      case 'bathroom':
+        this.renderVolunteeringBody(body, content);
+        break;
+      case 'garage':
+        this.renderCertificationsBody(body, content);
         break;
       case 'projects':
         this.renderProjectsBody(body, content);
         break;
+      case 'skills':
+        this.renderSkillsBody(body, content);
+        break;
       case 'process':
         this.renderProcessBody(body, content);
-        break;
-      case 'garage':
-      case 'bedroom':
-      case 'bathroom':
-        this.renderDisciplinesBody(body, content);
         break;
       case 'contact':
         this.renderContactBody(body, content);
@@ -547,21 +580,42 @@ export class CinematicDirector {
 
     card.append(body);
 
-    // Footer with keyboard hints and close action
+    // Footer with Prev/Next section navigation and close action
     const footer = document.createElement('div');
     footer.className = 'cinematic-footer';
 
     const hint = document.createElement('div');
     hint.className = 'cinematic-hint';
-    hint.innerHTML = `<span class="cinematic-key">ESC</span> to resume walking <span class="hint-sep">·</span> Explore at your own pace`;
+    hint.innerHTML = `<span class="cinematic-key">ESC</span> to resume walking <span class="hint-sep">·</span> LinkedIn &amp; GitHub Verified`;
+
+    const footerActions = document.createElement('div');
+    footerActions.className = 'cinematic-footer-actions';
+
+    if (portfolio.sectionOrder && portfolio.sectionOrder.length) {
+      const idx = portfolio.sectionOrder.findIndex((s) => s.id === sectionId);
+      if (idx !== -1 && idx < portfolio.sectionOrder.length - 1) {
+        const nextSec = portfolio.sectionOrder[idx + 1];
+        const nextSecBtn = document.createElement('button');
+        nextSecBtn.className = 'cinematic-next-sec-btn';
+        nextSecBtn.type = 'button';
+        nextSecBtn.textContent = `Next: ${nextSec.step} ${nextSec.label} →`;
+        nextSecBtn.addEventListener('click', () => {
+          if (typeof window !== 'undefined' && typeof window.__setRoom === 'function') {
+            window.__setRoom(nextSec.id, { teleport: true, open: true });
+          }
+        });
+        footerActions.append(nextSecBtn);
+      }
+    }
 
     const doneBtn = document.createElement('button');
     doneBtn.className = 'cinematic-done-btn';
     doneBtn.type = 'button';
-    doneBtn.textContent = 'Continue Exploring →';
+    doneBtn.textContent = 'Resume Walk';
     doneBtn.addEventListener('click', () => this.exitScene());
 
-    footer.append(hint, doneBtn);
+    footerActions.append(doneBtn);
+    footer.append(hint, footerActions);
     card.append(footer);
   }
 
@@ -571,6 +625,23 @@ export class CinematicDirector {
       p.className = 'cinematic-text';
       p.textContent = content.body;
       container.append(p);
+    }
+
+    if (content.profileLinks && content.profileLinks.length) {
+      const linkRow = document.createElement('div');
+      linkRow.className = 'project-actions';
+      linkRow.style.marginBottom = '12px';
+      for (let i = 0; i < content.profileLinks.length; i += 1) {
+        const l = content.profileLinks[i];
+        const a = document.createElement('a');
+        a.className = i === 0 ? 'project-btn project-btn-primary' : 'project-btn project-btn-secondary';
+        a.href = l.href;
+        a.target = '_blank';
+        a.rel = 'noreferrer';
+        a.textContent = `${l.label} ↗`;
+        linkRow.append(a);
+      }
+      container.append(linkRow);
     }
 
     if (content.disciplines) {
@@ -599,6 +670,181 @@ export class CinematicDirector {
         tags.append(span);
       }
       container.append(tags);
+    }
+  }
+
+  renderEducationBody(container, content) {
+    if (content.educationItems && content.educationItems.length) {
+      const list = document.createElement('div');
+      list.className = 'cinematic-timeline';
+
+      for (const ed of content.educationItems) {
+        const item = document.createElement('div');
+        item.className = 'cinematic-timeline-node';
+
+        const topRow = document.createElement('div');
+        topRow.className = 'linkedin-meta-row';
+
+        const period = document.createElement('span');
+        period.className = 'timeline-period';
+        period.textContent = ed.period;
+        topRow.append(period);
+
+        if (ed.grade) {
+          const grade = document.createElement('span');
+          grade.className = 'linkedin-grade-badge';
+          grade.textContent = ed.grade;
+          topRow.append(grade);
+        }
+
+        const header = document.createElement('div');
+        header.className = 'timeline-header';
+
+        const inst = document.createElement('strong');
+        inst.className = 'timeline-role';
+        inst.textContent = ed.institution;
+
+        const deg = document.createElement('span');
+        deg.className = 'timeline-org';
+        deg.textContent = ed.degree;
+
+        header.append(inst, deg);
+
+        if (ed.location) {
+          const loc = document.createElement('span');
+          loc.className = 'timeline-location';
+          loc.textContent = ed.location;
+          header.append(loc);
+        }
+
+        item.append(topRow, header);
+
+        if (ed.bullets && ed.bullets.length) {
+          const ul = document.createElement('ul');
+          ul.className = 'linkedin-bullet-list';
+          for (const b of ed.bullets) {
+            const li = document.createElement('li');
+            li.textContent = b;
+            ul.append(li);
+          }
+          item.append(ul);
+        }
+
+        list.append(item);
+      }
+      container.append(list);
+    } else {
+      this.renderDisciplinesBody(container, content);
+    }
+  }
+
+  renderVolunteeringBody(container, content) {
+    if (content.volunteeringItems && content.volunteeringItems.length) {
+      const list = document.createElement('div');
+      list.className = 'cinematic-timeline';
+
+      for (const vol of content.volunteeringItems) {
+        const item = document.createElement('div');
+        item.className = 'cinematic-timeline-node';
+
+        const topRow = document.createElement('div');
+        topRow.className = 'linkedin-meta-row';
+
+        const period = document.createElement('span');
+        period.className = 'timeline-period';
+        period.textContent = vol.period;
+        topRow.append(period);
+
+        if (vol.cause) {
+          const cause = document.createElement('span');
+          cause.className = 'linkedin-grade-badge';
+          cause.textContent = vol.cause;
+          topRow.append(cause);
+        }
+
+        const header = document.createElement('div');
+        header.className = 'timeline-header';
+
+        const role = document.createElement('strong');
+        role.className = 'timeline-role';
+        role.textContent = vol.role;
+
+        const org = document.createElement('span');
+        org.className = 'timeline-org';
+        org.textContent = vol.org;
+
+        header.append(role, org);
+
+        const desc = document.createElement('p');
+        desc.className = 'timeline-desc';
+        desc.textContent = vol.desc;
+
+        item.append(topRow, header, desc);
+        list.append(item);
+      }
+      container.append(list);
+    } else {
+      this.renderDisciplinesBody(container, content);
+    }
+  }
+
+  renderCertificationsBody(container, content) {
+    if (content.certifications && content.certifications.length) {
+      const list = document.createElement('div');
+      list.className = 'cinematic-timeline';
+
+      for (const cert of content.certifications) {
+        const item = document.createElement('div');
+        item.className = 'cinematic-timeline-node';
+
+        const topRow = document.createElement('div');
+        topRow.className = 'linkedin-meta-row';
+
+        const date = document.createElement('span');
+        date.className = 'timeline-period';
+        date.textContent = cert.date;
+        topRow.append(date);
+
+        if (cert.badge) {
+          const badge = document.createElement('span');
+          badge.className = 'linkedin-grade-badge';
+          badge.textContent = cert.badge;
+          topRow.append(badge);
+        }
+
+        const header = document.createElement('div');
+        header.className = 'timeline-header';
+
+        const title = document.createElement('strong');
+        title.className = 'timeline-role';
+        title.textContent = cert.title;
+
+        const issuer = document.createElement('span');
+        issuer.className = 'timeline-org';
+        issuer.textContent = cert.issuer;
+
+        header.append(title, issuer);
+        item.append(topRow, header);
+
+        if (cert.skills && cert.skills.length) {
+          const skillRow = document.createElement('div');
+          skillRow.className = 'project-stack-row';
+          skillRow.style.marginTop = '6px';
+          skillRow.style.marginBottom = '0';
+          for (const s of cert.skills) {
+            const chip = document.createElement('span');
+            chip.className = 'stack-chip';
+            chip.textContent = s;
+            skillRow.append(chip);
+          }
+          item.append(skillRow);
+        }
+
+        list.append(item);
+      }
+      container.append(list);
+    } else {
+      this.renderDisciplinesBody(container, content);
     }
   }
 
@@ -651,30 +897,56 @@ export class CinematicDirector {
 
   renderSkillsBody(container, content) {
     if (content.categories) {
-      const catList = document.createElement('div');
-      catList.className = 'cinematic-skill-categories';
+      const tableWrap = document.createElement('div');
+      tableWrap.className = 'arch-domain-table-wrap';
 
+      const table = document.createElement('table');
+      table.className = 'arch-domain-table';
+
+      const thead = document.createElement('thead');
+      thead.innerHTML = `<tr><th>Architectural Domain</th><th>Core Technologies &amp; Tooling</th></tr>`;
+      table.append(thead);
+
+      const tbody = document.createElement('tbody');
       for (const cat of content.categories) {
-        const catBox = document.createElement('div');
-        catBox.className = 'cinematic-skill-box';
+        const tr = document.createElement('tr');
 
-        const catTitle = document.createElement('div');
-        catTitle.className = 'cinematic-skill-cat-title';
-        catTitle.textContent = cat.name;
+        const tdDomain = document.createElement('td');
+        tdDomain.className = 'arch-domain-cell';
+        tdDomain.textContent = cat.name;
+
+        const tdTools = document.createElement('td');
+        tdTools.className = 'arch-tools-cell';
 
         const badgeRow = document.createElement('div');
         badgeRow.className = 'cinematic-badge-row';
-        for (const item of cat.items) {
-          const badge = document.createElement('span');
-          badge.className = 'cinematic-tech-badge';
-          badge.textContent = item;
-          badgeRow.append(badge);
+
+        if (cat.badges && cat.badges.length) {
+          for (const b of cat.badges) {
+            const shield = document.createElement('span');
+            shield.className = 'shield-tech-badge';
+            shield.style.backgroundColor = b.bg;
+            shield.style.color = b.fg;
+            shield.innerHTML = `<span class="shield-icon">${b.icon}</span><span class="shield-label">${b.label}</span>`;
+            badgeRow.append(shield);
+          }
+        } else {
+          for (const item of cat.items) {
+            const badge = document.createElement('span');
+            badge.className = 'cinematic-tech-badge';
+            badge.textContent = item;
+            badgeRow.append(badge);
+          }
         }
 
-        catBox.append(catTitle, badgeRow);
-        catList.append(catBox);
+        tdTools.append(badgeRow);
+        tr.append(tdDomain, tdTools);
+        tbody.append(tr);
       }
-      container.append(catList);
+
+      table.append(tbody);
+      tableWrap.append(table);
+      container.append(tableWrap);
     }
   }
 
@@ -687,9 +959,20 @@ export class CinematicDirector {
         const item = document.createElement('div');
         item.className = 'cinematic-timeline-node';
 
+        const topRow = document.createElement('div');
+        topRow.className = 'linkedin-meta-row';
+
         const period = document.createElement('span');
         period.className = 'timeline-period';
         period.textContent = m.period;
+        topRow.append(period);
+
+        if (m.location) {
+          const loc = document.createElement('span');
+          loc.className = 'timeline-location';
+          loc.textContent = m.location;
+          topRow.append(loc);
+        }
 
         const header = document.createElement('div');
         header.className = 'timeline-header';
@@ -703,12 +986,40 @@ export class CinematicDirector {
         org.textContent = m.org;
 
         header.append(role, org);
+        item.append(topRow, header);
 
-        const desc = document.createElement('p');
-        desc.className = 'timeline-desc';
-        desc.textContent = m.desc;
+        if (m.desc) {
+          const desc = document.createElement('p');
+          desc.className = 'timeline-desc';
+          desc.textContent = m.desc;
+          item.append(desc);
+        }
 
-        item.append(period, header, desc);
+        if (m.bullets && m.bullets.length) {
+          const ul = document.createElement('ul');
+          ul.className = 'linkedin-bullet-list';
+          for (const b of m.bullets) {
+            const li = document.createElement('li');
+            li.textContent = b;
+            ul.append(li);
+          }
+          item.append(ul);
+        }
+
+        if (m.attachment) {
+          const att = document.createElement('div');
+          att.className = 'linkedin-attachment-pill';
+          att.innerHTML = `<span class="att-icon">↗</span><strong>${m.attachment}</strong>`;
+          item.append(att);
+        }
+
+        if (m.skillsSummary) {
+          const sk = document.createElement('div');
+          sk.className = 'linkedin-skills-line';
+          sk.innerHTML = `<span class="diamond-icon">💎</span><span>${m.skillsSummary}</span>`;
+          item.append(sk);
+        }
+
         timeline.append(item);
       }
       container.append(timeline);
@@ -847,6 +1158,107 @@ export class CinematicDirector {
   }
 
   renderProcessBody(container, content) {
+    if (content.githubStats) {
+      const gh = content.githubStats;
+      const ghCard = document.createElement('div');
+      ghCard.className = 'gh-contrib-card';
+
+      const ghHeader = document.createElement('div');
+      ghHeader.className = 'gh-contrib-header';
+
+      const ghTitle = document.createElement('div');
+      ghTitle.className = 'gh-contrib-title';
+      ghTitle.textContent = gh.totalContributions.includes('contributions')
+        ? gh.totalContributions
+        : `${gh.totalContributions} contributions in the last year`;
+
+      const ghProfileLink = document.createElement('a');
+      ghProfileLink.className = 'gh-profile-pill';
+      ghProfileLink.href = gh.profileUrl;
+      ghProfileLink.target = '_blank';
+      ghProfileLink.rel = 'noreferrer';
+      ghProfileLink.textContent = `🐙 ${gh.displayName || gh.handle} ↗`;
+
+      ghHeader.append(ghTitle, ghProfileLink);
+      ghCard.append(ghHeader);
+
+      const graphBox = document.createElement('div');
+      graphBox.className = 'gh-contrib-graph-box';
+
+      const monthsRow = document.createElement('div');
+      monthsRow.className = 'gh-months-row';
+      for (const m of gh.months || ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct']) {
+        const mSpan = document.createElement('span');
+        mSpan.textContent = m;
+        monthsRow.append(mSpan);
+      }
+      graphBox.append(monthsRow);
+
+      const bodyRow = document.createElement('div');
+      bodyRow.className = 'gh-graph-body';
+
+      const daysCol = document.createElement('div');
+      daysCol.className = 'gh-days-col';
+      for (const d of ['', 'Mon', '', 'Wed', '', 'Fri', '']) {
+        const dSpan = document.createElement('span');
+        dSpan.textContent = d;
+        daysCol.append(dSpan);
+      }
+
+      const gridWrap = document.createElement('div');
+      gridWrap.className = 'gh-contrib-grid';
+
+      // Deterministic contribution density pattern matching Screenshot 2 (Nov-Oct, active in Nov-Feb & Jul-Oct)
+      const activeWeeks = [
+        [0, 2, 4, 3, 1, 3, 4], [2, 3, 1, 2, 4, 4, 2], [1, 0, 2, 1, 0, 1, 2], [1, 3, 1, 0, 0, 0, 1],
+        [1, 0, 0, 1, 2, 1, 1], [2, 1, 0, 1, 1, 3, 1], [1, 2, 2, 2, 3, 2, 2], [0, 1, 2, 2, 2, 2, 1],
+        [2, 1, 1, 2, 1, 1, 3], [2, 2, 2, 2, 2, 1, 2], [2, 2, 2, 2, 1, 1, 2], [2, 2, 2, 2, 2, 1, 2],
+        [2, 2, 2, 2, 1, 0, 1], [1, 2, 2, 2, 1, 2, 0], [0, 2, 3, 2, 1, 1, 0], [2, 0, 1, 1, 1, 0, 0],
+        [1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 2, 0, 2], [0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 2], [0, 0, 0, 2, 0, 0, 2],
+        [0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0], [2, 2, 0, 0, 0, 0, 1], [0, 1, 2, 0, 0, 0, 0], [2, 0, 0, 0, 0, 0, 2],
+        [2, 0, 0, 0, 0, 2, 1], [2, 1, 2, 2, 0, 0, 1], [3, 3, 2, 0, 1, 2, 3], [2, 0, 3, 1, 3, 1, 0],
+        [3, 1, 3, 1, 1, 1, 1], [2, 1, 1, 1, 1, 1, 2], [1, 1, 2, 1, 1, 2, 2], [1, 1, 2, 2, 2, 1, 1],
+        [2, 1, 2, 1, 1, 2, 1], [2, 4, 3, 2, 1, 4, 2], [3, 1, 2, 1, 1, 2, 2], [2, 2, 2, 1, 1, 1, 2],
+        [2, 2, 1, 2, 2, 2, 2], [1, 2, 2, 2, 1, 2, 1], [2, 2, 2, 1, 2, 2, 2], [2, 2, 2, 2, 2, 0, 0]
+      ];
+
+      for (let w = 0; w < 52; w++) {
+        const col = document.createElement('div');
+        col.className = 'gh-week-col';
+        const weekData = activeWeeks[w] || [1, 1, 0, 1, 0, 1, 1];
+        for (let d = 0; d < 7; d++) {
+          const cell = document.createElement('span');
+          const lvl = weekData[d] || 0;
+          cell.className = `gh-cell lvl-${lvl}`;
+          col.append(cell);
+        }
+        gridWrap.append(col);
+      }
+
+      bodyRow.append(daysCol, gridWrap);
+      graphBox.append(bodyRow);
+
+      const footerRow = document.createElement('div');
+      footerRow.className = 'gh-graph-footer';
+
+      const learnSpan = document.createElement('span');
+      learnSpan.className = 'gh-learn-text';
+      const repoList = gh.topRepos || gh.featuredRepos || [];
+      learnSpan.textContent = repoList.length ? `Active Repositories: ${repoList.join(' · ')}` : 'Learn how we count contributions';
+
+      const legendWrap = document.createElement('div');
+      legendWrap.className = 'gh-legend';
+      legendWrap.innerHTML = `<span>Less</span><i class="gh-cell lvl-0"></i><i class="gh-cell lvl-1"></i><i class="gh-cell lvl-2"></i><i class="gh-cell lvl-3"></i><i class="gh-cell lvl-4"></i><span>More</span>`;
+
+      footerRow.append(learnSpan, legendWrap);
+      graphBox.append(footerRow);
+      ghCard.append(graphBox);
+      container.append(ghCard);
+    }
+
     if (content.stages) {
       const stepsGrid = document.createElement('div');
       stepsGrid.className = 'cinematic-process-grid';

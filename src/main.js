@@ -101,15 +101,15 @@ const WORLD_MARKERS = [
   { id: 'road', label: 'Jalan Utama', sub: 'Akses Menuju Rumah', icon: '🚗', pos: [32.0, 3.5, 32.0], targetRoom: 'road' },
   { id: 'pool', label: 'Kolam Renang', sub: 'Swim & Relax', icon: '🏊', pos: [-25.0, 3.5, -5.0], targetRoom: 'pool' },
   { id: 'security', label: 'Security', sub: '24/7 Guard', icon: '🛡️', pos: [-18.0, 3.5, 24.0], targetRoom: 'security' },
-  { id: 'garage', label: 'Garasi', sub: 'BMW M Series', icon: '🏎️', pos: [21.0, 3.5, 2.0], targetRoom: 'garage' },
-  { id: 'zen', label: 'Taman', sub: 'Relax & Explore', icon: '🌲', pos: [35.0, 3.5, -8.0], targetRoom: 'zen' },
-  { id: 'gallery', label: 'Project Gallery', sub: 'My Work & Showcase', icon: '🖼️', pos: [-11.0, 4.4, 2.0], targetRoom: 'projects' },
-  { id: 'living', label: 'Living Room', sub: 'Chill & Connect', icon: '🛋️', pos: [0.0, 4.4, 2.0], targetRoom: 'about' },
-  { id: 'office', label: 'Home Office', sub: 'Work & Build', icon: '💻', pos: [10.75, 4.4, 2.0], targetRoom: 'skills' },
-  { id: 'bedroom', label: 'Master Bedroom', sub: 'Rest & Recharge', icon: '🛏️', pos: [-11.0, 10.2, 2.0], targetRoom: 'bedroom' },
-  { id: 'bathroom', label: 'Bathroom', sub: 'Relax & Refresh', icon: '🛁', pos: [0.0, 10.2, 2.0], targetRoom: 'bathroom' },
-  { id: 'library', label: 'Library Nook', sub: 'Read & Grow', icon: '📖', pos: [10.75, 10.2, 2.0], targetRoom: 'experience' },
-  { id: 'studio', label: 'Creative Studio', sub: 'Create & Explore', icon: '🎨', pos: [21.0, 10.2, 2.0], targetRoom: 'process' },
+  { id: 'living', label: '01 · About Me', sub: 'Grand Living Room', icon: '🛋️', pos: [0.0, 4.4, 2.0], targetRoom: 'about' },
+  { id: 'library', label: '02 · Work Experience', sub: 'Library Nook · 5 Roles', icon: '💼', pos: [10.75, 10.2, 2.0], targetRoom: 'experience' },
+  { id: 'bedroom', label: '03 · Education', sub: 'UNMUH Jember · GPA 3.75', icon: '🎓', pos: [-11.0, 10.2, 2.0], targetRoom: 'bedroom' },
+  { id: 'bathroom', label: '04 · Volunteering', sub: 'Humanitarian & Tech Ed', icon: '🤝', pos: [0.0, 10.2, 2.0], targetRoom: 'bathroom' },
+  { id: 'garage', label: '05 · Licenses & Certs', sub: 'Garasi BMW · 7 Credentials', icon: '📜', pos: [21.0, 3.5, 2.0], targetRoom: 'garage' },
+  { id: 'gallery', label: '06 · Projects', sub: 'Project Gallery · 6 Works', icon: '🖼️', pos: [-11.0, 4.4, 2.0], targetRoom: 'projects' },
+  { id: 'office', label: '07 · Tech & Tooling', sub: 'Architectural Domain', icon: '💻', pos: [10.75, 4.4, 2.0], targetRoom: 'skills' },
+  { id: 'studio', label: '08 · GitHub Contribs', sub: '1,039 Contributions', icon: '🐙', pos: [21.0, 10.2, 2.0], targetRoom: 'process' },
+  { id: 'zen', label: '09 · Contact', sub: 'Garden Terrace & Links', icon: '🌲', pos: [35.0, 3.5, -8.0], targetRoom: 'zen' },
 ];
 
 let overviewMode = false;
@@ -708,6 +708,60 @@ function openDetails(id) {
       list.append(row);
     }
     ui.panelContent.append(list);
+  }
+
+  if (content.educationItems) {
+    const list = document.createElement('div');
+    list.className = 'timeline';
+    for (const ed of content.educationItems) {
+      const row = document.createElement('div');
+      row.className = 'timeline-item';
+      const marker = document.createElement('b');
+      marker.textContent = `${ed.period} · ${ed.grade}`;
+      const copy = document.createElement('p');
+      copy.innerHTML = `<strong>${ed.institution} — ${ed.degree}</strong><br>${ed.desc}`;
+      row.append(marker, copy);
+      list.append(row);
+    }
+    ui.panelContent.append(list);
+  }
+
+  if (content.volunteeringItems) {
+    const list = document.createElement('div');
+    list.className = 'timeline';
+    for (const vol of content.volunteeringItems) {
+      const row = document.createElement('div');
+      row.className = 'timeline-item';
+      const marker = document.createElement('b');
+      marker.textContent = `${vol.period} · ${vol.cause}`;
+      const copy = document.createElement('p');
+      copy.innerHTML = `<strong>${vol.role} · ${vol.org}</strong><br>${vol.desc}`;
+      row.append(marker, copy);
+      list.append(row);
+    }
+    ui.panelContent.append(list);
+  }
+
+  if (content.certifications) {
+    const list = document.createElement('div');
+    list.className = 'timeline';
+    for (const cert of content.certifications) {
+      const row = document.createElement('div');
+      row.className = 'timeline-item';
+      const marker = document.createElement('b');
+      marker.textContent = `${cert.issued} · ${cert.issuer}`;
+      const copy = document.createElement('p');
+      copy.innerHTML = `<strong>${cert.name}</strong><br>Credential ID: ${cert.credentialId}`;
+      row.append(marker, copy);
+      list.append(row);
+    }
+    ui.panelContent.append(list);
+  }
+
+  if (content.githubStats) {
+    const ghNote = document.createElement('p');
+    ghNote.innerHTML = `<strong>${content.githubStats.totalContributions} contributions in the last year</strong> — <a href="${content.githubStats.profileUrl}" target="_blank" rel="noreferrer">${content.githubStats.displayName} ↗</a>`;
+    ui.panelContent.append(ghNote);
   }
 
   const projectItems = content.items || content.projects;
@@ -1350,10 +1404,10 @@ function setPaused(value) {
 const tourStops = [
   {
     id: 'yard',
-    step: '01 / 07',
+    step: '01 / 10',
     name: 'Front Yard & Garden Gate',
-    subtitle: 'A LITTLE WORLD, BUILT BY HAND',
-    intro: 'Welcome to Vicky’s 3D portfolio! Stroll along the sandstone pathway through the blooming cartoon garden.',
+    subtitle: 'WELCOME TO VICKY’S DEVELOPER ESTATE',
+    intro: 'Welcome to M. Vicky Mosafan’s 3D interactive portfolio! Follow the guided tour in the exact sequence of my LinkedIn & GitHub profile.',
     position: [0, 1.12, 16.8],
     archX: 0,
     facing: Math.PI,
@@ -1362,10 +1416,10 @@ const tourStops = [
   },
   {
     id: 'about',
-    step: '02 / 07',
-    name: 'Living Room · About Me',
-    subtitle: 'THE PERSON BEHIND THE PIXELS',
-    intro: 'Creative developer blending software engineering, 3D graphics, and practical AI to make tech feel warm and human.',
+    step: '02 / 10',
+    name: '01 · About Me (Living Room)',
+    subtitle: 'AI ENGINEER · FULL-STACK DEVELOPER · SYSTEM ARCHITECT',
+    intro: 'Full-Stack Web Developer & AI Engineer with GPA 3.75/4.00 and 1,039+ GitHub contributions in the last year.',
     position: [-1.0, 1.12, 2.0],
     archX: 0,
     facing: -Math.PI * 0.5,
@@ -1373,23 +1427,11 @@ const tourStops = [
     cameraPitch: 0.16,
   },
   {
-    id: 'skills',
-    step: '03 / 07',
-    name: 'Home Office · Skills & Tools',
-    subtitle: 'TOOLS I REACH FOR EVERY DAY',
-    intro: 'TypeScript, JavaScript, Three.js, Python, and applied agentic workflows built for reliable modern production.',
-    position: [10.0, 1.12, -1.5],
-    archX: 5.5,
-    facing: -0.25,
-    cameraYaw: -0.1,
-    cameraPitch: 0.22,
-  },
-  {
     id: 'experience',
-    step: '04 / 07',
-    name: 'Library Nook · My Story',
-    subtitle: 'ALWAYS CURIOUS, ALWAYS LEARNING',
-    intro: 'Learning by shipping real products, studying system design, and constantly refining interactive craft.',
+    step: '03 / 10',
+    name: '02 · Work Experience (Library Nook)',
+    subtitle: 'DESTINO COPYTRADE · MQL5 · POSYandu · ANTOSA · MANDIRI',
+    intro: '5 verified LinkedIn roles across FinTech copytrading, MQL5 algorithmic trading, clinical health SaaS, and mobile banking.',
     position: [10.0, 6.32, -1.5],
     archX: 5.5,
     facing: -0.25,
@@ -1397,11 +1439,47 @@ const tourStops = [
     cameraPitch: 0.22,
   },
   {
+    id: 'bedroom',
+    step: '04 / 10',
+    name: '03 · Education (Master Suite)',
+    subtitle: 'UNIVERSITAS MUHAMMADIYAH JEMBER · GPA 3.75 / 4.00',
+    intro: 'Bachelor of Computer Science (Informatics Engineering, 2023–2027) and MAN 2 Banyuwangi Science Track.',
+    position: [-10.0, 6.32, -1.5],
+    archX: -5.5,
+    facing: 0.25,
+    cameraYaw: 0.1,
+    cameraPitch: 0.22,
+  },
+  {
+    id: 'bathroom',
+    step: '05 / 10',
+    name: '04 · Volunteering (Wellness Sanctuary)',
+    subtitle: 'ELDERLY HEALTH DIGITIZATION & STUDENT MENTORSHIP',
+    intro: 'Community volunteering for Posyandu lansia clinical digitization and open-source web/AI workshops.',
+    position: [0.0, 6.32, -1.5],
+    archX: 0,
+    facing: 0.0,
+    cameraYaw: 0.0,
+    cameraPitch: 0.22,
+  },
+  {
+    id: 'garage',
+    step: '06 / 10',
+    name: '05 · Licenses & Certifications (BMW Garage)',
+    subtitle: 'MANDIRI · ALIBABA CLOUD · CODEPOLITAN · DICODING',
+    intro: '7 verified industry credentials across mobile banking, cloud architecture, full-stack engineering, and applied AI.',
+    position: [20.5, 1.12, 2.0],
+    archX: 16.0,
+    facing: -0.35,
+    cameraYaw: -0.2,
+    cameraPitch: 0.2,
+  },
+  {
     id: 'projects',
-    step: '05 / 07',
-    name: 'Project Gallery · Works',
-    subtitle: 'SELECTED HIGHLIGHTS',
-    intro: 'IntelliChat AI workspace, Smart Kost SaaS, 3D interactive graphics, and agentic automation pipelines.',
+    step: '07 / 10',
+    name: '06 · Projects (Project Gallery)',
+    subtitle: 'DESTINO CT · INTELLICHAT · POSYANDU · MQL5 · SMART KOST',
+    intro: '6 production case studies with live demos and open-source repositories.',
     position: [-10.0, 1.12, -1.5],
     archX: -5.5,
     facing: 0.25,
@@ -1409,11 +1487,23 @@ const tourStops = [
     cameraPitch: 0.22,
   },
   {
+    id: 'skills',
+    step: '08 / 10',
+    name: '07 · Architectural Domain & Core Technologies & Tooling',
+    subtitle: 'LANGUAGES · FRONTEND · BACKEND · DB · AI TOOLING · DEVOPS',
+    intro: 'Full matrix of languages, React 19 / Next.js 15, Node.js / NestJS / Laravel, PostgreSQL / Supabase Vector, and AI Augmented Tooling.',
+    position: [10.0, 1.12, -1.5],
+    archX: 5.5,
+    facing: -0.25,
+    cameraYaw: -0.1,
+    cameraPitch: 0.22,
+  },
+  {
     id: 'process',
-    step: '06 / 07',
-    name: 'Creative Studio · Process',
-    subtitle: 'FROM FIRST SKETCH TO LAST DETAIL',
-    intro: 'Three deliberate passes: listen closely to find the real need, build to learn, then polish what counts.',
+    step: '09 / 10',
+    name: '08 · GitHub Contributions (Creative Studio)',
+    subtitle: '1,039 CONTRIBUTIONS · VICKYYMOSAFAN (M. VICKY MOSAFAN)',
+    intro: '1,039 contributions in the last year on github.com/vickyymosafan powered by a 6-stage deterministic engineering workflow.',
     position: [20.5, 6.32, -1.5],
     archX: 16.0,
     facing: -0.25,
@@ -1422,10 +1512,10 @@ const tourStops = [
   },
   {
     id: 'contact',
-    step: '07 / 07',
-    name: 'Garden Terrace · Let’s Connect',
-    subtitle: 'THERE’S ROOM FOR ONE MORE IDEA',
-    intro: 'Open for thoughtful projects, applied AI products, and ambitious collaborations. Let’s make something great!',
+    step: '10 / 10',
+    name: '09 · Contact & Links (Garden Terrace)',
+    subtitle: 'LINKEDIN · GITHUB · EMAIL · INSTAGRAM',
+    intro: 'Connect directly via linkedin.com/in/vickymosafan or github.com/vickyymosafan.',
     position: [0.0, 1.12, -22.5],
     archX: 0,
     facing: Math.PI,
@@ -2319,6 +2409,14 @@ async function init() {
     }
     if (urlParams.get('start') === '1') {
       startExperience();
+    }
+    const sectionParam = urlParams.get('section');
+    if (sectionParam && portfolio.content[sectionParam]) {
+      if (!started) startExperience();
+      setRoom(sectionParam, { teleport: true, open: true });
+      if (cinematicDirector && cinematicDirector.isActive()) {
+        cinematicDirector.skipToContent();
+      }
     }
     const camParam = urlParams.get('cam');
     const targetParam = urlParams.get('target');

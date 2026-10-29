@@ -159,3 +159,75 @@
 .inspect-title{margin-top:2px;color:#1a3d31;font-family:var(--display);font-size:16px;font-weight:900}
 .inspect-desc{margin:0 0 6px;color:#45695a;font-size:12.5px;line-height:1.55}
 .inspect-hint{padding-top:6px;border-top:1px solid rgba(36,72,61,.1);color:#69897c;font-size:11px;font-weight:600}
+
+/* Compact 10-Section Room Nav + New Glyphs */
+.room-nav{gap:3px;padding:7px;max-height:calc(100vh - 150px);overflow-y:auto;scrollbar-width:none}
+.room-nav::-webkit-scrollbar{display:none}
+.room-link{min-height:32px;padding:4px 9px;font-size:10.5px}
+.glyph-education{border-radius:4px;background:linear-gradient(180deg,rgba(36,72,61,.2) 0 40%,transparent 41%)}
+.glyph-education:after{content:'';position:absolute;left:3px;bottom:2px;width:7px;height:4px;border:1.3px solid currentColor;border-top:0}
+.glyph-volunteer{border-radius:50%;background:radial-gradient(circle at 50% 50%,currentColor 0 22%,transparent 24%)}
+.glyph-licenses{border-radius:3px}
+.glyph-licenses:before{content:'';position:absolute;left:3px;top:3px;width:7px;height:2px;background:currentColor;box-shadow:0 4px currentColor}
+.glyph-licenses:after{content:'';position:absolute;right:2px;bottom:2px;width:4px;height:4px;border-radius:50%;background:#db553c}
+
+/* Wider Cinematic Story Card for LinkedIn & GitHub Matrices */
+.cinematic-story-card{width:min(610px,calc(100vw - 36px));max-height:min(88vh,860px)}
+
+/* Ordered Section Switcher Bar */
+.cinematic-section-switcher{display:flex;align-items:center;gap:5px;overflow-x:auto;padding:4px 2px 10px;margin-bottom:12px;border-bottom:1px solid rgba(36,72,61,.1);scrollbar-width:thin}
+.cinematic-section-switcher::-webkit-scrollbar{height:4px}
+.cinematic-section-switcher::-webkit-scrollbar-thumb{background:rgba(36,72,61,.2);border-radius:999px}
+.section-pill{flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid rgba(36,72,61,.15);border-radius:999px;background:#f4efe4;color:#35594a;font-size:10.5px;font-weight:700;cursor:pointer;transition:all .14s ease;white-space:nowrap}
+.section-pill:hover{background:#e7e0d0;color:#183c30}
+.section-pill.is-active{background:#24483d;border-color:#24483d;color:#ffffff;box-shadow:0 2px 8px rgba(36,72,61,.22)}
+
+/* LinkedIn Experience, Education, Volunteering & Certifications Enhancements */
+.linkedin-meta-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.linkedin-grade-badge{display:inline-flex;align-items:center;padding:3px 8px;background:#e8f4ec;border:1px solid rgba(33,110,57,.25);border-radius:6px;color:#1b5e32;font-size:10.5px;font-weight:800}
+.timeline-location{color:#6a877a;font-size:11px;font-weight:600}
+.linkedin-bullet-list{margin:6px 0 8px;padding-left:18px;color:#355849;font-size:12px;line-height:1.55}
+.linkedin-bullet-list li{margin-bottom:3px}
+.linkedin-attachment-pill{display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:6px 11px;background:#132530;border:1px solid rgba(255,255,255,.15);border-radius:9px;color:#ffffff;font-size:11px;font-weight:700;text-decoration:none;transition:transform .14s ease,box-shadow .14s ease}
+.linkedin-attachment-pill:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(19,37,48,.25);color:#7ce0ff}
+.linkedin-skills-line{margin-top:7px;padding-top:6px;border-top:1px dashed rgba(36,72,61,.14);color:#264b3c;font-size:11px;font-weight:700}
+
+/* Architectural Domain & Core Technologies & Tooling Table (Screenshot 1) */
+.arch-domain-table-wrap{margin:10px 0 12px;border:1px solid #d0d7de;border-radius:12px;overflow:hidden;background:#ffffff;box-shadow:0 2px 10px rgba(24,60,48,.05)}
+.arch-domain-table{width:100%;border-collapse:collapse;font-size:12px;text-align:left}
+.arch-domain-table th{padding:10px 12px;background:#f6f8fa;border-bottom:1px solid #d0d7de;color:#1f2328;font-size:12px;font-weight:800}
+.arch-domain-table th+th,.arch-domain-table td+td{border-left:1px solid #d0d7de}
+.arch-domain-table td{padding:10px 12px;border-bottom:1px solid #e5e9ee;vertical-align:middle}
+.arch-domain-table tr:last-child td{border-bottom:0}
+.arch-domain-cell{width:34%;color:#1f2328;font-weight:700;font-size:12px;background:#fbfcfd}
+.arch-badges-cell{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.shield-tech-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.02em;line-height:1.25;box-shadow:0 1px 2px rgba(0,0,0,.12);white-space:nowrap}
+
+/* GitHub Contributions Graph (Screenshot 2) */
+.gh-contrib-card{margin:10px 0 14px;padding:13px 14px;background:#ffffff;border:1px solid #d0d7de;border-radius:14px;box-shadow:0 2px 10px rgba(24,60,48,.05)}
+.gh-contrib-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:9px}
+.gh-contrib-title{color:#1f2328;font-size:13.5px;font-weight:700}
+.gh-profile-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:#24292f;border-radius:999px;color:#ffffff;font-size:11px;font-weight:700;text-decoration:none;transition:all .14s ease}
+.gh-profile-pill:hover{background:#0969da;transform:translateY(-1px)}
+.gh-contrib-graph-box{padding:10px 10px 8px;border:1px solid #d0d7de;border-radius:10px;background:#ffffff;overflow-x:auto}
+.gh-months-row{display:grid;grid-template-columns:repeat(12,1fr);padding-left:26px;margin-bottom:4px;color:#57606a;font-size:9.5px;font-weight:600}
+.gh-graph-body{display:flex;align-items:stretch;gap:5px}
+.gh-days-col{display:grid;grid-template-rows:repeat(7,1fr);width:22px;color:#57606a;font-size:9px;font-weight:600;line-height:9px;align-items:center}
+.gh-contrib-grid{flex:1;display:grid;grid-template-columns:repeat(52,1fr);gap:2px;min-width:410px}
+.gh-week-col{display:grid;grid-template-rows:repeat(7,1fr);gap:2px}
+.gh-cell{display:block;width:100%;aspect-ratio:1;min-width:6px;min-height:6px;border-radius:2px;background:#ebedf0;border:1px solid rgba(27,31,35,.06)}
+.gh-cell.lvl-0{background:#ebedf0}
+.gh-cell.lvl-1{background:#9be9a8}
+.gh-cell.lvl-2{background:#40c463}
+.gh-cell.lvl-3{background:#30a14e}
+.gh-cell.lvl-4{background:#216e39}
+.gh-graph-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:8px;padding-top:6px;border-top:1px solid #f0f2f4;color:#57606a;font-size:10px}
+.gh-learn-text{color:#57606a;font-weight:600}
+.gh-legend{display:inline-flex;align-items:center;gap:3px;color:#57606a;font-size:10px;font-weight:600}
+.gh-legend .gh-cell{width:9px;height:9px;display:inline-block}
+
+/* Cinematic Footer Actions */
+.cinematic-footer-actions{display:flex;align-items:center;gap:8px}
+.cinematic-next-btn{padding:8px 13px;border:1px solid rgba(36,72,61,.2);border-radius:12px;background:#f4efe4;color:#1d4033;font-size:12px;font-weight:800;cursor:pointer;transition:all .15s ease}
+.cinematic-next-btn:hover{background:#db553c;border-color:#db553c;color:#ffffff;transform:translateY(-1px)}
+

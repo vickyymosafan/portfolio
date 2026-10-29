@@ -24,17 +24,17 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
   // Lantai 2: Master Bedroom, Bathroom, Library Nook, Creative Studio
   const roomSpecs = [
     // --- LANTAI 1 (GROUND FLOOR, y = 0.0) ---
-    { id: 'about', x: 0.0, y: 0.0, z: -2.0, title: 'Beyond the Code', subtitle: 'CHAPTER 01 · ABOUT ME', accent: palette.coral, rugMat: materials.carpetPersian },
-    { id: 'projects', x: -11.0, y: 0.0, z: -2.0, title: 'The Artifact Gallery', subtitle: 'CHAPTER 03 · PROJECTS', accent: palette.pinkRose, rugMat: materials.carpetBauhaus },
-    { id: 'skills', x: 10.75, y: 0.0, z: -2.0, title: 'The Engineering Workshop', subtitle: 'CHAPTER 04 · SKILLS & TOOLS', accent: palette.blueSky, rugMat: materials.blue },
-    { id: 'garage', x: 21.0, y: 0.0, z: -2.0, title: 'Private Garage & Workshop', subtitle: 'BMW M-SERIES & TOOLS', accent: palette.goldBrass, rugMat: materials.epoxyFloor },
-    { id: 'contact', x: 0.0, y: 0.0, z: -11.8, title: 'The Final Scene', subtitle: 'COME SAY HELLO', accent: palette.coral, rugMat: materials.terraceTiles },
+    { id: 'about', x: 0.0, y: 0.0, z: -2.0, title: 'About Me', subtitle: '01 · M. VICKY MOSAFAN', accent: palette.coral, rugMat: materials.carpetPersian },
+    { id: 'projects', x: -11.0, y: 0.0, z: -2.0, title: 'Featured Projects', subtitle: '06 · ARTIFACT GALLERY', accent: palette.pinkRose, rugMat: materials.carpetBauhaus },
+    { id: 'skills', x: 10.75, y: 0.0, z: -2.0, title: 'Tech & Tooling', subtitle: '07 · ARCHITECTURAL DOMAIN', accent: palette.blueSky, rugMat: materials.blue },
+    { id: 'garage', x: 21.0, y: 0.0, z: -2.0, title: 'Licenses & Certifications', subtitle: '05 · VERIFIED CREDENTIALS', accent: palette.goldBrass, rugMat: materials.epoxyFloor },
+    { id: 'contact', x: 0.0, y: 0.0, z: -11.8, title: 'Let’s Connect', subtitle: '09 · LINKEDIN & GITHUB', accent: palette.coral, rugMat: materials.terraceTiles },
 
     // --- LANTAI 2 (SECOND FLOOR, y = 5.2m) ---
-    { id: 'bedroom', x: -11.0, y: 5.2, z: -2.0, title: 'Master Bedroom', subtitle: 'REST & RECHARGE', accent: palette.bluePastel, rugMat: materials.carpetBauhaus },
-    { id: 'bathroom', x: 0.0, y: 5.2, z: -2.0, title: 'Master Bathroom', subtitle: 'RELAX & REFRESH', accent: palette.mintSage, rugMat: materials.bathroomTile },
-    { id: 'experience', x: 10.75, y: 5.2, z: -2.0, title: 'The Engineering Journey', subtitle: 'STORY & MILESTONES', accent: palette.yellowSun, rugMat: materials.carpetPersian },
-    { id: 'process', x: 21.0, y: 5.2, z: -2.0, title: 'Creative Studio', subtitle: 'CHAPTER 02 · PROCESS', accent: palette.mintSage, rugMat: materials.mint },
+    { id: 'bedroom', x: -11.0, y: 5.2, z: -2.0, title: 'Education', subtitle: '03 · ACADEMIC HONORS', accent: palette.bluePastel, rugMat: materials.carpetBauhaus },
+    { id: 'bathroom', x: 0.0, y: 5.2, z: -2.0, title: 'Volunteering', subtitle: '04 · LEADERSHIP & COMMUNITY', accent: palette.mintSage, rugMat: materials.bathroomTile },
+    { id: 'experience', x: 10.75, y: 5.2, z: -2.0, title: 'Work Experience', subtitle: '02 · LINKEDIN CAREER', accent: palette.yellowSun, rugMat: materials.carpetPersian },
+    { id: 'process', x: 21.0, y: 5.2, z: -2.0, title: 'GitHub Activity', subtitle: '08 · 1,039 CONTRIBUTIONS', accent: palette.mintSage, rugMat: materials.mint },
   ];
 
   for (let i = 0; i < roomSpecs.length; i += 1) {
@@ -44,10 +44,10 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
     if (spec.id !== 'garage' && spec.id !== 'bathroom' && spec.id !== 'contact' && spec.id !== 'about') {
       const rugW = 8.4;
       const rugD = 6.4;
-      addBox(building, [spec.x, spec.y + 0.005, spec.z], [rugW, 0.02, rugD], spec.rugMat, { receive: true, shadow: false });
+      addBox(building, [spec.x, spec.y + 0.02, spec.z], [rugW, 0.016, rugD], spec.rugMat, { receive: false, shadow: false });
     } else if (spec.id === 'about') {
       // Grand central designer area rug defining the About Me Pavilion space
-      addBox(building, [-1.4, spec.y + 0.005, 1.7], [6.2, 0.02, 4.4], spec.rugMat, { receive: true, shadow: false });
+      addBox(building, [-1.4, spec.y + 0.02, 1.7], [6.2, 0.016, 4.4], spec.rugMat, { receive: false, shadow: false });
     }
 
     // Presentation Display Board Mounted on back wall of room (leaving center clear)
@@ -111,7 +111,7 @@ function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
   const isAbout = id === 'about';
   const bx = isAbout ? -5.35 : x;
   const by = y;
-  const bz = id === 'contact' ? -15.2 : (isAbout ? 1.7 : -7.8);
+  const bz = id === 'contact' ? -15.2 : (isAbout ? 1.7 : (id === 'experience' ? -7.12 : -7.8));
   const rotY = isAbout ? Math.PI * 0.5 : 0;
 
   const display = new THREE.Group();
@@ -276,16 +276,17 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
     // museum pedestals with holographic artifacts, spotlight track
     // =========================================================================
 
-    // 3 Large Illuminated Project Wall Showcases on back wall (z = -7.7)
+    // 3 Large Illuminated Project Wall Showcases (2 flanking the central display board on back wall, 1 on West wall)
     const showcases = [
-      { dx: -3.2, title: 'Beyond-RAG ASI', mat: materials.screenCode },
-      { dx: 0.0, title: 'IntelliChat AI', mat: materials.screenGlow },
-      { dx: 3.2, title: 'Smart Kost SaaS', mat: materials.screenCad },
+      { pos: [x - 3.5, y + 2.6, z - 5.7], rotY: 0, title: 'Destino Copytrade', mat: materials.screenCode },
+      { pos: [x + 3.5, y + 2.6, z - 5.7], rotY: 0, title: 'Posyandu Digital', mat: materials.screenGlow },
+      { pos: [x - 4.75, y + 2.6, z - 1.8], rotY: Math.PI * 0.5, title: 'IntelliChat AI', mat: materials.screenCad },
     ];
 
     for (const sc of showcases) {
       const frame = new THREE.Group();
-      frame.position.set(x + sc.dx, y + 2.6, z - 5.7);
+      frame.position.set(sc.pos[0], sc.pos[1], sc.pos[2]);
+      frame.rotation.y = sc.rotY;
       parent.add(frame);
       // Modern beveled black frame
       addBox(frame, [0, 0, 0], [2.8, 1.9, 0.1], materials.metalDark);
@@ -384,13 +385,14 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
     addBox(chair, [0, 1.75, -0.34], [0.42, 0.22, 0.08], materials.metalDark);
     addFurnitureCollider(world, RAPIER, staticBodies, [x, y + 0.6, z - 0.2], [0.42, 0.6, 0.42]);
 
-    // System Architecture Whiteboard on Back Wall (z = -7.8)
+    // System Architecture Whiteboard on East Partition Wall (leaving back wall clear for Display Board)
     const wb = new THREE.Group();
-    wb.position.set(x, y + 2.8, z - 5.7);
+    wb.position.set(x + 5.05, y + 2.6, z - 1.5);
+    wb.rotation.y = -Math.PI * 0.5;
     parent.add(wb);
-    addBox(wb, [0, 0, 0], [4.4, 2.2, 0.06], materials.trim);
-    addBox(wb, [0, 0, 0.04], [4.2, 2.0, 0.02], materials.whiteboardDiagram, { shadow: false });
-    addBox(wb, [0, -1.05, 0.08], [3.2, 0.04, 0.12], materials.metalDark);
+    addBox(wb, [0, 0, 0], [4.0, 2.0, 0.06], materials.trim);
+    addBox(wb, [0, 0, 0.04], [3.8, 1.8, 0.02], materials.whiteboardDiagram, { shadow: false });
+    addBox(wb, [0, -0.95, 0.08], [2.8, 0.04, 0.12], materials.metalDark);
   } else if (id === 'garage') {
     // =========================================================================
     // 4. GARASI (Lantai 1 Far-Right, x = 21.0, y = 0.0, z = -2.0)
@@ -579,6 +581,7 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
     for (let row = 0; row < 5; row += 1) {
       const by = 0.95 + row * 0.8;
       for (let bx = -3.4; bx <= 3.4; bx += 0.32) {
+        if (Math.abs(bx) < 2.0 && row >= 1 && row <= 3) continue;
         const seed = Math.abs(Math.sin(bx * 13.7 + row * 5.3));
         const bookH = 0.42 + seed * 0.18;
         const bookW = 0.18 + (seed % 0.1) * 0.8;
