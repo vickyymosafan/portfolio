@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 import { materials, palette } from './materials.js';
 import { addBox, addSphere, addCylinder, mergeSubtreeMeshes } from './geometry.js';
 
@@ -39,197 +39,246 @@ export function createCharacter(scene) {
   torsoGroup.position.set(0, 0, 0);
   pelvisGroup.add(torsoGroup);
 
-  // 1. Knitted Tunic Body
-  // Main body sphere
-  const bodyMesh = addSphere(torsoGroup, [0, 0.08, 0], [0.42, 0.54, 0.35], materials.tunic, { shadow: true });
-  // Ribbed waist hem
-  addCylinder(torsoGroup, [0, -0.32, 0], 0.35, 0.38, 0.18, materials.tunic, { segments: 18 });
-  // Inner white collared shirt neck & collar flaps
-  addCylinder(torsoGroup, [0, 0.52, 0], 0.22, 0.26, 0.16, materials.trim, { segments: 16 });
-  addBox(torsoGroup, [-0.1, 0.52, 0.18], [0.12, 0.08, 0.14], materials.trim, { rotation: [0.35, -0.2, 0.3] });
-  addBox(torsoGroup, [0.1, 0.52, 0.18], [0.12, 0.08, 0.14], materials.trim, { rotation: [0.35, 0.2, -0.3] });
+  // ---------------------------------------------------------------------------
+  // DEVELOPER OUTFIT MATERIALS (fitted tee, dark denim, glasses, headphones, backpack)
+  // ---------------------------------------------------------------------------
+  const devMat = (color, roughness = 0.7, extra = {}) =>
+    new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.02, ...extra });
+  const teeMat = devMat(0x1f2933, 0.78);
+  const teeTrimMat = devMat(0x2fbf71, 0.55);
+  const denimMat = devMat(0x2c3e5c, 0.82);
+  const beltMat = devMat(0x1a1410, 0.5);
+  const hairMat = devMat(0x1c1410, 0.65);
+  const frameMat = devMat(0x111111, 0.35, { metalness: 0.3 });
+  const lensMat = new THREE.MeshStandardMaterial({
+    color: 0xbfe6ff, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.35, depthWrite: false,
+  });
+  const phoneMat = devMat(0x23272e, 0.4, { metalness: 0.35 });
+  const phoneAccentMat = devMat(0x2fbf71, 0.4, { emissive: 0x1a8a4c, emissiveIntensity: 0.4 });
+  const packMat = devMat(0x343a46, 0.75);
+  const watchMat = devMat(0x0e1116, 0.3, { metalness: 0.4 });
+  const sneakerMat = devMat(0xf4f4f2, 0.6);
+  const sneakerAccentMat = devMat(0x2fbf71, 0.5);
 
-  // 2. Crossbody Leather Messenger Bag with Brass Clasp & Strap
-  const strapAngle = 0.58;
-  addCylinder(torsoGroup, [0.04, 0.14, 0.02], 0.44, 0.44, 0.08, materials.leatherDark, { rotation: [0.28, 0, strapAngle] });
-  // Shoulder pad on right shoulder
-  addBox(torsoGroup, [0.28, 0.38, 0.04], [0.14, 0.06, 0.22], materials.leather, { rotation: [0.2, 0, strapAngle] });
-  // Leather pouch at left hip
-  const bagGroup = new THREE.Group();
-  bagGroup.position.set(-0.4, -0.16, 0.16);
-  bagGroup.rotation.set(0.12, -0.25, 0.1);
-  torsoGroup.add(bagGroup);
-  // Main satchel body
-  addBox(bagGroup, [0, 0, 0], [0.18, 0.34, 0.3], materials.leather);
-  // Flap covering upper half
-  addBox(bagGroup, [-0.03, 0.06, 0], [0.14, 0.22, 0.32], materials.leatherDark);
-  // Brass buckle clasp
-  addBox(bagGroup, [-0.07, -0.04, 0], [0.06, 0.1, 0.1], materials.brass, { shadow: false });
+  // Chest print: green "</>" code glyph on the tee
+  const printCanvas = document.createElement('canvas');
+  printCanvas.width = 256;
+  printCanvas.height = 128;
+  const pctx = printCanvas.getContext('2d');
+  pctx.clearRect(0, 0, 256, 128);
+  pctx.fillStyle = '#35d07f';
+  pctx.font = 'bold 92px monospace';
+  pctx.textAlign = 'center';
+  pctx.textBaseline = 'middle';
+  pctx.fillText('</>', 128, 66);
+  const printTex = new THREE.CanvasTexture(printCanvas);
+  printTex.colorSpace = THREE.SRGBColorSpace;
+  const printMat = new THREE.MeshBasicMaterial({ map: printTex, transparent: true, depthWrite: false });
+
+  // 1. Athletic V-taper torso in a fitted developer tee
+  // Waist / abdomen
+  const bodyMesh = addSphere(torsoGroup, [0, -0.08, 0], [0.31, 0.34, 0.24], teeMat, { shadow: true });
+  // Broad chest block
+  addSphere(torsoGroup, [0, 0.26, 0], [0.42, 0.34, 0.27], teeMat);
+  // Pectoral definition
+  addSphere(torsoGroup, [-0.15, 0.3, 0.13], [0.17, 0.13, 0.12], teeMat);
+  addSphere(torsoGroup, [0.15, 0.3, 0.13], [0.17, 0.13, 0.12], teeMat);
+  // Lats flaring out toward the shoulders
+  addSphere(torsoGroup, [-0.26, 0.22, -0.03], [0.14, 0.24, 0.2], teeMat);
+  addSphere(torsoGroup, [0.26, 0.22, -0.03], [0.14, 0.24, 0.2], teeMat);
+  // Trapezius slope up to the neck
+  addSphere(torsoGroup, [0, 0.52, -0.04], [0.3, 0.1, 0.18], teeMat);
+  // Green crew-neck ribbing
+  addCylinder(torsoGroup, [0, 0.6, 0], 0.13, 0.15, 0.05, teeTrimMat, { segments: 16 });
+  // Neck
+  addCylinder(torsoGroup, [0, 0.7, 0], 0.11, 0.13, 0.2, materials.skin, { segments: 12 });
+  // Tee hem
+  addCylinder(torsoGroup, [0, -0.3, 0], 0.3, 0.31, 0.08, teeMat, { segments: 18 });
+  // Leather belt with brushed buckle
+  addCylinder(torsoGroup, [0, -0.36, 0], 0.305, 0.305, 0.06, beltMat, { segments: 18 });
+  addBox(torsoGroup, [0, -0.36, 0.3], [0.09, 0.06, 0.03], materials.chrome || frameMat, { shadow: false });
+
+  // Over-ear headphones resting around the neck
+  const phones = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.025, 8, 20, Math.PI * 1.25), phoneMat);
+  phones.position.set(0, 0.62, 0.02);
+  phones.rotation.set(Math.PI * 0.5 + 0.35, 0, Math.PI * 0.875);
+  torsoGroup.add(phones);
+  for (const side of [-1, 1]) {
+    addCylinder(torsoGroup, [side * 0.17, 0.6, 0.08], 0.07, 0.07, 0.05, phoneMat, {
+      rotation: [0.35, 0, Math.PI * 0.5], segments: 14,
+    });
+    addCylinder(torsoGroup, [side * 0.2, 0.6, 0.08], 0.045, 0.045, 0.012, phoneAccentMat, {
+      rotation: [0.35, 0, Math.PI * 0.5], segments: 14, shadow: false,
+    });
+  }
+
+  // Laptop backpack with shoulder straps
+  addBox(torsoGroup, [0, 0.16, -0.33], [0.5, 0.6, 0.18], packMat);
+  addBox(torsoGroup, [0, 0.0, -0.43], [0.36, 0.26, 0.05], packMat);
+  addBox(torsoGroup, [0, 0.42, -0.36], [0.4, 0.03, 0.08], teeTrimMat, { shadow: false });
+  for (const side of [-1, 1]) {
+    addBox(torsoGroup, [side * 0.2, 0.22, 0.22], [0.07, 0.5, 0.04], packMat, { rotation: [-0.12, 0, 0] });
+    addBox(torsoGroup, [side * 0.2, 0.5, 0.0], [0.07, 0.04, 0.42], packMat);
+  }
+
   mergeSubtreeMeshes(torsoGroup, false, true);
   const mergedBodyMesh = torsoGroup.children.find((c) => c.isMesh) || bodyMesh;
 
-  // 3. Head & Face
+  // Chest print kept separate (canvas texture, unmerged)
+  const print = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.13), printMat);
+  print.position.set(0, 0.24, 0.272);
+  torsoGroup.add(print);
+
+  // 3. Head & Face (adult proportions matching the security guards)
   const headGroup = new THREE.Group();
   headGroup.position.set(0, 0.94, 0);
   torsoGroup.add(headGroup);
 
-  // Stylized head with soft peachy skin
-  const headMesh = addSphere(headGroup, [0, 0, 0], [0.45, 0.48, 0.43], materials.skin);
-
-  // Stylized Ears
+  const headMesh = addSphere(headGroup, [0, 0.02, 0], [0.25, 0.28, 0.25], materials.skin);
+  // Strong jaw
+  addSphere(headGroup, [0, -0.1, 0.03], [0.21, 0.15, 0.2], materials.skin);
+  // Ears
   for (const side of [-1, 1]) {
-    const ear = addSphere(headGroup, [side * 0.44, -0.02, 0.02], [0.07, 0.11, 0.09], materials.skin);
-    ear.rotation.y = side * 0.25;
-    addSphere(headGroup, [side * 0.45, -0.02, 0.03], [0.035, 0.06, 0.05], materials.skinBlush, { shadow: false });
+    addSphere(headGroup, [side * 0.245, 0.0, 0.0], [0.045, 0.07, 0.05], materials.skin);
   }
 
-  // Layered Voluminous Chestnut Hair
-  // Main rear/top crown volume
-  addSphere(headGroup, [0, 0.18, -0.08], [0.48, 0.44, 0.48], materials.hair);
-  addSphere(headGroup, [0, 0.35, 0.0], [0.46, 0.28, 0.44], materials.hair);
-  addSphere(headGroup, [0, -0.06, -0.22], [0.44, 0.35, 0.32], materials.hair);
+  // Short undercut hair with a textured quiff
+  addSphere(headGroup, [0, 0.14, -0.03], [0.265, 0.2, 0.26], hairMat);
+  addSphere(headGroup, [0, 0.03, -0.1], [0.26, 0.22, 0.2], hairMat);
+  addSphere(headGroup, [0.02, 0.23, 0.08], [0.2, 0.09, 0.17], hairMat);
 
-  // Front Swept Bangs framing forehead
-  addSphere(headGroup, [-0.2, 0.24, 0.32], [0.22, 0.18, 0.18], materials.hair);
-  addSphere(headGroup, [0.18, 0.24, 0.32], [0.22, 0.18, 0.18], materials.hair);
-  addSphere(headGroup, [0.02, 0.28, 0.37], [0.2, 0.16, 0.16], materials.hair);
-  addSphere(headGroup, [-0.1, 0.32, 0.35], [0.18, 0.15, 0.16], materials.hair);
-
-  // Sideburn tufts framing the face
-  addSphere(headGroup, [-0.38, 0.08, 0.18], [0.14, 0.25, 0.16], materials.hair, { rotation: [0.1, 0, 0.2] });
-  addSphere(headGroup, [0.38, 0.08, 0.18], [0.14, 0.25, 0.16], materials.hair, { rotation: [0.1, 0, -0.2] });
-
-  // Rosy Blush Cheeks
-  addSphere(headGroup, [-0.25, -0.07, 0.36], [0.09, 0.05, 0.04], materials.skinBlush, { shadow: false });
-  addSphere(headGroup, [0.25, -0.07, 0.36], [0.09, 0.05, 0.04], materials.skinBlush, { shadow: false });
-
-  // Expressive 3D Eyes with Iris Gradient, Pupils & Dual Catchlights
+  // Eyes
   for (const side of [-1, 1]) {
-    const eyeX = side * 0.18;
-    // Eye sclera (soft white almond)
-    addSphere(headGroup, [eyeX, 0.02, 0.375], [0.085, 0.11, 0.06], materials.trim, { shadow: false });
-    // Stylized rich teal iris
-    addSphere(headGroup, [eyeX, 0.02, 0.415], [0.062, 0.085, 0.035], materials.iris, { shadow: false });
-    // Dark deep pupil
-    addSphere(headGroup, [eyeX, 0.02, 0.435], [0.042, 0.06, 0.02], materials.ink, { shadow: false });
-    // Primary specular catchlight (top-side sparkle)
-    addSphere(headGroup, [eyeX + side * 0.022, 0.05, 0.45], [0.024, 0.024, 0.02], materials.trim, { shadow: false });
-    // Secondary micro-catchlight (bottom twinkle)
-    addSphere(headGroup, [eyeX - side * 0.015, -0.02, 0.45], [0.012, 0.012, 0.01], materials.trim, { shadow: false });
-    // Expressive stylized eyebrow
-    addBox(headGroup, [eyeX, 0.15, 0.375], [0.15, 0.035, 0.04], materials.hair, { rotation: [0, 0, side * -0.16] });
+    const eyeX = side * 0.095;
+    addSphere(headGroup, [eyeX, 0.04, 0.225], [0.042, 0.048, 0.025], materials.trim, { shadow: false });
+    addSphere(headGroup, [eyeX, 0.04, 0.242], [0.026, 0.032, 0.015], materials.ink, { shadow: false });
+    addSphere(headGroup, [eyeX + side * 0.01, 0.055, 0.252], [0.009, 0.009, 0.006], materials.trim, { shadow: false });
+    // Brows
+    addBox(headGroup, [eyeX, 0.11, 0.23], [0.085, 0.022, 0.025], hairMat, { rotation: [0, 0, side * -0.1] });
   }
 
-  // Cute Button Nose with soft blush
-  addSphere(headGroup, [0, -0.07, 0.435], [0.048, 0.042, 0.045], materials.skinBlush, { shadow: false });
+  // Black rectangular developer glasses
+  for (const side of [-1, 1]) {
+    const gx = side * 0.095;
+    addBox(headGroup, [gx, 0.04, 0.262], [0.11, 0.075, 0.012], lensMat, { shadow: false });
+    addBox(headGroup, [gx, 0.083, 0.262], [0.12, 0.015, 0.018], frameMat, { shadow: false });
+    addBox(headGroup, [gx, -0.0, 0.262], [0.12, 0.012, 0.018], frameMat, { shadow: false });
+    addBox(headGroup, [side * 0.152, 0.04, 0.262], [0.012, 0.085, 0.018], frameMat, { shadow: false });
+    addBox(headGroup, [side * 0.038, 0.04, 0.262], [0.012, 0.085, 0.018], frameMat, { shadow: false });
+    addBox(headGroup, [side * 0.2, 0.06, 0.13], [0.012, 0.014, 0.25], frameMat, { shadow: false });
+  }
+  addBox(headGroup, [0, 0.055, 0.265], [0.05, 0.012, 0.014], frameMat, { shadow: false });
 
-  // Warm Friendly Smile
-  const smile = new THREE.Mesh(
-    new THREE.TorusGeometry(0.095, 0.017, 6, 12, Math.PI),
-    materials.ink
-  );
-  smile.position.set(0, -0.175, 0.395);
+  // Nose & confident smile
+  addSphere(headGroup, [0, -0.02, 0.255], [0.03, 0.04, 0.03], materials.skin, { shadow: false });
+  const smile = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.01, 6, 12, Math.PI), materials.ink);
+  smile.position.set(0, -0.09, 0.24);
   smile.rotation.set(0, 0, Math.PI);
   headGroup.add(smile);
+  // Light stubble shadow
+  addSphere(headGroup, [0, -0.15, 0.1], [0.16, 0.07, 0.13], devMat(0x8a6a55, 0.9), { shadow: false });
 
-  // Dynamic Expressive Cowlick Tuft (ahoge) on top crown
+  // Animated quiff tuft (kept for the existing hair-inertia animation)
   const hairTuft = new THREE.Group();
-  hairTuft.position.set(-0.16, 0.44, 0.06);
-  hairTuft.rotation.set(0.15, 0.1, 0.35);
+  hairTuft.position.set(0.02, 0.27, 0.12);
+  hairTuft.rotation.set(0.15, 0, 0);
   headGroup.add(hairTuft);
-  addSphere(hairTuft, [0, 0.1, 0], [0.11, 0.2, 0.11], materials.hair);
-  addSphere(hairTuft, [0.04, 0.24, 0.04], [0.08, 0.14, 0.08], materials.hair, { rotation: [0.2, 0, 0.2] });
+  addSphere(hairTuft, [0, 0.02, 0], [0.12, 0.06, 0.09], hairMat);
 
   mergeSubtreeMeshes(headGroup, false, true);
   const mergedHeadMesh = headGroup.children.find((c) => c.isMesh) || headMesh;
 
-  // 4. Arms with Articulated Shoulder & Elbow Joints
+  // 4. Muscular arms with articulated shoulder & elbow joints
   const leftArm = new THREE.Group();
-  leftArm.position.set(-0.44, 0.36, 0);
+  leftArm.position.set(-0.47, 0.42, 0);
   const rightArm = new THREE.Group();
-  rightArm.position.set(0.44, 0.36, 0);
+  rightArm.position.set(0.47, 0.42, 0);
   torsoGroup.add(leftArm, rightArm);
 
-  // Left Forearm group
   const leftForearm = new THREE.Group();
-  leftForearm.position.set(0, -0.28, 0);
-
-  // Right Forearm group
+  leftForearm.position.set(0, -0.3, 0);
   const rightForearm = new THREE.Group();
-  rightForearm.position.set(0, -0.28, 0);
+  rightForearm.position.set(0, -0.3, 0);
 
-  // Left & Right Hands
   const leftHand = new THREE.Group();
   leftHand.position.set(0, -0.28, 0);
-
   const rightHand = new THREE.Group();
   rightHand.position.set(0, -0.28, 0);
 
-  // Build arm geometry
   for (const [armGroup, forearmGroup, handGroup, side] of [
     [leftArm, leftForearm, leftHand, -1],
     [rightArm, rightForearm, rightHand, 1],
   ]) {
-    // Upper arm sweater sleeve
-    addCylinder(armGroup, [0, -0.14, 0], 0.125, 0.115, 0.28, materials.tunic);
+    // Rounded deltoid capped by the tee sleeve
+    addSphere(armGroup, [side * 0.02, 0.0, 0], [0.16, 0.14, 0.15], teeMat);
+    // Short sleeve with green trim
+    addCylinder(armGroup, [0, -0.1, 0], 0.14, 0.135, 0.14, teeMat);
+    addCylinder(armGroup, [0, -0.17, 0], 0.137, 0.137, 0.025, teeTrimMat, { shadow: false });
+    // Bare bicep / tricep bulge
+    addSphere(armGroup, [0, -0.22, 0.02], [0.115, 0.12, 0.12], materials.skin);
+    addCylinder(armGroup, [0, -0.25, 0], 0.1, 0.095, 0.1, materials.skin);
     mergeSubtreeMeshes(armGroup, false, true);
     armGroup.add(forearmGroup);
 
-    // Forearm sleeve & ribbed knitted cuff + hand merged into forearm bone
-    addCylinder(forearmGroup, [0, -0.12, 0], 0.115, 0.105, 0.24, materials.tunic);
-    addCylinder(forearmGroup, [0, -0.24, 0], 0.115, 0.115, 0.06, materials.tunic);
+    // Thick forearm tapering to the wrist
+    addSphere(forearmGroup, [0, -0.06, 0.01], [0.1, 0.11, 0.1], materials.skin);
+    addCylinder(forearmGroup, [0, -0.15, 0], 0.09, 0.07, 0.2, materials.skin);
+    if (side === -1) {
+      // Smartwatch on the left wrist
+      addCylinder(forearmGroup, [0, -0.235, 0], 0.075, 0.075, 0.04, watchMat);
+      addBox(forearmGroup, [0, -0.235, 0.07], [0.06, 0.05, 0.02], phoneAccentMat, { shadow: false });
+    }
     forearmGroup.add(handGroup);
-    addSphere(handGroup, [0, -0.04, 0], [0.085, 0.1, 0.075], materials.skin);
-    addSphere(handGroup, [side * 0.055, -0.02, 0.04], [0.038, 0.05, 0.038], materials.skin, {
+    addSphere(handGroup, [0, -0.03, 0], [0.08, 0.09, 0.07], materials.skin);
+    addSphere(handGroup, [side * 0.05, -0.01, 0.04], [0.035, 0.045, 0.035], materials.skin, {
       rotation: [0.3, side * 0.4, side * 0.3],
     });
     mergeSubtreeMeshes(forearmGroup, false, true);
   }
 
-  // 5. Legs with Articulated Hip, Knee, and Ankle/Foot Joints
+  // 5. Legs with articulated hip, knee, and ankle joints (dark denim + sneakers)
   const leftLeg = new THREE.Group();
-  leftLeg.position.set(-0.19, -0.32, 0);
+  leftLeg.position.set(-0.17, -0.32, 0);
   const rightLeg = new THREE.Group();
-  rightLeg.position.set(0.19, -0.32, 0);
+  rightLeg.position.set(0.17, -0.32, 0);
   pelvisGroup.add(leftLeg, rightLeg);
 
-  // Knee joints (lower leg)
   const leftLowerLeg = new THREE.Group();
   leftLowerLeg.position.set(0, -0.3, 0);
-
   const rightLowerLeg = new THREE.Group();
   rightLowerLeg.position.set(0, -0.3, 0);
 
-  // Sneaker / Shoes
   const leftShoe = new THREE.Group();
-  leftShoe.position.set(0, -0.3, 0.05);
-
+  leftShoe.position.set(0, -0.3, 0.04);
   const rightShoe = new THREE.Group();
-  rightShoe.position.set(0, -0.3, 0.05);
+  rightShoe.position.set(0, -0.3, 0.04);
+
+  // Hip block so the denim reads as one garment
+  addSphere(pelvisGroup, [0, -0.36, 0], [0.31, 0.14, 0.23], denimMat);
 
   for (const [thighGroup, calfGroup, shoeGroup] of [
     [leftLeg, leftLowerLeg, leftShoe],
     [rightLeg, rightLowerLeg, rightShoe],
   ]) {
-    // Upper thigh trousers
-    addCylinder(thighGroup, [0, -0.15, 0], 0.155, 0.145, 0.3, materials.trousers);
+    // Powerful thighs
+    addCylinder(thighGroup, [0, -0.15, 0], 0.15, 0.13, 0.32, denimMat);
+    addSphere(thighGroup, [0, -0.1, 0.03], [0.15, 0.17, 0.15], denimMat);
     mergeSubtreeMeshes(thighGroup, false, true);
     thighGroup.add(calfGroup);
 
-    // Lower calf trousers & cuff hem
-    addCylinder(calfGroup, [0, -0.14, 0], 0.145, 0.135, 0.28, materials.trousers);
-    addCylinder(calfGroup, [0, -0.27, 0], 0.145, 0.145, 0.06, materials.trousers);
+    // Calves with a rolled denim cuff
+    addCylinder(calfGroup, [0, -0.13, 0], 0.125, 0.11, 0.28, denimMat);
+    addCylinder(calfGroup, [0, -0.26, 0], 0.122, 0.122, 0.05, devMat(0x4a6488, 0.8));
     mergeSubtreeMeshes(calfGroup, false, true);
     calfGroup.add(shoeGroup);
 
-    // Designer Sneaker
-    addBox(shoeGroup, [0, 0.05, 0.02], [0.22, 0.13, 0.36], materials.sneakerCoral);
-    addBox(shoeGroup, [0, 0.09, 0.04], [0.14, 0.06, 0.2], materials.trim);
-    addBox(shoeGroup, [0, 0.12, 0.06], [0.12, 0.02, 0.14], materials.trim);
-    addBox(shoeGroup, [0, -0.03, 0.03], [0.24, 0.06, 0.39], materials.sneakerSole);
-    addBox(shoeGroup, [0, -0.065, 0.03], [0.245, 0.03, 0.4], materials.leatherDark);
-    addSphere(shoeGroup, [0, 0.02, 0.18], [0.115, 0.08, 0.095], materials.sneakerSole);
-    addBox(shoeGroup, [0, 0.06, -0.14], [0.2, 0.09, 0.06], materials.trim);
+    // Clean white sneakers with green dev accents
+    addBox(shoeGroup, [0, 0.04, 0.03], [0.2, 0.12, 0.36], sneakerMat);
+    addSphere(shoeGroup, [0, 0.02, 0.18], [0.1, 0.075, 0.09], sneakerMat);
+    addBox(shoeGroup, [0, 0.05, 0.03], [0.205, 0.035, 0.22], sneakerAccentMat, { shadow: false });
+    addBox(shoeGroup, [0, 0.105, 0.06], [0.12, 0.02, 0.14], sneakerMat);
+    addBox(shoeGroup, [0, -0.04, 0.03], [0.22, 0.05, 0.39], materials.sneakerSole);
+    addBox(shoeGroup, [0, -0.07, 0.03], [0.225, 0.02, 0.4], beltMat);
     mergeSubtreeMeshes(shoeGroup, false, true);
   }
 
