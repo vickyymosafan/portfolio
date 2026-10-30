@@ -84,6 +84,7 @@ let characterRig;
 let doorControls;
 let cinematicDirector;
 let worldInteractions;
+let drivewayZone;
 let securityZone;
 let farmZone;
 let riceZone;
@@ -396,7 +397,7 @@ async function createScene() {
 
   // Phase 3 & 4: Exterior Estate Zones (Pool Deck, Driveway & Roundabout, Zen Garden, Security Area, Farm & Rice Fields)
   createPoolArea(scene, world, RAPIER, staticBodies);
-  createDriveway(scene, world, RAPIER, staticBodies);
+  drivewayZone = createDriveway(scene, world, RAPIER, staticBodies);
   await yieldToMain();
 
   createZenGarden(scene, world, RAPIER, staticBodies);
@@ -2272,6 +2273,7 @@ function animate(timestamp) {
 
   updateCharacterRig(characterRig, dt, elapsed, moveAmount, grounded);
   if (doorControls?.update) doorControls.update(dt);
+  if (drivewayZone?.update) drivewayZone.update(dt, elapsed);
   updateRoomFromPosition(timestamp);
   findInteraction();
 
