@@ -124,26 +124,49 @@ function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
 
   // Architectural fluted acoustic timber slats & brass frame behind "About Me" board
   if (isAbout) {
-    // Freestanding architectural stone monolith & acoustic timber slats in the garden
-    addBox(display, [0, 2.5, -0.06], [4.4, 4.0, 0.12], materials.stoneWarm);
-    addBox(display, [0, 2.5, -0.01], [4.2, 3.8, 0.04], materials.woodDark);
-    for (let s = -1.95; s <= 1.95; s += 0.2) {
-      if (Math.abs(s) > 1.52) {
-        addBox(display, [s, 2.5, 0.03], [0.08, 3.8, 0.04], materials.woodLight);
+    const wallH = 3.04;
+    const wallW = 3.65;
+    const wallY = 1.69;
+
+    // 1. Base plinth in stone
+    addBox(display, [0, 0.26, 0.0], [wallW + 0.08, 0.18, 0.20], materials.stone);
+
+    // 2. Main architectural frame in dark wood
+    addBox(display, [0, wallY, 0.0], [wallW, wallH, 0.14], materials.woodDark);
+
+    // 3. FRONT FACE (+Z): Acoustic fluted timber slats & brushed brass header/footer
+    addBox(display, [0, wallY, 0.06], [wallW - 0.12, wallH - 0.16, 0.02], materials.wood);
+    for (let s = -1.65; s <= 1.65; s += 0.18) {
+      if (Math.abs(s) > 1.36) {
+        addBox(display, [s, wallY, 0.08], [0.07, wallH - 0.20, 0.03], materials.woodLight);
       }
     }
-    addBox(display, [0, 4.46, 0.02], [4.4, 0.08, 0.14], materials.brass);
-    addBox(display, [0, 0.56, 0.02], [4.4, 0.08, 0.14], materials.brass);
-    addBox(display, [-2.18, 2.5, 0.02], [0.08, 4.0, 0.14], materials.brass);
-    addBox(display, [2.18, 2.5, 0.02], [0.08, 4.0, 0.14], materials.brass);
-    addFurnitureCollider(world, RAPIER, staticBodies, [bx, by + 2.0, bz], [0.15, 2.0, 2.2]);
+    // Brass top, bottom, and side trims
+    addBox(display, [0, wallY + wallH * 0.5 - 0.04, 0.08], [wallW, 0.06, 0.06], materials.brass);
+    addBox(display, [0, wallY - wallH * 0.5 + 0.04, 0.08], [wallW, 0.06, 0.06], materials.brass);
+    addBox(display, [-wallW * 0.5 + 0.03, wallY, 0.08], [0.06, wallH, 0.06], materials.brass);
+    addBox(display, [wallW * 0.5 - 0.03, wallY, 0.08], [0.06, wallH, 0.06], materials.brass);
+
+    // 4. REAR FACE (-Z, facing west lawn/fence):
+    // Refined architectural teak panelling with horizontal louvers & brass divider
+    addBox(display, [0, wallY, -0.065], [wallW - 0.16, wallH - 0.20, 0.02], materials.wood);
+    for (let ry = 0.50; ry <= 3.05; ry += 0.22) {
+      addBox(display, [0, ry, -0.08], [wallW - 0.22, 0.05, 0.02], materials.woodLight);
+    }
+    addBox(display, [0, wallY, -0.085], [0.04, wallH - 0.20, 0.02], materials.brass);
+    addBox(display, [0, wallY + wallH * 0.5 - 0.04, -0.075], [wallW, 0.06, 0.05], materials.brass);
+    addBox(display, [0, wallY - wallH * 0.5 + 0.04, -0.075], [wallW, 0.06, 0.05], materials.brass);
+
+    // Physics collider matching the new dimensions
+    addFurnitureCollider(world, RAPIER, staticBodies, [bx, by + wallY, bz], [0.15, wallH * 0.5, wallW * 0.5]);
   }
 
   // Wall mounted plaque frame with brushed brass trim
-  const boardW = isAbout ? 3.0 : (id === 'bathroom' ? 3.2 : 3.5);
-  const boardH = isAbout ? 1.8 : 1.95;
-  addBox(display, [0, 2.7, 0.06], [boardW + 0.12, boardH + 0.12, 0.06], materials.brass);
-  addBox(display, [0, 2.7, 0.09], [boardW, boardH, 0.08], materials.woodDark);
+  const boardY = isAbout ? 1.85 : 2.7;
+  const boardW = isAbout ? 2.65 : (id === 'bathroom' ? 3.2 : 3.5);
+  const boardH = isAbout ? 1.55 : 1.95;
+  addBox(display, [0, boardY, 0.06], [boardW + 0.12, boardH + 0.12, 0.06], materials.brass);
+  addBox(display, [0, boardY, 0.09], [boardW, boardH, 0.08], materials.woodDark);
 
   // Canvas sign texture
   const signTex = createSignTexture(title, subtitle, accent, 512, 340);
@@ -151,15 +174,16 @@ function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
     new THREE.PlaneGeometry(boardW - 0.2, boardH - 0.2),
     new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.45, metalness: 0.05 })
   );
-  signMesh.position.set(0, 2.7, 0.15);
+  signMesh.position.set(0, boardY, 0.15);
   signMesh.castShadow = false;
   signMesh.receiveShadow = false;
   display.add(signMesh);
 
-  // Twin brass picture lamps over board
-  for (const lx of isAbout ? [-0.65, 0.65] : [0]) {
-    addBox(display, [lx, 2.7 + boardH * 0.5 + 0.14, 0.25], [isAbout ? 0.9 : boardW * 0.55, 0.06, 0.16], materials.brass);
-    addSphere(display, [lx, 2.7 + boardH * 0.5 + 0.05, 0.25], [0.14, 0.05, 0.14], materials.glow, { shadow: false });
+  // Brass picture lamps over board
+  const lampY = boardY + boardH * 0.5 + (isAbout ? 0.10 : 0.14);
+  for (const lx of isAbout ? [-0.6, 0.6] : [0]) {
+    addBox(display, [lx, lampY, 0.25], [isAbout ? 0.75 : boardW * 0.55, 0.06, 0.16], materials.brass);
+    addSphere(display, [lx, lampY - 0.08, 0.25], [0.14, 0.05, 0.14], materials.glow, { shadow: false });
   }
 }
 

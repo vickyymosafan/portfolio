@@ -1,4 +1,4 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 import { materials, palette } from './materials.js';
 import { addBox, addSphere, addCylinder, mergeSubtreeMeshes } from './geometry.js';
 
@@ -40,245 +40,250 @@ export function createCharacter(scene) {
   pelvisGroup.add(torsoGroup);
 
   // ---------------------------------------------------------------------------
-  // DEVELOPER OUTFIT MATERIALS (fitted tee, dark denim, glasses, headphones, backpack)
+  // COOL DEVELOPER TECHWEAR OUTFIT MATERIALS
+  // Minimalist obsidian jacket, charcoal tee, emerald tech accents,
+  // dark tapered denim, designer sneakers, titanium watch, sleek headphones
   // ---------------------------------------------------------------------------
   const devMat = (color, roughness = 0.7, extra = {}) =>
-    new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.02, ...extra });
-  const teeMat = devMat(0x1f2933, 0.78);
-  const teeTrimMat = devMat(0x2fbf71, 0.55);
-  const denimMat = devMat(0x2c3e5c, 0.82);
-  const beltMat = devMat(0x1a1410, 0.5);
-  const hairMat = devMat(0x1c1410, 0.65);
-  const frameMat = devMat(0x111111, 0.35, { metalness: 0.3 });
-  const lensMat = new THREE.MeshStandardMaterial({
-    color: 0xbfe6ff, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.35, depthWrite: false,
-  });
-  const phoneMat = devMat(0x23272e, 0.4, { metalness: 0.35 });
-  const phoneAccentMat = devMat(0x2fbf71, 0.4, { emissive: 0x1a8a4c, emissiveIntensity: 0.4 });
-  const packMat = devMat(0x343a46, 0.75);
-  const watchMat = devMat(0x0e1116, 0.3, { metalness: 0.4 });
-  const sneakerMat = devMat(0xf4f4f2, 0.6);
-  const sneakerAccentMat = devMat(0x2fbf71, 0.5);
+    new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.04, ...extra });
 
-  // Chest print: green "</>" code glyph on the tee
-  const printCanvas = document.createElement('canvas');
-  printCanvas.width = 256;
-  printCanvas.height = 128;
-  const pctx = printCanvas.getContext('2d');
-  pctx.clearRect(0, 0, 256, 128);
-  pctx.fillStyle = '#35d07f';
-  pctx.font = 'bold 92px monospace';
-  pctx.textAlign = 'center';
-  pctx.textBaseline = 'middle';
-  pctx.fillText('</>', 128, 66);
-  const printTex = new THREE.CanvasTexture(printCanvas);
-  printTex.colorSpace = THREE.SRGBColorSpace;
-  const printMat = new THREE.MeshBasicMaterial({ map: printTex, transparent: true, depthWrite: false });
+  const jacketMat = devMat(0x1a202c, 0.72); // Matte obsidian tech overshirt/jacket
+  const teeMat = devMat(0xe2e8f0, 0.65); // Clean light heather streetwear inner tee (sharp contrast!)
+  const teeTrimMat = devMat(0x10b981, 0.45, { emissive: 0x059669, emissiveIntensity: 0.25 }); // Vibrant emerald accent
+  const denimMat = devMat(0x232c3d, 0.82); // Clean dark indigo tapered denim trousers
+  const beltMat = devMat(0x171923, 0.55); // Matte black tactical belt
+  const hairMat = devMat(0x161311, 0.65); // Deep rich espresso hair
+  const hairLockMat = devMat(0x221c18, 0.62); // Layered textured hair locks
+  const phoneMat = devMat(0x2d3436, 0.35, { metalness: 0.65 }); // Space-gray aluminum headphones
+  const phoneAccentMat = devMat(0x10b981, 0.35, { emissive: 0x059669, emissiveIntensity: 0.45 }); // Emerald LED ring
+  const packMat = devMat(0x1f242d, 0.75); // Minimalist waterproof tech sling/backpack
+  const watchMat = devMat(0x2d3748, 0.25, { metalness: 0.75 }); // Titanium smartwatch
+  const braceletMat = devMat(0x141414, 0.5); // Minimalist black cord bracelet
+  const sneakerMat = devMat(0xf8fafc, 0.55); // Crisp clean white leather
+  const sneakerDarkMat = devMat(0x1e293b, 0.6); // Obsidian leather panels
+  const sneakerAccentMat = devMat(0x10b981, 0.45); // Emerald accent detail
 
-  // 1. Athletic V-taper torso in a fitted developer tee
-  // Waist / abdomen
-  const bodyMesh = addSphere(torsoGroup, [0, -0.08, 0], [0.31, 0.34, 0.24], teeMat, { shadow: true });
-  // Broad chest block
-  addSphere(torsoGroup, [0, 0.26, 0], [0.42, 0.34, 0.27], teeMat);
-  // Pectoral definition
-  addSphere(torsoGroup, [-0.15, 0.3, 0.13], [0.17, 0.13, 0.12], teeMat);
-  addSphere(torsoGroup, [0.15, 0.3, 0.13], [0.17, 0.13, 0.12], teeMat);
-  // Lats flaring out toward the shoulders
-  addSphere(torsoGroup, [-0.26, 0.22, -0.03], [0.14, 0.24, 0.2], teeMat);
-  addSphere(torsoGroup, [0.26, 0.22, -0.03], [0.14, 0.24, 0.2], teeMat);
-  // Trapezius slope up to the neck
-  addSphere(torsoGroup, [0, 0.52, -0.04], [0.3, 0.1, 0.18], teeMat);
-  // Green crew-neck ribbing
-  addCylinder(torsoGroup, [0, 0.6, 0], 0.13, 0.15, 0.05, teeTrimMat, { segments: 16 });
-  // Neck
-  addCylinder(torsoGroup, [0, 0.7, 0], 0.11, 0.13, 0.2, materials.skin, { segments: 12 });
-  // Tee hem
-  addCylinder(torsoGroup, [0, -0.3, 0], 0.3, 0.31, 0.08, teeMat, { segments: 18 });
-  // Leather belt with brushed buckle
-  addCylinder(torsoGroup, [0, -0.36, 0], 0.305, 0.305, 0.06, beltMat, { segments: 18 });
-  addBox(torsoGroup, [0, -0.36, 0.3], [0.09, 0.06, 0.03], materials.chrome || frameMat, { shadow: false });
+  // 1. Sleek, natural fit torso (modern tech-wear streetwear — NOT bulky, NOT kekar)
+  // Base lower waist & abdomen
+  const bodyMesh = addSphere(torsoGroup, [0, 0.06, 0], [0.24, 0.22, 0.18], teeMat, { shadow: true });
+  // Upper torso in sleek matte obsidian jacket
+  addBox(torsoGroup, [0, 0.20, 0], [0.46, 0.32, 0.26], jacketMat);
+  // Soft rounded jacket side contours
+  addCylinder(torsoGroup, [-0.21, 0.20, 0], 0.12, 0.12, 0.32, jacketMat, { segments: 12 });
+  addCylinder(torsoGroup, [0.21, 0.20, 0], 0.12, 0.12, 0.32, jacketMat, { segments: 12 });
+  // Inner tee center reveal (crisp streetwear contrast)
+  addBox(torsoGroup, [0, 0.20, 0.08], [0.18, 0.30, 0.12], teeMat);
+  // Open jacket lapels
+  addBox(torsoGroup, [-0.10, 0.20, 0.135], [0.032, 0.32, 0.025], jacketMat);
+  addBox(torsoGroup, [0.10, 0.20, 0.135], [0.032, 0.32, 0.025], jacketMat);
+  // Minimalist terminal code prompt symbol "<_" on inner tee
+  addBox(torsoGroup, [-0.03, 0.24, 0.142], [0.035, 0.008, 0.010], devMat(0x0f172a, 0.7), { shadow: false });
+  addBox(torsoGroup, [0.02, 0.22, 0.142], [0.025, 0.006, 0.010], teeTrimMat, { shadow: false });
+  // Left chest minimalist tech badge with tiny emerald indicator
+  addBox(torsoGroup, [0.14, 0.24, 0.138], [0.06, 0.045, 0.02], jacketMat);
+  addSphere(torsoGroup, [0.155, 0.24, 0.150], [0.008, 0.008, 0.005], teeTrimMat, { shadow: false });
 
-  // Over-ear headphones resting around the neck
-  const phones = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.025, 8, 20, Math.PI * 1.25), phoneMat);
-  phones.position.set(0, 0.62, 0.02);
-  phones.rotation.set(Math.PI * 0.5 + 0.35, 0, Math.PI * 0.875);
+  // Jacket collar & well-proportioned athletic neck
+  addCylinder(torsoGroup, [0, 0.35, 0], 0.13, 0.15, 0.06, jacketMat, { segments: 16 });
+  addCylinder(torsoGroup, [0, 0.44, 0], 0.086, 0.105, 0.13, materials.skin, { segments: 14 });
+
+  // Tactical belt with gunmetal buckle
+  addBox(torsoGroup, [0, -0.06, 0], [0.44, 0.06, 0.25], beltMat);
+  addBox(torsoGroup, [0, -0.06, 0.13], [0.06, 0.05, 0.02], watchMat, { shadow: false });
+
+  // Sleek over-ear headphones resting comfortably around collar (AirPods Max style)
+  const phones = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.018, 8, 20, Math.PI * 1.25), phoneMat);
+  phones.position.set(0, 0.39, 0.02);
+  phones.rotation.set(Math.PI * 0.5 + 0.30, 0, Math.PI * 0.875);
   torsoGroup.add(phones);
   for (const side of [-1, 1]) {
-    addCylinder(torsoGroup, [side * 0.17, 0.6, 0.08], 0.07, 0.07, 0.05, phoneMat, {
-      rotation: [0.35, 0, Math.PI * 0.5], segments: 14,
+    addCylinder(torsoGroup, [side * 0.14, 0.39, 0.06], 0.055, 0.055, 0.038, phoneMat, {
+      rotation: [0.35, 0, Math.PI * 0.5], segments: 16,
     });
-    addCylinder(torsoGroup, [side * 0.2, 0.6, 0.08], 0.045, 0.045, 0.012, phoneAccentMat, {
-      rotation: [0.35, 0, Math.PI * 0.5], segments: 14, shadow: false,
+    addCylinder(torsoGroup, [side * 0.162, 0.39, 0.06], 0.035, 0.035, 0.008, phoneAccentMat, {
+      rotation: [0.35, 0, Math.PI * 0.5], segments: 16, shadow: false,
     });
   }
 
-  // Laptop backpack with shoulder straps
-  addBox(torsoGroup, [0, 0.16, -0.33], [0.5, 0.6, 0.18], packMat);
-  addBox(torsoGroup, [0, 0.0, -0.43], [0.36, 0.26, 0.05], packMat);
-  addBox(torsoGroup, [0, 0.42, -0.36], [0.4, 0.03, 0.08], teeTrimMat, { shadow: false });
+  // Minimalist waterproof tech backpack with slim ergonomic shoulder straps
+  addBox(torsoGroup, [0, 0.16, -0.20], [0.38, 0.44, 0.12], packMat);
+  addBox(torsoGroup, [0, 0.02, -0.27], [0.28, 0.20, 0.035], packMat);
+  addBox(torsoGroup, [0, 0.35, -0.22], [0.30, 0.022, 0.05], teeTrimMat, { shadow: false });
   for (const side of [-1, 1]) {
-    addBox(torsoGroup, [side * 0.2, 0.22, 0.22], [0.07, 0.5, 0.04], packMat, { rotation: [-0.12, 0, 0] });
-    addBox(torsoGroup, [side * 0.2, 0.5, 0.0], [0.07, 0.04, 0.42], packMat);
+    // Slim ergonomic straps resting cleanly on shoulders without dominating chest
+    addBox(torsoGroup, [side * 0.16, 0.18, 0.13], [0.026, 0.36, 0.018], packMat, { rotation: [-0.08, 0, side * 0.04] });
+    addBox(torsoGroup, [side * 0.16, 0.34, -0.03], [0.026, 0.018, 0.32], packMat);
   }
 
   mergeSubtreeMeshes(torsoGroup, false, true);
   const mergedBodyMesh = torsoGroup.children.find((c) => c.isMesh) || bodyMesh;
 
-  // Chest print kept separate (canvas texture, unmerged)
-  const print = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.13), printMat);
-  print.position.set(0, 0.24, 0.272);
-  torsoGroup.add(print);
-
-  // 3. Head & Face (adult proportions matching the security guards)
+  // 2. Head, Face & Hair (COOL, handsome, confident — ZERO nerd glasses!)
   const headGroup = new THREE.Group();
-  headGroup.position.set(0, 0.94, 0);
+  headGroup.position.set(0, 0.67, 0.015);
   torsoGroup.add(headGroup);
 
-  const headMesh = addSphere(headGroup, [0, 0.02, 0], [0.25, 0.28, 0.25], materials.skin);
-  // Strong jaw
-  addSphere(headGroup, [0, -0.1, 0.03], [0.21, 0.15, 0.2], materials.skin);
-  // Ears
+  const headMesh = addSphere(headGroup, [0, 0.02, 0], [0.23, 0.25, 0.23], materials.skin);
+  // Sleek defined jawline and clean chin (no weird stubble shadow)
+  addSphere(headGroup, [0, -0.09, 0.02], [0.16, 0.12, 0.16], materials.skin);
+  // Natural cheek contours & charming anime blush
   for (const side of [-1, 1]) {
-    addSphere(headGroup, [side * 0.245, 0.0, 0.0], [0.045, 0.07, 0.05], materials.skin);
+    addSphere(headGroup, [side * 0.11, -0.02, 0.10], [0.075, 0.065, 0.075], materials.skin);
+    addSphere(headGroup, [side * 0.10, -0.01, 0.18], [0.028, 0.016, 0.010], materials.skinBlush, { shadow: false });
+    addSphere(headGroup, [side * 0.22, 0.0, -0.01], [0.035, 0.06, 0.04], materials.skin);
   }
 
-  // Short undercut hair with a textured quiff
-  addSphere(headGroup, [0, 0.14, -0.03], [0.265, 0.2, 0.26], hairMat);
-  addSphere(headGroup, [0, 0.03, -0.1], [0.26, 0.22, 0.2], hairMat);
-  addSphere(headGroup, [0.02, 0.23, 0.08], [0.2, 0.09, 0.17], hairMat);
+  // Trendy layered wavy/textured modern haircut (dark espresso with dynamic locks)
+  // Base volume
+  addSphere(headGroup, [0, 0.11, -0.04], [0.25, 0.20, 0.24], hairMat);
+  addSphere(headGroup, [0, 0.01, -0.09], [0.24, 0.21, 0.19], hairMat);
+  // Volumetric top with textured separation
+  addSphere(headGroup, [0, 0.21, 0.01], [0.22, 0.11, 0.19], hairMat);
+  addSphere(headGroup, [-0.07, 0.20, 0.04], [0.14, 0.09, 0.15], hairLockMat);
+  addSphere(headGroup, [0.07, 0.19, 0.04], [0.14, 0.09, 0.15], hairLockMat);
+  // Stylish textured curtain bangs framing forehead & temples
+  addSphere(headGroup, [-0.07, 0.14, 0.19], [0.08, 0.06, 0.08], hairLockMat, { rotation: [0.2, -0.15, 0.2] });
+  addSphere(headGroup, [0.06, 0.14, 0.19], [0.08, 0.06, 0.08], hairMat, { rotation: [0.2, 0.15, -0.2] });
+  addSphere(headGroup, [-0.15, 0.08, 0.15], [0.07, 0.11, 0.08], hairMat, { rotation: [0.1, 0, 0.25] });
+  addSphere(headGroup, [0.15, 0.07, 0.14], [0.07, 0.12, 0.08], hairMat, { rotation: [0.1, 0, -0.25] });
 
-  // Eyes
+  // Sharp, expressive Pixar/anime stylized eyes (NO clunky glasses!)
   for (const side of [-1, 1]) {
-    const eyeX = side * 0.095;
-    addSphere(headGroup, [eyeX, 0.04, 0.225], [0.042, 0.048, 0.025], materials.trim, { shadow: false });
-    addSphere(headGroup, [eyeX, 0.04, 0.242], [0.026, 0.032, 0.015], materials.ink, { shadow: false });
-    addSphere(headGroup, [eyeX + side * 0.01, 0.055, 0.252], [0.009, 0.009, 0.006], materials.trim, { shadow: false });
-    // Brows
-    addBox(headGroup, [eyeX, 0.11, 0.23], [0.085, 0.022, 0.025], hairMat, { rotation: [0, 0, side * -0.1] });
+    const eyeX = side * 0.085;
+    // Sclera (crisp white almond eye)
+    addSphere(headGroup, [eyeX, 0.03, 0.21], [0.042, 0.048, 0.02], materials.trim, { shadow: false });
+    // Iris (deep expressive dark obsidian with subtle depth)
+    addSphere(headGroup, [eyeX, 0.03, 0.222], [0.028, 0.034, 0.012], materials.ink, { shadow: false });
+    // Subtle emerald tint in the lower iris
+    addSphere(headGroup, [eyeX, 0.024, 0.226], [0.016, 0.016, 0.007], teeTrimMat, { shadow: false });
+    addSphere(headGroup, [eyeX, 0.028, 0.228], [0.012, 0.014, 0.005], materials.ink, { shadow: false });
+    // Primary glossy specular catchlight
+    addSphere(headGroup, [eyeX + side * 0.009, 0.044, 0.233], [0.008, 0.008, 0.005], materials.trim, { shadow: false });
+    // Secondary micro catchlight
+    addSphere(headGroup, [eyeX - side * 0.007, 0.018, 0.231], [0.004, 0.004, 0.003], materials.trim, { shadow: false });
+    // Upper eyelid contour line
+    addBox(headGroup, [eyeX, 0.060, 0.218], [0.052, 0.008, 0.014], materials.ink, { shadow: false });
+    // Sleek, confident tapered eyebrows
+    addBox(headGroup, [eyeX, 0.095, 0.210], [0.075, 0.015, 0.018], hairMat, {
+      rotation: [0, 0, side * -0.09], shadow: false,
+    });
   }
 
-  // Black rectangular developer glasses
-  for (const side of [-1, 1]) {
-    const gx = side * 0.095;
-    addBox(headGroup, [gx, 0.04, 0.262], [0.11, 0.075, 0.012], lensMat, { shadow: false });
-    addBox(headGroup, [gx, 0.083, 0.262], [0.12, 0.015, 0.018], frameMat, { shadow: false });
-    addBox(headGroup, [gx, -0.0, 0.262], [0.12, 0.012, 0.018], frameMat, { shadow: false });
-    addBox(headGroup, [side * 0.152, 0.04, 0.262], [0.012, 0.085, 0.018], frameMat, { shadow: false });
-    addBox(headGroup, [side * 0.038, 0.04, 0.262], [0.012, 0.085, 0.018], frameMat, { shadow: false });
-    addBox(headGroup, [side * 0.2, 0.06, 0.13], [0.012, 0.014, 0.25], frameMat, { shadow: false });
-  }
-  addBox(headGroup, [0, 0.055, 0.265], [0.05, 0.012, 0.014], frameMat, { shadow: false });
-
-  // Nose & confident smile
-  addSphere(headGroup, [0, -0.02, 0.255], [0.03, 0.04, 0.03], materials.skin, { shadow: false });
-  const smile = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.01, 6, 12, Math.PI), materials.ink);
-  smile.position.set(0, -0.09, 0.24);
-  smile.rotation.set(0, 0, Math.PI);
+  // Subtle button nose & confident cool smirk
+  addSphere(headGroup, [0, -0.02, 0.238], [0.024, 0.028, 0.024], materials.skin, { shadow: false });
+  const smile = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.006, 6, 12, Math.PI * 0.75), materials.ink);
+  smile.position.set(0.004, -0.075, 0.225);
+  smile.rotation.set(0, 0, Math.PI * 1.08);
   headGroup.add(smile);
-  // Light stubble shadow
-  addSphere(headGroup, [0, -0.15, 0.1], [0.16, 0.07, 0.13], devMat(0x8a6a55, 0.9), { shadow: false });
 
-  // Animated quiff tuft (kept for the existing hair-inertia animation)
+  // Dynamic animated hair lock (tuft that reacts to movement inertia)
   const hairTuft = new THREE.Group();
-  hairTuft.position.set(0.02, 0.27, 0.12);
+  hairTuft.position.set(0.02, 0.25, 0.08);
   hairTuft.rotation.set(0.15, 0, 0);
   headGroup.add(hairTuft);
-  addSphere(hairTuft, [0, 0.02, 0], [0.12, 0.06, 0.09], hairMat);
+  addSphere(hairTuft, [0, 0.02, 0], [0.09, 0.05, 0.08], hairLockMat);
 
   mergeSubtreeMeshes(headGroup, false, true);
   const mergedHeadMesh = headGroup.children.find((c) => c.isMesh) || headMesh;
 
-  // 4. Muscular arms with articulated shoulder & elbow joints
+  // 3. Natural, stylish arms (natural modern stance — NOT bulky, NOT kekar)
   const leftArm = new THREE.Group();
-  leftArm.position.set(-0.47, 0.42, 0);
+  leftArm.position.set(-0.29, 0.36, 0);
   const rightArm = new THREE.Group();
-  rightArm.position.set(0.47, 0.42, 0);
+  rightArm.position.set(0.29, 0.36, 0);
   torsoGroup.add(leftArm, rightArm);
 
   const leftForearm = new THREE.Group();
-  leftForearm.position.set(0, -0.3, 0);
+  leftForearm.position.set(0, -0.26, 0);
   const rightForearm = new THREE.Group();
-  rightForearm.position.set(0, -0.3, 0);
+  rightForearm.position.set(0, -0.26, 0);
 
   const leftHand = new THREE.Group();
-  leftHand.position.set(0, -0.28, 0);
+  leftHand.position.set(0, -0.24, 0);
   const rightHand = new THREE.Group();
-  rightHand.position.set(0, -0.28, 0);
+  rightHand.position.set(0, -0.24, 0);
 
   for (const [armGroup, forearmGroup, handGroup, side] of [
     [leftArm, leftForearm, leftHand, -1],
     [rightArm, rightForearm, rightHand, 1],
   ]) {
-    // Rounded deltoid capped by the tee sleeve
-    addSphere(armGroup, [side * 0.02, 0.0, 0], [0.16, 0.14, 0.15], teeMat);
-    // Short sleeve with green trim
-    addCylinder(armGroup, [0, -0.1, 0], 0.14, 0.135, 0.14, teeMat);
-    addCylinder(armGroup, [0, -0.17, 0], 0.137, 0.137, 0.025, teeTrimMat, { shadow: false });
-    // Bare bicep / tricep bulge
-    addSphere(armGroup, [0, -0.22, 0.02], [0.115, 0.12, 0.12], materials.skin);
-    addCylinder(armGroup, [0, -0.25, 0], 0.1, 0.095, 0.1, materials.skin);
+    // Sleek jacket sleeve shoulder cap
+    addSphere(armGroup, [side * 0.01, 0.0, 0], [0.10, 0.11, 0.10], jacketMat);
+    // Jacket upper sleeve
+    addCylinder(armGroup, [0, -0.10, 0], 0.088, 0.082, 0.16, jacketMat);
+    // Rolled cuff detail
+    addCylinder(armGroup, [0, -0.18, 0], 0.085, 0.085, 0.03, devMat(0x12161c, 0.8));
+    // Forearm skin
+    addCylinder(armGroup, [0, -0.22, 0], 0.072, 0.068, 0.06, materials.skin);
     mergeSubtreeMeshes(armGroup, false, true);
     armGroup.add(forearmGroup);
 
-    // Thick forearm tapering to the wrist
-    addSphere(forearmGroup, [0, -0.06, 0.01], [0.1, 0.11, 0.1], materials.skin);
-    addCylinder(forearmGroup, [0, -0.15, 0], 0.09, 0.07, 0.2, materials.skin);
+    // Natural tapered forearm
+    addCylinder(forearmGroup, [0, -0.11, 0], 0.068, 0.060, 0.20, materials.skin);
+
     if (side === -1) {
-      // Smartwatch on the left wrist
-      addCylinder(forearmGroup, [0, -0.235, 0], 0.075, 0.075, 0.04, watchMat);
-      addBox(forearmGroup, [0, -0.235, 0.07], [0.06, 0.05, 0.02], phoneAccentMat, { shadow: false });
+      // Left wrist: Titanium smartwatch (Apple Watch Ultra style) with emerald UI indicator
+      addCylinder(forearmGroup, [0, -0.19, 0], 0.064, 0.064, 0.032, watchMat);
+      addBox(forearmGroup, [0, -0.19, 0.058], [0.046, 0.042, 0.014], phoneMat, { shadow: false });
+      addSphere(forearmGroup, [0, -0.19, 0.066], [0.010, 0.010, 0.005], teeTrimMat, { shadow: false });
+    } else {
+      // Right wrist: Minimalist black tactical cord bracelet
+      addCylinder(forearmGroup, [0, -0.19, 0], 0.062, 0.062, 0.016, braceletMat);
     }
+
     forearmGroup.add(handGroup);
-    addSphere(handGroup, [0, -0.03, 0], [0.08, 0.09, 0.07], materials.skin);
-    addSphere(handGroup, [side * 0.05, -0.01, 0.04], [0.035, 0.045, 0.035], materials.skin, {
-      rotation: [0.3, side * 0.4, side * 0.3],
+    // Relaxed stylized cartoon hand
+    addSphere(handGroup, [0, -0.025, 0], [0.062, 0.072, 0.055], materials.skin);
+    addSphere(handGroup, [side * 0.038, -0.012, 0.028], [0.026, 0.034, 0.026], materials.skin, {
+      rotation: [0.3, side * 0.35, side * 0.25],
     });
     mergeSubtreeMeshes(forearmGroup, false, true);
   }
 
-  // 5. Legs with articulated hip, knee, and ankle joints (dark denim + sneakers)
+  // 4. Slim-straight tapered dark denim & designer modern sneakers
   const leftLeg = new THREE.Group();
-  leftLeg.position.set(-0.17, -0.32, 0);
+  leftLeg.position.set(-0.15, -0.10, 0);
   const rightLeg = new THREE.Group();
-  rightLeg.position.set(0.17, -0.32, 0);
+  rightLeg.position.set(0.15, -0.10, 0);
   pelvisGroup.add(leftLeg, rightLeg);
 
   const leftLowerLeg = new THREE.Group();
-  leftLowerLeg.position.set(0, -0.3, 0);
+  leftLowerLeg.position.set(0, -0.36, 0);
   const rightLowerLeg = new THREE.Group();
-  rightLowerLeg.position.set(0, -0.3, 0);
+  rightLowerLeg.position.set(0, -0.36, 0);
 
   const leftShoe = new THREE.Group();
-  leftShoe.position.set(0, -0.3, 0.04);
+  leftShoe.position.set(0, -0.36, 0.03);
   const rightShoe = new THREE.Group();
-  rightShoe.position.set(0, -0.3, 0.04);
+  rightShoe.position.set(0, -0.36, 0.03);
 
-  // Hip block so the denim reads as one garment
-  addSphere(pelvisGroup, [0, -0.36, 0], [0.31, 0.14, 0.23], denimMat);
+  // Hip connection block
+  addSphere(pelvisGroup, [0, -0.12, 0], [0.24, 0.12, 0.19], denimMat);
 
   for (const [thighGroup, calfGroup, shoeGroup] of [
     [leftLeg, leftLowerLeg, leftShoe],
     [rightLeg, rightLowerLeg, rightShoe],
   ]) {
-    // Powerful thighs
-    addCylinder(thighGroup, [0, -0.15, 0], 0.15, 0.13, 0.32, denimMat);
-    addSphere(thighGroup, [0, -0.1, 0.03], [0.15, 0.17, 0.15], denimMat);
+    // Slim-straight denim thighs
+    addCylinder(thighGroup, [0, -0.18, 0], 0.108, 0.098, 0.36, denimMat);
+    addSphere(thighGroup, [0, -0.06, 0.01], [0.108, 0.12, 0.108], denimMat);
     mergeSubtreeMeshes(thighGroup, false, true);
     thighGroup.add(calfGroup);
 
-    // Calves with a rolled denim cuff
-    addCylinder(calfGroup, [0, -0.13, 0], 0.125, 0.11, 0.28, denimMat);
-    addCylinder(calfGroup, [0, -0.26, 0], 0.122, 0.122, 0.05, devMat(0x4a6488, 0.8));
+    // Tapered calves with clean trouser cuff
+    addCylinder(calfGroup, [0, -0.18, 0], 0.095, 0.084, 0.34, denimMat);
+    addCylinder(calfGroup, [0, -0.34, 0], 0.090, 0.090, 0.04, devMat(0x1e2430, 0.8));
     mergeSubtreeMeshes(calfGroup, false, true);
     calfGroup.add(shoeGroup);
 
-    // Clean white sneakers with green dev accents
-    addBox(shoeGroup, [0, 0.04, 0.03], [0.2, 0.12, 0.36], sneakerMat);
-    addSphere(shoeGroup, [0, 0.02, 0.18], [0.1, 0.075, 0.09], sneakerMat);
-    addBox(shoeGroup, [0, 0.05, 0.03], [0.205, 0.035, 0.22], sneakerAccentMat, { shadow: false });
-    addBox(shoeGroup, [0, 0.105, 0.06], [0.12, 0.02, 0.14], sneakerMat);
-    addBox(shoeGroup, [0, -0.04, 0.03], [0.22, 0.05, 0.39], materials.sneakerSole);
-    addBox(shoeGroup, [0, -0.07, 0.03], [0.225, 0.02, 0.4], beltMat);
+    // High-end designer street sneakers (clean white leather + obsidian panels + emerald accents)
+    addBox(shoeGroup, [0, 0.04, 0.03], [0.17, 0.11, 0.33], sneakerMat);
+    addSphere(shoeGroup, [0, 0.02, 0.17], [0.085, 0.065, 0.08], sneakerMat);
+    addSphere(shoeGroup, [0, 0.015, 0.18], [0.088, 0.055, 0.065], sneakerDarkMat);
+    addBox(shoeGroup, [0, 0.05, 0.03], [0.175, 0.03, 0.20], sneakerAccentMat, { shadow: false });
+    addBox(shoeGroup, [0, 0.095, 0.05], [0.10, 0.02, 0.12], sneakerMat);
+    addBox(shoeGroup, [0, -0.035, 0.03], [0.185, 0.045, 0.35], materials.sneakerSole);
+    addBox(shoeGroup, [0, -0.062, 0.03], [0.19, 0.018, 0.36], beltMat);
     mergeSubtreeMeshes(shoeGroup, false, true);
   }
 
@@ -455,7 +460,7 @@ export function updateCharacterRig(rig, dt, elapsed, moveAmount, grounded) {
 
     // --- HEAD & HAIR ---
     // Head stabilizes against bounce and keeps focus forward
-    headGroup.position.y = 0.94 - stepBob * 0.5;
+    headGroup.position.y = 0.67 - stepBob * 0.5;
     headGroup.rotation.x = -forwardLean * 0.65;
     headGroup.rotation.z = Math.sin(phase * 0.5) * 0.035 * walkWeight;
 
@@ -507,7 +512,7 @@ export function updateCharacterRig(rig, dt, elapsed, moveAmount, grounded) {
     torsoGroup.position.y = THREE.MathUtils.damp(torsoGroup.position.y, idleSin * 0.012, 6.0, dt);
 
     // Head subtle natural breathing nod and occasional look-around scanning
-    headGroup.position.y = 0.94 + idleSin * 0.01;
+    headGroup.position.y = 0.67 + idleSin * 0.01;
     headGroup.rotation.x = THREE.MathUtils.damp(headGroup.rotation.x, idleSin * 0.02, 6.0, dt);
     headGroup.rotation.y = THREE.MathUtils.damp(headGroup.rotation.y, idleSlowSin * 0.06, 3.0, dt);
     headGroup.rotation.z = THREE.MathUtils.damp(headGroup.rotation.z, 0, 6.0, dt);
