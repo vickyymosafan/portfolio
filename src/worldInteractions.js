@@ -4,7 +4,6 @@ import { SIT_ROOT_OFFSET, SEAT_DEFINITIONS } from './seatLayout.js';
 export const InteractionMode = {
   NONE: 'NONE',
   SITTING: 'SITTING',
-  INSPECTING: 'INSPECTING',
   DOOR: 'DOOR',
 };
 
@@ -53,7 +52,6 @@ export class WorldInteractionManager {
     this.mode = InteractionMode.NONE;
     this.lifecycleState = InteractionState.IDLE;
     this.activeSeat = null;
-    this.activeInspectTarget = null;
     this.activeDoorControls = null;
 
     this.stateClock = 0;
@@ -83,96 +81,6 @@ export class WorldInteractionManager {
     // Defined Seating Targets in the world with exact anchor positions & facing orientations
     // Automatically populated from centralized SEAT_DEFINITIONS derived from furniture geometry.
     this.seats = Object.values(SEAT_DEFINITIONS);
-
-    // Defined Environmental Inspection Targets
-    this.inspectables = [
-      {
-        id: 'tree_front',
-        label: 'Grand Front Yard Tree',
-        type: 'tree',
-        pos: [-12.2, 1.12, 14.5],
-        radius: 3.5,
-        headPitch: -0.38,
-        headYaw: 0,
-        title: 'Grand Evergreen Oak',
-        desc: 'Planted with deep roots in clean computer science fundamentals, modular architectures, and scalable fullstack code.',
-        camOffset: [3.2, 1.8, 3.8],
-      },
-      {
-        id: 'flower_bed',
-        label: 'Blooming Flower Bed',
-        type: 'nature',
-        pos: [-9.5, 1.12, 5.2],
-        radius: 2.8,
-        headPitch: 0.45,
-        headYaw: 0,
-        title: 'Vibrant Garden Flora',
-        desc: 'Hand-crafted botanical details illustrating the care given to UI micro-interactions and frontend polish.',
-        camOffset: [0, 1.6, 3.2],
-      },
-      {
-        id: 'fireplace',
-        label: 'Stone Fireplace',
-        type: 'furniture',
-        pos: [-13.4, 1.12, -0.2],
-        radius: 3.2,
-        headPitch: -0.05,
-        headYaw: -0.4,
-        title: 'Cozy Hearth & Mantle',
-        desc: 'Warm crackling fireplace in the living room—creating a warm, human atmosphere where thoughtful ideas thrive.',
-        camOffset: [3.4, 1.6, 2.2],
-      },
-      {
-        id: 'workstation',
-        label: 'Developer Workstation',
-        type: 'tech',
-        pos: [12.7, 1.12, -0.2],
-        radius: 3.2,
-        headPitch: -0.15,
-        headYaw: 0.45,
-        title: 'Triple-Monitor Development Rig',
-        desc: 'Powered by TypeScript, Next.js 15, React 19, Node.js, and modern AI acceleration for rapid high-quality engineering.',
-        camOffset: [-3.0, 1.7, 2.4],
-      },
-      {
-        id: 'bookshelf',
-        label: 'Library Compendium',
-        type: 'books',
-        pos: [-13.4, 1.12, -8.3],
-        radius: 3.2,
-        headPitch: -0.22,
-        headYaw: -0.35,
-        title: 'Engineering Library & Archives',
-        desc: 'Curated technical reference shelf: System Design, Database Indexing, Microservices, and SOLID principles.',
-        camOffset: [3.2, 1.8, 2.2],
-      },
-      {
-        id: 'blueprint_desk',
-        label: 'Architectural Drafting Table',
-        type: 'blueprint',
-        pos: [-12.7, 1.12, -16.1],
-        radius: 3.2,
-        headPitch: 0.35,
-        headYaw: -0.35,
-        title: 'System Architecture Blueprint',
-        desc: 'From deterministic PRDs and component breakdown to implementation—planning before coding ensures zero technical debt.',
-        camOffset: [2.8, 1.7, 2.5],
-      },
-      {
-        id: 'terrace_view',
-        label: 'Terrace Garden Vista',
-        type: 'vista',
-        pos: [11.5, 1.12, -16.1],
-        radius: 3.4,
-        headPitch: -0.1,
-        headYaw: 0.45,
-        title: 'Terrace Garden Horizon',
-        desc: 'A calm outdoor space to reflect, review production telemetry, and welcome new collaborations.',
-        camOffset: [-3.2, 1.9, 3.2],
-      },
-    ];
-
-    this.initInspectionCard();
   }
 
   setContext({ scene, camera, characterRig, playerBody, cameraBlockers, onPositionUpdate, onCameraSync, onStateChange }) {
@@ -222,19 +130,6 @@ export class WorldInteractionManager {
     console.log(`[InteractionDebug] ${event}`, details);
   }
 
-  initInspectionCard() {
-    let card = document.getElementById('inspect-toast');
-    if (!card) {
-      card = document.createElement('div');
-      card.id = 'inspect-toast';
-      card.className = 'inspect-toast';
-      card.setAttribute('role', 'status');
-      card.setAttribute('aria-live', 'polite');
-      document.getElementById('experience')?.appendChild(card);
-    }
-    this.inspectCard = card;
-  }
-
   isActive() {
     return this.mode !== InteractionMode.NONE;
   }
@@ -267,25 +162,6 @@ export class WorldInteractionManager {
       const dist = Math.hypot(dx, dz);
       if (dist < seat.radius && dist < nearestDist) {
         nearest = seat;
-        nearestDist = dist;
-      }
-    }
-    return nearest;
-  }
-
-  /**
-   * Find nearest inspectable environmental object within range
-   */
-  getNearbyInspectable(px, pz) {
-    if (!isFiniteNumber(px) || !isFiniteNumber(pz)) return null;
-    let nearest = null;
-    let nearestDist = Infinity;
-    for (const item of this.inspectables) {
-      const dx = px - item.pos[0];
-      const dz = pz - item.pos[2];
-      const dist = Math.hypot(dx, dz);
-      if (dist < item.radius && dist < nearestDist) {
-        nearest = item;
         nearestDist = dist;
       }
     }
@@ -534,112 +410,6 @@ export class WorldInteractionManager {
   }
 
   /**
-   * Environmental Object Inspection
-   */
-  toggleInspect(px, pz, playerState = {}) {
-    if (this.mode === InteractionMode.INSPECTING) {
-      return this.cancelInspect();
-    }
-
-    if (this.lifecycleState !== InteractionState.IDLE || this.mode !== InteractionMode.NONE) {
-      return false;
-    }
-
-    const item = this.getNearbyInspectable(px, pz);
-    if (!item) return false;
-
-    const char = this.characterRig?.character;
-    if (!char) return false;
-
-    this.activeInspectTarget = item;
-    this.mode = InteractionMode.INSPECTING;
-    this.lifecycleState = InteractionState.PLAYING_CINEMATIC;
-    this.stateClock = 0;
-    this.stateDuration = 0.8;
-    this.watchdogClock = 0;
-
-    this.savedCameraDistance = isFiniteNumber(playerState.cameraDistance) ? playerState.cameraDistance : 4.4;
-    this.savedYaw = isFiniteNumber(playerState.yaw) ? playerState.yaw : 0;
-    this.savedPitch = isFiniteNumber(playerState.pitch) ? playerState.pitch : 0.25;
-
-    // Character smoothly turns toward inspectable object
-    const dx = item.pos[0] - char.position.x;
-    const dz = item.pos[2] - char.position.z;
-    const targetYaw = Math.atan2(dx, dz);
-    char.rotation.y = targetYaw;
-
-    this.characterRig.setActionState('INSPECTING', {
-      headPitch: item.headPitch || -0.2,
-      headYaw: item.headYaw || 0,
-    });
-
-    if (this.camera) {
-      this._camStartPos.copy(this.camera.position);
-      this._camStartLook.set(char.position.x, char.position.y + 1.3, char.position.z);
-      this._currentLook.copy(this._camStartLook);
-
-      const offset = item.camOffset || [2.5, 1.8, 3.0];
-      this._camTargetPos.set(
-        char.position.x + offset[0],
-        char.position.y + offset[1],
-        char.position.z + offset[2]
-      );
-      this._camTargetLook.set(
-        (char.position.x + item.pos[0]) * 0.5,
-        char.position.y + 1.3,
-        (char.position.z + item.pos[2]) * 0.5
-      );
-    }
-
-    // Show inspection card
-    if (this.inspectCard) {
-      this.inspectCard.innerHTML = `
-        <div class="inspect-badge">INSPECTING · ${item.label.toUpperCase()}</div>
-        <div class="inspect-title">${item.title}</div>
-        <p class="inspect-desc">${item.desc}</p>
-        <div class="inspect-hint"><span class="cinematic-key">F</span> or <span class="cinematic-key">ESC</span> to resume walking</div>
-      `;
-      this.inspectCard.classList.add('is-visible');
-    }
-
-    if (this.onStateChange) this.onStateChange(this.lifecycleState);
-    return true;
-  }
-
-  cancelInspect() {
-    if (this.mode !== InteractionMode.INSPECTING) return false;
-
-    if (this.characterRig) {
-      this.characterRig.setActionState('IDLE');
-    }
-
-    if (this.inspectCard) {
-      this.inspectCard.classList.remove('is-visible');
-    }
-
-    this.lifecycleState = InteractionState.RESTORING;
-    this.stateClock = 0;
-    this.stateDuration = 0.45;
-    this.watchdogClock = 0;
-
-    if (this.camera && this.characterRig) {
-      const char = this.characterRig.character;
-      this._camStartPos.copy(this.camera.position);
-      this._camStartLook.copy(this._currentLook);
-
-      const horizontal = this.savedCameraDistance * Math.cos(this.savedPitch);
-      this._camTargetPos.set(
-        char.position.x + Math.sin(this.savedYaw) * horizontal,
-        char.position.y + 1.4 + Math.sin(this.savedPitch) * this.savedCameraDistance,
-        char.position.z + Math.cos(this.savedYaw) * horizontal
-      );
-      this._camTargetLook.set(char.position.x, char.position.y + 1.25, char.position.z);
-    }
-
-    return true;
-  }
-
-  /**
    * Sound effect for physical door latch
    */
   playDoorLatchSound(isOpen) {
@@ -727,12 +497,7 @@ export class WorldInteractionManager {
       }
     }
 
-    // 2. Hide inspect overlay if open
-    if (this.inspectCard) {
-      this.inspectCard.classList.remove('is-visible');
-    }
-
-    // 3. Ensure valid character position & ground alignment
+    // 2. Ensure valid character position & ground alignment
     this.activeDoorControls?.settle?.();
     const char = this.characterRig?.character;
     if (char) {
@@ -772,7 +537,6 @@ export class WorldInteractionManager {
     this.mode = InteractionMode.NONE;
     this.lifecycleState = InteractionState.IDLE;
     this.activeSeat = null;
-    this.activeInspectTarget = null;
     this.activeDoorControls = null;
     this.stateClock = 0;
     this.watchdogClock = 0;
@@ -921,13 +685,6 @@ export class WorldInteractionManager {
           }
           if (this.onStateChange) this.onStateChange(this.lifecycleState);
         }
-      } else if (this.mode === InteractionMode.INSPECTING) {
-        if (this.camera) {
-          this.camera.position.x = THREE.MathUtils.damp(this.camera.position.x, this._camTargetPos.x, 6.0, dt);
-          this.camera.position.y = THREE.MathUtils.damp(this.camera.position.y, this._camTargetPos.y, 6.0, dt);
-          this.camera.position.z = THREE.MathUtils.damp(this.camera.position.z, this._camTargetPos.z, 6.0, dt);
-          this.camera.lookAt(this._camTargetLook);
-        }
       }
       return true;
     }
@@ -961,7 +718,6 @@ export class WorldInteractionManager {
         this.mode = InteractionMode.NONE;
         this.lifecycleState = InteractionState.IDLE;
         this.activeSeat = null;
-        this.activeInspectTarget = null;
         this.activeDoorControls = null;
         this.stateClock = 0;
         this.watchdogClock = 0;

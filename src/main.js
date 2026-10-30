@@ -20,7 +20,6 @@ import { createFarmArea } from './farmArea.js';
 import { createRiceFields } from './riceFields.js';
 import { createCharacter, updateCharacterRig } from './character.js';
 import { CinematicDirector, CinematicState } from './cinematic.js';
-import { QuestSystem } from './quest.js';
 import { WorldInteractionManager, InteractionMode, InteractionState } from './worldInteractions.js';
 import { BENCH } from './seatLayout.js';
 import { InputManager } from './systems/inputManager.js';
@@ -84,7 +83,6 @@ let characterController;
 let characterRig;
 let doorControls;
 let cinematicDirector;
-let questSystem;
 let worldInteractions;
 let securityZone;
 let farmZone;
@@ -205,12 +203,6 @@ const inputManager = new InputManager({
     } else {
       dispatchInteraction('KeyE');
     }
-  },
-  onInspect: () => {
-    if (!renderer || !started) { startExperience(); return; }
-    if (cinematicDirector && cinematicDirector.isActive()) return;
-    if (dispatchInteraction('KeyF')) return;
-    if (!worldInteractions || worldInteractions.mode === InteractionMode.NONE) beginTour();
   },
   onJump: () => {
     if (tourActive && tourWaitingAtStop) {
@@ -1271,16 +1263,10 @@ function findInteraction() {
       setPromptUI(true, 'E', doorState === 'closing' ? 'Closing the garden door...' : 'Opening the garden door...', '...');
       return;
     }
-
-    if (worldInteractions.mode === InteractionMode.INSPECTING) {
-      setPromptUI(true, 'F', 'Resume walking', 'Resume');
-      return;
-    }
   }
 
   // 2. We are in normal locomotion: evaluate available targets
   const nearbySeat = worldInteractions ? worldInteractions.getNearbySeat(physX, physZ, physY) : null;
-  const nearbyInspectable = worldInteractions ? worldInteractions.getNearbyInspectable(physX, physZ) : null;
 
   // Door interaction candidate (E) - front entrance, rear terrace, or second floor balcony glass doors
   let doorCandidate = null;
@@ -1317,7 +1303,6 @@ function findInteraction() {
   // 1. Door (E) takes top priority when in doorway clearance or when outside facing the entrance
   // 2. Bench/Seat (C) takes priority over room beacons if closer or in garden/lounge
   // 3. Room Exhibit (E) - strictly requires character to be inside the room
-  // 4. Environmental Inspection (F)
   let chosen = null;
   if (doorCandidate && (physZ > 3.8 || !bestRoom || doorCandidate.dist < 1.6)) {
     const pt = doorCandidate.point;
@@ -1363,14 +1348,6 @@ function findInteraction() {
       target: nearbySeat,
     };
     currentInteraction = null;
-  } else if (nearbyInspectable) {
-    chosen = {
-      key: 'F',
-      label: `Inspect ${nearbyInspectable.label}`,
-      touch: 'Inspect',
-      target: nearbyInspectable,
-    };
-    currentInteraction = null;
   } else {
     currentInteraction = null;
   }
@@ -1388,7 +1365,6 @@ function findInteraction() {
  * Single source of truth for key -> interaction. Each key owns exactly one interaction type:
  *   KeyC: sit / stand (seats only). NEVER touches doors or room exhibits.
  *   KeyE: doors and room exhibits (interactionPoints only). NEVER triggers sitting.
- *   KeyF: inspect (inspectables only).
  * A key never executes another key's interaction, so the prompt and the action cannot diverge.
  */
 function dispatchInteraction(code) {
@@ -1457,18 +1433,6 @@ function dispatchInteraction(code) {
     if (!target) return reject('no_e_target_in_range');
     if (import.meta.env.DEV) console.log('[Interaction] KeyE -> execute target:', target.id);
     result = target.action() !== false;
-  } else if (code === 'KeyF') {
-    // KeyF: ONLY environmental inspectables.
-    if (w.mode === InteractionMode.INSPECTING) {
-      result = w.cancelInspect();
-    } else if (w.mode !== InteractionMode.NONE) {
-      return reject('other_interaction_active');
-    } else {
-      const inspectable = w.getNearbyInspectable(physX, physZ);
-      if (!inspectable) return reject('no_inspectable_in_range');
-      if (import.meta.env.DEV) console.log('[Interaction] KeyF -> inspect:', inspectable.id);
-      result = w.toggleInspect(physX, physZ, { cameraDistance, yaw, pitch });
-    }
   }
 
   findInteraction();
@@ -2135,7 +2099,7 @@ function bindEvents() {
   // The touch button runs exactly the action advertised by the visible prompt key.
   $('touch-interact').addEventListener('click', () => {
     const shown = $('interact-key')?.textContent;
-    const code = { C: 'KeyC', E: 'KeyE', F: 'KeyF' }[shown] || 'KeyE';
+    const code = { C: 'KeyC', E: 'KeyE' }[shown] || 'KeyE';
     dispatchInteraction(code);
   });
   $('touch-jump').addEventListener('click', () => {
@@ -2311,7 +2275,6 @@ function animate(timestamp) {
   if (doorControls?.update) doorControls.update(dt);
   updateRoomFromPosition(timestamp);
   findInteraction();
-  if (questSystem) questSystem.update(dt, elapsed, characterRig ? characterRig.character.position : null);
 
   const npcInterval = activePreset?.npcUpdateInterval || 1;
   if (frameCounter % npcInterval === 0) {
@@ -2404,9 +2367,6 @@ async function init() {
       }
     };
     window.__cinematic = cinematicDirector;
-
-    questSystem = new QuestSystem(scene, characterRig);
-    window.__quest = questSystem;
 
     worldInteractions = new WorldInteractionManager({
       scene,

@@ -22,7 +22,6 @@ export class InputManager {
       onToggleMap: options.onToggleMap || null,
       onSit: options.onSit || null,
       onInteract: options.onInteract || null,
-      onInspect: options.onInspect || null,
       onJump: options.onJump || null,
       onCarouselNext: options.onCarouselNext || null,
       onCarouselPrev: options.onCarouselPrev || null,
@@ -92,11 +91,6 @@ export class InputManager {
 
     if (event.code === 'ArrowLeft' && !event.repeat) {
       if (this.callbacks.onCarouselPrev && this.callbacks.onCarouselPrev()) return;
-    }
-
-    if (event.code === 'KeyF' && !event.repeat) {
-      if (this.callbacks.onInspect) this.callbacks.onInspect();
-      return;
     }
 
     if (event.code === 'Space' && !event.repeat) {
