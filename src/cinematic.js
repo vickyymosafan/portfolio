@@ -160,14 +160,14 @@ export class CinematicDirector {
 
     switch (room.id) {
       case 'about':
-        // Living room: Ground floor center (rx = -1.4, rz = 1.7), looking West toward the About Me Feature Wall (x = -5.35, z = 1.7)
-        camX = rx + 2.6;
-        camY = ry + 1.35;
-        camZ = rz + 0.8;
-        lookX = -5.35;
-        lookY = ry + 1.15;
-        lookZ = 1.7;
-        charFacing = -Math.PI * 0.35;
+        // Outdoor Executive Pavilion: West Front Garden (rx = -7.5, rz = 10.5), looking West toward the About Me Display Board & 4 Pillars (x = -13.6, z = 10.5)
+        camX = -4.8;
+        camY = ry + 1.25;
+        camZ = 10.5;
+        lookX = -10.8;
+        lookY = ry + 1.2;
+        lookZ = 10.5;
+        charFacing = -Math.PI * 0.5;
         break;
 
       case 'skills':

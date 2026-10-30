@@ -49,11 +49,11 @@ export const SEAT_DEFINITIONS = {
   bench_yard_left: {
     id: 'bench_yard_left',
     label: 'Garden Bench',
-    ...benchSeatAnchor(-9.2, 0, 9.8, 0.35),
+    ...benchSeatAnchor(-11.5, 0, 18.0, 0.0),
     radius: 2.9,
     cameraShot: {
-      pos: [-6.8, 1.85, 12.6],
-      look: [-9.16, 1.25, 9.89],
+      pos: [-9.2, 1.85, 20.6],
+      look: [-11.5, 1.25, 18.1],
     },
   },
   bench_yard_right: {
@@ -68,17 +68,16 @@ export const SEAT_DEFINITIONS = {
   },
   sofa_living: {
     id: 'sofa_living',
-    label: 'Living Room Sofa',
-    // Living room sofa in Bay 1 at [-6.3, 0, 2.0] facing 0 (+z). Cushion top = 0.645.
-    pos: [-6.3, 0.645, 2.0],
-    charFacing: 0,
+    label: 'Executive Pavilion Armchair',
+    pos: [-8.8, 0.58, 9.65],
+    charFacing: -Math.PI * 0.5,
     radius: 2.5,
-    standPos: [-4.2, 1.12, 1.6],
+    standPos: [-7.8, 1.12, 9.65],
     cameraShot: {
-      pos: [-3.8, 1.75, 0.6],
-      look: [-6.3, 1.25, 2.0],
+      pos: [-6.4, 1.85, 9.65],
+      look: [-9.8, 1.25, 9.65],
     },
-    roomBounds: { minX: -12.8, maxX: -2.0, minZ: 0.2, maxZ: 3.4 },
+    roomBounds: { minX: -14.0, maxX: -6.0, minZ: 7.0, maxZ: 14.0 },
   },
   chair_office: {
     id: 'chair_office',

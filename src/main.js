@@ -101,7 +101,7 @@ const WORLD_MARKERS = [
   { id: 'road', label: 'Jalan Utama', sub: 'Akses Menuju Rumah', icon: '🚗', pos: [32.0, 3.5, 32.0], targetRoom: 'road' },
   { id: 'pool', label: 'Kolam Renang', sub: 'Swim & Relax', icon: '🏊', pos: [-25.0, 3.5, -5.0], targetRoom: 'pool' },
   { id: 'security', label: 'Security', sub: '24/7 Guard', icon: '🛡️', pos: [-18.0, 3.5, 24.0], targetRoom: 'security' },
-  { id: 'living', label: '01 · About Me', sub: 'Grand Living Room', icon: '🛋️', pos: [0.0, 4.4, 2.0], targetRoom: 'about' },
+  { id: 'living', label: '01 · About Me', sub: 'Garden Pavilion', icon: '🏛️', pos: [-10.5, 3.8, 10.5], targetRoom: 'about' },
   { id: 'library', label: '02 · Work Experience', sub: 'Library Nook · 5 Roles', icon: '💼', pos: [10.75, 10.2, 2.0], targetRoom: 'experience' },
   { id: 'bedroom', label: '03 · Education', sub: 'UNMUH Jember · GPA 3.75', icon: '🎓', pos: [-11.0, 10.2, 2.0], targetRoom: 'bedroom' },
   { id: 'bathroom', label: '04 · Volunteering', sub: 'Humanitarian & Tech Ed', icon: '🤝', pos: [0.0, 10.2, 2.0], targetRoom: 'bathroom' },
@@ -415,7 +415,7 @@ async function createScene() {
   riceZone = createRiceFields(scene, world, RAPIER, staticBodies);
   await yieldToMain();
 
-  for (const [bx, bz, brot] of [[-9.2, 9.8, 0.35], [9.2, 9.8, -0.35]]) {
+  for (const [bx, bz, brot] of [[-11.5, 18.0, 0.0], [9.2, 9.8, -0.35]]) {
     createGardenBench(scene, bx, 0, bz, brot);
     const benchBody = world.createRigidBody(
       RAPIER.RigidBodyDesc.fixed()
@@ -1093,7 +1093,7 @@ function onMarkerClick(marker) {
   }
 }
 
-function teleportToZone(x, y, z, facing = 0) {
+function teleportToZone(x, y, z, facing = 0, camYaw = null, camPitch = 0.22) {
   physX = x;
   physY = y;
   physZ = z;
@@ -1105,8 +1105,8 @@ function teleportToZone(x, y, z, facing = 0) {
     characterRig.character.position.set(x, y, z);
     characterRig.character.rotation.y = facing;
   }
-  yaw = facing;
-  pitch = 0.22;
+  yaw = camYaw !== null ? camYaw : (facing + Math.PI);
+  pitch = camPitch;
   if (roofGroup) roofGroup.visible = physZ > 4.0;
 }
 
@@ -1186,13 +1186,17 @@ function canInteractWithRoom(roomItem, px, py, pz, doorControls) {
 
   // 1. Ground Floor (py < 3.0)
   if (!isUpper) {
+    if (id === 'about') {
+      // About Me is in the outdoor Executive Garden Pavilion in Front Yard: [x = -10.5, z = 10.5]
+      return Math.hypot(px - (-10.5), pz - 10.5) <= 4.8;
+    }
     if (id === 'contact') {
       // Contact is in the Garden Terrace (outdoor rear pavilion): z < -8.2
       // If player is inside the mansion (z >= -8.2), they must go through the terrace door to interact.
       return pz < -8.2 && Math.abs(px) <= 12.0;
     }
 
-    // All other ground floor exhibits (about, projects, skills, garage) are INDOOR:
+    // All other ground floor exhibits (projects, skills, garage) are INDOOR:
     // When character is OUTSIDE in the front yard / porch (pz > 3.8):
     // They MUST NOT interact with indoor exhibits through the closed doors or glass walls!
     if (pz > 3.8) return false;
@@ -1204,10 +1208,6 @@ function canInteractWithRoom(roomItem, px, py, pz, doorControls) {
     if (px < -16.0 || px > 26.0) return false;
 
     // Room-specific bay verification to prevent bleeding into adjacent rooms:
-    if (id === 'about') {
-      // Grand Living Room / Rotunda: x in [-5.5, 5.5], z in [-8.2, 3.8]
-      return Math.abs(px) <= 5.8 && pz <= 3.8 && pz >= -8.2;
-    }
     if (id === 'projects') {
       // West Gallery: x in [-16.0, -4.8], z in [-8.2, 3.8]
       return px >= -16.0 && px <= -4.8 && pz <= 3.8 && pz >= -8.2;
@@ -1501,10 +1501,10 @@ const tourStops = [
   {
     id: 'about',
     step: '02 / 10',
-    name: '01 · About Me (Living Room)',
+    name: '01 · About Me (Garden Pavilion)',
     subtitle: 'AI ENGINEER · FULL-STACK DEVELOPER · SYSTEM ARCHITECT',
     intro: 'Full-Stack Web Developer & AI Engineer with GPA 3.75/4.00 and 1,039+ GitHub contributions in the last year.',
-    position: [-1.0, 1.12, 2.0],
+    position: [-7.5, 1.12, 10.5],
     archX: 0,
     facing: -Math.PI * 0.5,
     cameraYaw: -Math.PI * 0.5,
@@ -2019,8 +2019,13 @@ function updateRoomFromPosition(timestamp = 0) {
   // Ground floor outdoor zones
   if (physY < 3.0) {
     if (physZ > 3.8) {
-      // In front yard / front driveway / porch: always 'yard'
-      nearest = portfolio.rooms.find((r) => r.id === 'yard') || portfolio.rooms[0];
+      // In front yard: check if player is at the outdoor About Me Garden Pavilion
+      const distToAbout = Math.hypot(physX - (-10.5), physZ - 10.5);
+      if (distToAbout <= 5.0) {
+        nearest = portfolio.rooms.find((r) => r.id === 'about') || portfolio.rooms[0];
+      } else {
+        nearest = portfolio.rooms.find((r) => r.id === 'yard') || portfolio.rooms[0];
+      }
       if (nearest.id !== lastRoomVisited) {
         lastRoomVisited = nearest.id;
         currentRoom = nearest;
@@ -2041,8 +2046,10 @@ function updateRoomFromPosition(timestamp = 0) {
   }
 
   for (const room of portfolio.rooms) {
-    // Skip yard when inside the house
-    if (room.id === 'yard' && physZ <= 3.8 && physZ >= -8.2 && physX >= -16 && physX <= 26) continue;
+    // Skip outdoor zones (yard, about, contact) when inside the house
+    if (physZ <= 3.8 && physZ >= -8.2 && physX >= -16 && physX <= 26) {
+      if (room.id === 'yard' || room.id === 'about' || room.id === 'contact') continue;
+    }
     const dx = room.position[0] - physX;
     const dy = (room.position[1] !== undefined ? room.position[1] : 1.12) - physY;
     const dz = room.position[2] - physZ;
@@ -2457,7 +2464,8 @@ async function init() {
     window.__setCameraOverride = (cam, target) => {
       teleportCameraOverride = cam && target ? { cam, target } : null;
     };
-    window.__teleport = (x, y, z, facing = 0) => teleportToZone(x, y, z, facing);
+    window.__teleport = (x, y, z, facing = 0, camYaw = null, camPitch = 0.22) =>
+      teleportToZone(x, y, z, facing, camYaw, camPitch);
     window.__toggleOverviewMode = toggleOverviewMode;
     window.__playerBody = playerBody;
     window.__characterRig = characterRig;

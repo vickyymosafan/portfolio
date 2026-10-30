@@ -24,8 +24,10 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
   // 05 Licenses & Certifications -> 06 Projects -> 07 Architectural Domain & Tooling ->
   // 08 GitHub Contributions -> 09 Contact
   const roomSpecs = [
+    // --- OUTDOOR FRONT YARD (GROUND, y = 0.0) ---
+    { id: 'about', x: -10.5, y: 0.0, z: 10.5, title: 'About Me', subtitle: '01 · M. VICKY MOSAFAN', accent: palette.coral, rugMat: materials.terraceTiles },
+
     // --- LANTAI 1 (GROUND FLOOR, y = 0.0) ---
-    { id: 'about', x: 0.0, y: 0.0, z: -2.0, title: 'About Me', subtitle: '01 · M. VICKY MOSAFAN', accent: palette.coral, rugMat: materials.carpetPersian },
     { id: 'projects', x: -11.0, y: 0.0, z: -2.0, title: 'Featured Projects', subtitle: '06 · ARTIFACT GALLERY', accent: palette.pinkRose, rugMat: materials.carpetBauhaus },
     { id: 'skills', x: 10.75, y: 0.0, z: -2.0, title: 'Tech & Tooling', subtitle: '07 · ARCHITECTURAL DOMAIN', accent: palette.blueSky, rugMat: materials.blue },
     { id: 'garage', x: 21.0, y: 0.0, z: -2.0, title: 'Licenses & Certifications', subtitle: '05 · VERIFIED CREDENTIALS', accent: palette.goldBrass, rugMat: materials.epoxyFloor },
@@ -38,17 +40,17 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
     { id: 'process', x: 21.0, y: 5.2, z: -2.0, title: 'GitHub Activity', subtitle: '08 · 1,039 CONTRIBUTIONS', accent: palette.mintSage, rugMat: materials.mint },
   ];
 
+  // Ground Floor Central Hall inside Mansion: Grand Entrance Galleria (100% open walkthrough)
+  buildGrandEntranceGalleria(building, world, RAPIER, staticBodies);
+
   for (let i = 0; i < roomSpecs.length; i += 1) {
     const spec = roomSpecs[i];
 
-    // Custom area rug for all indoor non-garage pavilions
+    // Custom area rug for indoor non-garage pavilions
     if (spec.id !== 'garage' && spec.id !== 'contact' && spec.id !== 'about') {
       const rugW = spec.id === 'bathroom' ? 7.6 : 8.4;
       const rugD = spec.id === 'bathroom' ? 6.0 : 6.4;
       addBox(building, [spec.x, spec.y + 0.02, spec.z], [rugW, 0.016, rugD], spec.rugMat, { receive: false, shadow: false });
-    } else if (spec.id === 'about') {
-      // Grand central designer area rug defining the About Me Rotunda space
-      addBox(building, [-1.4, spec.y + 0.02, 1.7], [6.4, 0.016, 4.6], spec.rugMat, { receive: false, shadow: false });
     }
 
     // Presentation Display Board mounted in every pavilion (all 9 sections)
@@ -59,8 +61,8 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
 
     // Interactive glowing floor beacon placed conveniently in front/center of each room
     const isAbout = spec.id === 'about';
-    const beaconX = isAbout ? -1.4 : spec.x;
-    const beaconZ = spec.id === 'contact' ? -11.8 : (spec.id === 'bathroom' ? -2.2 : (isAbout ? 1.7 : -1.5));
+    const beaconX = isAbout ? -10.5 : spec.x;
+    const beaconZ = isAbout ? 10.5 : (spec.id === 'contact' ? -11.8 : (spec.id === 'bathroom' ? -2.2 : -1.5));
     createFloorBeacon(building, beaconX, spec.y, beaconZ, spec.accent);
 
     // Register interaction point covering the full room bay
@@ -105,11 +107,11 @@ function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
   const { x, y, id, title, subtitle, accent } = room;
 
   const isAbout = id === 'about';
-  const bx = isAbout ? -5.35 : x;
+  const bx = isAbout ? -13.6 : x;
   const by = y;
   let bz = -7.8;
   if (id === 'contact') bz = -15.2;
-  else if (isAbout) bz = 1.7;
+  else if (isAbout) bz = 10.5;
   else if (id === 'experience' || id === 'bedroom') bz = -7.08;
   else if (id === 'bathroom' || id === 'garage' || id === 'process') bz = -7.45;
   const rotY = isAbout ? Math.PI * 0.5 : 0;
@@ -121,16 +123,19 @@ function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
 
   // Architectural fluted acoustic timber slats & brass frame behind "About Me" board
   if (isAbout) {
-    addBox(display, [0, 2.5, -0.02], [4.2, 3.9, 0.04], materials.woodDark);
+    // Freestanding architectural stone monolith & acoustic timber slats in the garden
+    addBox(display, [0, 2.5, -0.06], [4.4, 4.0, 0.12], materials.stoneWarm);
+    addBox(display, [0, 2.5, -0.01], [4.2, 3.8, 0.04], materials.woodDark);
     for (let s = -1.95; s <= 1.95; s += 0.2) {
       if (Math.abs(s) > 1.52) {
-        addBox(display, [s, 2.5, 0.02], [0.08, 3.8, 0.04], materials.woodLight);
+        addBox(display, [s, 2.5, 0.03], [0.08, 3.8, 0.04], materials.woodLight);
       }
     }
-    addBox(display, [0, 4.46, 0.01], [4.26, 0.06, 0.06], materials.brass);
-    addBox(display, [0, 0.56, 0.01], [4.26, 0.06, 0.06], materials.brass);
-    addBox(display, [-2.12, 2.5, 0.01], [0.06, 3.9, 0.06], materials.brass);
-    addBox(display, [2.12, 2.5, 0.01], [0.06, 3.9, 0.06], materials.brass);
+    addBox(display, [0, 4.46, 0.02], [4.4, 0.08, 0.14], materials.brass);
+    addBox(display, [0, 0.56, 0.02], [4.4, 0.08, 0.14], materials.brass);
+    addBox(display, [-2.18, 2.5, 0.02], [0.08, 4.0, 0.14], materials.brass);
+    addBox(display, [2.18, 2.5, 0.02], [0.08, 4.0, 0.14], materials.brass);
+    addFurnitureCollider(world, RAPIER, staticBodies, [bx, by + 2.0, bz], [0.15, 2.0, 2.2]);
   }
 
   // Wall mounted plaque frame with brushed brass trim
@@ -157,79 +162,170 @@ function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
   }
 }
 
+function buildGrandEntranceGalleria(parent, world, RAPIER, staticBodies) {
+  // =========================================================================
+  // MANSION GROUND FLOOR: GRAND ENTRANCE GALLERIA & FOYER (x = 0, z = -2.0)
+  // 100% WIDE OPEN CENTRAL PASSAGEWAY FROM FRONT ENTRANCE (z = 3.8) TO REAR
+  // GLASS TERRACE DOORS (z = -8.2). ZERO COLLIDERS IN WALKING LANE x: [-2.5, 2.5]!
+  // =========================================================================
+
+  // 1. Long Classical Persian Runner Rug down the central hall (Flat visual only, zero collider)
+  addBox(parent, [0.0, 0.02, -2.0], [2.2, 0.016, 9.8], materials.carpetPersian, { receive: false, shadow: false });
+
+  // 2. Multi-tier Sculptural Ring Chandelier centered in the 2-story Foyer Void (x = 0.0, y = 4.8, z = -2.0)
+  const chandelier = new THREE.Group();
+  chandelier.position.set(0.0, 4.8, -2.0);
+  parent.add(chandelier);
+  addCylinder(chandelier, [0, 0, 0], 1.85, 1.85, 0.1, materials.brass, { segments: 24 });
+  addCylinder(chandelier, [0, -0.04, 0], 1.72, 1.72, 0.06, materials.glow, { segments: 24, shadow: false });
+  addCylinder(chandelier, [0, 0.38, 0], 1.15, 1.15, 0.08, materials.brass, { segments: 20 });
+  addCylinder(chandelier, [0, 0.34, 0], 1.05, 1.05, 0.05, materials.glow, { segments: 20, shadow: false });
+  for (let c = 0; c < 4; c += 1) {
+    const angle = (c / 4) * Math.PI * 2;
+    addCylinder(chandelier, [Math.cos(angle) * 1.7, 0.55, Math.sin(angle) * 1.7], 0.015, 0.015, 1.1, materials.brass);
+  }
+
+  // 3. West Wall Console (x = -5.1, z = 1.7, against west partition wall)
+  addBox(parent, [-5.12, 0.46, 1.7], [0.44, 0.54, 2.6], materials.woodDark);
+  addBox(parent, [-5.10, 0.75, 1.7], [0.48, 0.05, 2.66], materials.stone);
+  addBox(parent, [-4.86, 0.46, 1.7], [0.02, 0.48, 2.5], materials.brass);
+  addFurnitureCollider(world, RAPIER, staticBodies, [-5.12, 0.45, 1.7], [0.24, 0.45, 1.35]);
+
+  // Tall Brass Framed Arch Mirror mounted on West wall above console
+  addBox(parent, [-5.32, 2.1, 1.7], [0.04, 1.9, 1.6], materials.brass);
+  addBox(parent, [-5.30, 2.1, 1.7], [0.02, 1.76, 1.46], materials.mirror);
+  // Architectural Fluted Vase with Monstera Foliage on West console
+  addCylinder(parent, [-5.05, 0.95, 1.7], 0.12, 0.08, 0.36, materials.ceramicTeal, { segments: 14 });
+  addSphere(parent, [-5.05, 1.25, 1.7], [0.24, 0.28, 0.24], materials.foliageBright);
+
+  // 4. East Wall Console (x = 4.8, z = 3.0, south of staircase foot)
+  addBox(parent, [4.82, 0.46, 3.0], [0.44, 0.54, 1.6], materials.woodDark);
+  addBox(parent, [4.80, 0.75, 3.0], [0.48, 0.05, 1.66], materials.stone);
+  addBox(parent, [4.56, 0.46, 3.0], [0.02, 0.48, 1.5], materials.brass);
+  addFurnitureCollider(world, RAPIER, staticBodies, [4.82, 0.45, 3.0], [0.24, 0.45, 0.85]);
+  // Warm Foyer Lamp on East console
+  addCylinder(parent, [4.75, 0.95, 3.0], 0.08, 0.12, 0.34, materials.brass, { segments: 12 });
+  addSphere(parent, [4.75, 1.22, 3.0], [0.16, 0.16, 0.16], materials.glow, { shadow: false });
+
+  // 5. Symmetrical Potted Fiddle-Leaf Fig Trees in Foyer Corners (x = ±4.8, z = 3.2, framing front windows safely outside doorway)
+  for (const fx of [-4.85, 4.85]) {
+    addCylinder(parent, [fx, 0.45, 3.2], 0.34, 0.24, 0.9, materials.ceramicTerracotta, { segments: 16 });
+    for (let i = 0; i < 6; i += 1) {
+      const angle = (i / 6) * Math.PI * 2;
+      addSphere(parent, [fx + Math.cos(angle) * 0.32, 1.35 + (i % 2) * 0.18, 3.2 + Math.sin(angle) * 0.32], [0.32, 0.20, 0.32], materials.foliageBright);
+    }
+    addFurnitureCollider(world, RAPIER, staticBodies, [fx, 0.55, 3.2], [0.35, 0.55, 0.35]);
+  }
+
+  // 6. Rear Media Wall on West Partition (x = -5.35, z = -6.0)
+  const mediaWall = new THREE.Group();
+  mediaWall.position.set(-5.35, 2.2, -6.0);
+  mediaWall.rotation.y = Math.PI * 0.5;
+  parent.add(mediaWall);
+  addBox(mediaWall, [0, 0, 0], [2.6, 1.5, 0.06], materials.metalDark);
+  addBox(mediaWall, [0, 0, 0.04], [2.48, 1.38, 0.02], materials.artLandscape, { shadow: false });
+  addBox(parent, [-5.15, 0.42, -6.0], [0.42, 0.42, 2.4], materials.woodDark);
+  addBox(parent, [-5.14, 0.64, -6.0], [0.40, 0.02, 2.3], materials.stone);
+  addFurnitureCollider(world, RAPIER, staticBodies, [-5.15, 0.45, -6.0], [0.25, 0.45, 1.25]);
+}
+
 function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
   const { x, y, z, id } = room;
 
   if (id === 'about') {
     // =========================================================================
-    // 01 · ABOUT ME — EXECUTIVE BIOGRAPHICAL ROTUNDA & IDENTITY PAVILION
-    // Monumental feature wall, Flanking Identity Columns, 4 Pillars of Engineering
-    // Craft, Central Rotunda Table with 3D Estate Scale Model (Maquette), and
-    // Executive Lounge Suite
+    // 01 · ABOUT ME — EXECUTIVE GARDEN ROTUNDA & IDENTITY PAVILION (FRONT YARD)
+    // Located at [x = -10.5, y = 0.0, z = 10.5] in the West Front Garden
+    // Raised Stone & Teak Platform, Architectural Trellis Pergola,
+    // 4 Architectural Pillars of Vicky's Craft, Central Rotunda Table with
+    // 3D Estate Scale Maquette, Exhibition Credenza with Crest, and
+    // Executive Outdoor Lounge Suite
     // =========================================================================
 
-    // Multi-tier Sculptural Ring Chandelier centered in About Me Pavilion (y = 4.6)
-    const chandelier = new THREE.Group();
-    chandelier.position.set(x - 1.4, y + 4.6, 1.7);
-    parent.add(chandelier);
-    addCylinder(chandelier, [0, 0, 0], 1.65, 1.65, 0.1, materials.brass, { segments: 24 });
-    addCylinder(chandelier, [0, -0.04, 0], 1.54, 1.54, 0.06, materials.glow, { segments: 24, shadow: false });
-    addCylinder(chandelier, [0, 0.35, 0], 0.95, 0.95, 0.08, materials.brass, { segments: 20 });
-    addCylinder(chandelier, [0, 0.31, 0], 0.86, 0.86, 0.05, materials.glow, { segments: 20, shadow: false });
-    for (let c = 0; c < 3; c += 1) {
-      const angle = (c / 3) * Math.PI * 2;
-      addCylinder(chandelier, [Math.cos(angle) * 1.5, 0.45, Math.sin(angle) * 1.5], 0.015, 0.015, 0.9, materials.brass);
+    const px = -10.5;
+    const py = 0.0;
+    const pz = 10.5;
+
+    // 1. Raised Stone Garden Platform with Teak Inlay
+    addBox(parent, [px, py + 0.08, pz], [7.0, 0.16, 6.2], materials.stoneWarm);
+    addBox(parent, [px, py + 0.17, pz], [6.6, 0.02, 5.8], materials.woodWarm);
+    // Eastern step facing fountain turnaround
+    addBox(parent, [px + 3.65, py + 0.05, pz], [0.4, 0.10, 2.6], materials.stone);
+
+    // Flagstone stepping stones connecting fountain roundabout to pavilion entrance
+    for (let sx = -7.2; sx <= -6.8; sx += 0.35) {
+      addBox(parent, [sx, py + 0.03, pz], [0.32, 0.04, 1.8], materials.stoneWarm);
     }
 
-    // Flanking Illuminated Biographical Columns on West Wall (z = -0.35 and z = 3.75)
-    for (const cz of [-0.35, 3.75]) {
-      addBox(parent, [x - 5.18, y + 2.25, cz], [0.36, 4.3, 0.46], materials.woodDark);
-      addBox(parent, [x - 4.98, y + 2.25, cz], [0.04, 3.9, 0.08], materials.glow, { shadow: false });
-      addBox(parent, [x - 5.12, y + 1.0, cz], [0.38, 0.05, 0.48], materials.brass);
-      addSphere(parent, [x - 5.05, y + 1.25, cz], [0.11, 0.11, 0.11], materials.gold);
+    // 2. Architectural Garden Pergola Canopy (4 Columns + Louvered Trellis)
+    const pergolaColumns = [
+      [-3.1, -2.7],
+      [-3.1, 2.7],
+      [3.1, -2.7],
+      [3.1, 2.7],
+    ];
+    for (const [cx, cz] of pergolaColumns) {
+      addBox(parent, [px + cx, py + 1.8, pz + cz], [0.22, 3.6, 0.22], materials.woodDark);
+      addBox(parent, [px + cx, py + 0.2, pz + cz], [0.32, 0.4, 0.32], materials.stone);
+      addFurnitureCollider(world, RAPIER, staticBodies, [px + cx, py + 1.8, pz + cz], [0.16, 1.8, 0.16]);
     }
 
-    // --- FEATURE WALL EXHIBITION CONSOLE (Below "About Me" Display Board at x = -5.12, z = 1.7) ---
-    addBox(parent, [x - 5.12, y + 0.46, 1.7], [0.48, 0.54, 3.5], materials.woodDark);
-    addBox(parent, [x - 5.10, y + 0.75, 1.7], [0.52, 0.05, 3.56], materials.stone);
-    addBox(parent, [x - 4.86, y + 0.46, 1.7], [0.02, 0.48, 3.4], materials.brass);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 5.12, y + 0.45, 1.7], [0.28, 0.45, 1.78]);
+    // Longitudinal Main Support Beams (spanning Z at y = 3.6)
+    for (const bx of [-3.1, 3.1]) {
+      addBox(parent, [px + bx, py + 3.6, pz], [0.24, 0.22, 6.4], materials.woodDark);
+    }
+    // Transverse Shading Louvers (7 teak beams spanning X at y = 3.75)
+    for (let lz = -2.7; lz <= 2.7; lz += 0.9) {
+      addBox(parent, [px, py + 3.75, pz + lz], [6.8, 0.12, 0.18], materials.woodWarm);
+    }
+
+    // Twin Sculpted Brass Lanterns suspended from pergola beams
+    for (const lz of [-1.5, 1.5]) {
+      addCylinder(parent, [px, py + 3.3, pz + lz], 0.02, 0.02, 0.5, materials.brass);
+      addBox(parent, [px, py + 2.95, pz + lz], [0.28, 0.36, 0.28], materials.brass);
+      addSphere(parent, [px, py + 2.95, pz + lz], [0.14, 0.18, 0.14], materials.glow, { shadow: false });
+    }
+
+    // 3. Feature Wall Exhibition Credenza (Below "About Me" Display Board at x = -13.3, z = 10.5)
+    addBox(parent, [px - 2.8, py + 0.46, pz], [0.44, 0.54, 3.5], materials.woodDark);
+    addBox(parent, [px - 2.8, py + 0.75, pz], [0.48, 0.05, 3.56], materials.stone);
+    addBox(parent, [px - 2.56, py + 0.46, pz], [0.02, 0.48, 3.4], materials.brass);
+    addFurnitureCollider(world, RAPIER, staticBodies, [px - 2.8, py + 0.45, pz], [0.26, 0.45, 1.78]);
 
     // Signature Biographical Artifacts on Credenza:
     // 1. Center: Golden Developer Architecture Crest (<VM/>) on Stepped Marble Plinth
-    addBox(parent, [x - 5.05, y + 0.84, 1.7], [0.24, 0.12, 0.58], materials.stoneWarm);
-    addBox(parent, [x - 5.05, y + 0.96, 1.7], [0.08, 0.24, 0.46], materials.gold);
-    addSphere(parent, [x - 5.05, y + 1.16, 1.7], [0.09, 0.09, 0.09], materials.glow, { shadow: false });
+    addBox(parent, [px - 2.75, py + 0.84, pz], [0.24, 0.12, 0.58], materials.stoneWarm);
+    addBox(parent, [px - 2.75, py + 0.96, pz], [0.08, 0.24, 0.46], materials.gold);
+    addSphere(parent, [px - 2.75, py + 1.16, pz], [0.09, 0.09, 0.09], materials.glow, { shadow: false });
     // 2. North: Innovation Milestone Star Trophy in Gold
-    addCylinder(parent, [x - 5.06, y + 0.84, 2.65], 0.10, 0.12, 0.18, materials.brass, { segments: 14 });
-    addSphere(parent, [x - 5.06, y + 1.02, 2.65], [0.09, 0.14, 0.09], materials.gold);
+    addCylinder(parent, [px - 2.76, py + 0.84, pz + 0.95], 0.10, 0.12, 0.18, materials.brass, { segments: 14 });
+    addSphere(parent, [px - 2.76, py + 1.02, pz + 0.95], [0.09, 0.14, 0.09], materials.gold);
     // 3. South: Sculptural Teal Ceramic Bonsai Planter
-    addCylinder(parent, [x - 5.06, y + 0.85, 0.75], 0.12, 0.09, 0.20, materials.ceramicTeal, { segments: 14 });
-    addSphere(parent, [x - 5.06, y + 1.04, 0.75], [0.16, 0.12, 0.16], materials.foliageBright);
+    addCylinder(parent, [px - 2.76, py + 0.85, pz - 0.95], 0.12, 0.09, 0.20, materials.ceramicTeal, { segments: 14 });
+    addSphere(parent, [px - 2.76, py + 1.04, pz - 0.95], [0.16, 0.12, 0.16], materials.foliageBright);
 
-    // --- 4 ARCHITECTURAL PILLARS OF VICKY'S CRAFT (SOLID, Backend, Frontend/3D, AI SDLC) ---
+    // 4. 4 ARCHITECTURAL PILLARS OF VICKY'S CRAFT (SOLID, Backend, Frontend/3D, AI SDLC)
     const pillars = [
-      { z: 3.05, mat: materials.blue, cap: materials.brass },
-      { z: 2.15, mat: materials.emerald, cap: materials.gold },
-      { z: 1.25, mat: materials.coral, cap: materials.brass },
-      { z: 0.35, mat: materials.gold, cap: materials.gold },
+      { z: pz + 1.35, mat: materials.blue, cap: materials.brass },
+      { z: pz + 0.45, mat: materials.emerald, cap: materials.gold },
+      { z: pz - 0.45, mat: materials.coral, cap: materials.brass },
+      { z: pz - 1.35, mat: materials.gold, cap: materials.gold },
     ];
     for (const p of pillars) {
-      addBox(parent, [x - 3.35, y + 0.42, p.z], [0.40, 0.84, 0.40], materials.woodWarm);
-      addBox(parent, [x - 3.35, y + 0.86, p.z], [0.46, 0.04, 0.46], p.cap);
-      addSphere(parent, [x - 3.35, y + 1.04, p.z], [0.11, 0.14, 0.11], p.mat);
-      addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.35, y + 0.45, p.z], [0.24, 0.45, 0.24]);
+      addBox(parent, [px - 1.65, py + 0.42, p.z], [0.38, 0.84, 0.38], materials.woodWarm);
+      addBox(parent, [px - 1.65, py + 0.86, p.z], [0.44, 0.04, 0.44], p.cap);
+      addSphere(parent, [px - 1.65, py + 1.04, p.z], [0.11, 0.14, 0.11], p.mat);
+      addFurnitureCollider(world, RAPIER, staticBodies, [px - 1.65, py + 0.45, p.z], [0.22, 0.45, 0.22]);
     }
 
-    // --- CENTRAL IDENTITY ROTUNDA TABLE WITH 3D ARCHITECTURAL MAQUETTE OF VICKY'S ESTATE ---
-    // Circular Italian Marble & Brushed Brass Rotunda Table at [x - 1.4, z = 1.7]
+    // 5. CENTRAL IDENTITY ROTUNDA TABLE WITH 3D ARCHITECTURAL MAQUETTE OF VICKY'S ESTATE
     const rotunda = new THREE.Group();
-    rotunda.position.set(x - 1.4, y, 1.7);
+    rotunda.position.set(px, py, pz);
     parent.add(rotunda);
     addCylinder(rotunda, [0, 0.32, 0], 0.42, 0.52, 0.64, materials.woodDark, { segments: 20 });
     addCylinder(rotunda, [0, 0.66, 0], 0.88, 0.88, 0.06, materials.stone, { segments: 24 });
     addCylinder(rotunda, [0, 0.695, 0], 0.90, 0.90, 0.02, materials.brass, { segments: 24 });
-    // Miniature 3D Architectural Scale Model (Maquette) of the Mansion on top of the Rotunda Table!
+    // Miniature 3D Architectural Scale Model (Maquette) of the Mansion on top of Rotunda Table
     addBox(rotunda, [0, 0.72, 0], [1.15, 0.03, 0.85], materials.foliageMid); // Mini estate lawn
     addBox(rotunda, [-0.36, 0.74, 0.08], [0.24, 0.02, 0.36], materials.poolWater, { shadow: false }); // Mini pool
     addBox(rotunda, [0.06, 0.82, -0.04], [0.58, 0.18, 0.32], materials.wall); // Mini mansion body
@@ -238,14 +334,13 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
       addCylinder(rotunda, [0.06 + mcx, 0.82, 0.14], 0.012, 0.012, 0.18, materials.column, { segments: 8 });
     }
     addSphere(rotunda, [0.06, 1.08, -0.04], [0.08, 0.08, 0.08], materials.glow, { shadow: false });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 1.4, y + 0.48, 1.7], [0.88, 0.48, 0.88]);
+    addFurnitureCollider(world, RAPIER, staticBodies, [px, py + 0.48, pz], [0.88, 0.48, 0.88]);
 
-    // --- EXECUTIVE BIOGRAPHICAL LOUNGE SUITE (Oriented West toward About Me Feature Wall) ---
-    // Pair of Sculpted Terracotta & Brushed-Brass Lounge Armchairs at x = +0.55
+    // 6. EXECUTIVE OUTDOOR LOUNGE ARMCHAIRS (East side of platform, facing West toward table & board)
     for (const cz of [-0.85, 0.85]) {
       const arm = new THREE.Group();
-      arm.position.set(x + 0.55, y, 1.7 + cz);
-      arm.rotation.y = Math.PI;
+      arm.position.set(px + 1.7, py + 0.16, pz + cz);
+      arm.rotation.y = Math.PI * 0.5; // facing West (-X)
       parent.add(arm);
       addBox(arm, [0, 0.16, 0], [0.88, 0.05, 0.82], materials.brass);
       addBox(arm, [0, 0.40, 0], [0.84, 0.38, 0.78], materials.terracotta);
@@ -253,27 +348,15 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
       addBox(arm, [0.02, 0.58, -0.36], [0.80, 0.24, 0.10], materials.woodDark);
       addBox(arm, [0.02, 0.58, 0.36], [0.80, 0.24, 0.10], materials.woodDark);
       addBox(arm, [0.20, 0.66, 0], [0.14, 0.32, 0.40], cz > 0 ? materials.cushionYellow : materials.cushionMint);
-      addFurnitureCollider(world, RAPIER, staticBodies, [x + 0.55, y + 0.45, 1.7 + cz], [0.46, 0.45, 0.44]);
+      addFurnitureCollider(world, RAPIER, staticBodies, [px + 1.7, py + 0.45, pz + cz], [0.45, 0.45, 0.42]);
     }
 
-    // Architectural Fig Tree in Corner (x = -4.6, z = 3.2)
-    addCylinder(parent, [x - 4.6, y + 0.45, 3.2], 0.38, 0.28, 0.9, materials.ceramicTerracotta, { segments: 16 });
-    for (let i = 0; i < 7; i += 1) {
-      const angle = (i / 7) * Math.PI * 2;
-      addSphere(parent, [x - 4.6 + Math.cos(angle) * 0.38, y + 1.35 + (i % 2) * 0.18, 3.2 + Math.sin(angle) * 0.38], [0.36, 0.22, 0.36], materials.foliageBright);
+    // 7. Flanking Topiary Planters on front garden terrace corners
+    for (const cz of [-2.8, 2.8]) {
+      addBox(parent, [px + 3.1, py + 0.3, pz + cz], [0.55, 0.6, 0.55], materials.stoneWarm);
+      addSphere(parent, [px + 3.1, py + 0.85, pz + cz], [0.38, 0.38, 0.38], materials.foliageDeep);
+      addFurnitureCollider(world, RAPIER, staticBodies, [px + 3.1, py + 0.4, pz + cz], [0.3, 0.4, 0.3]);
     }
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.6, y + 0.55, 3.2], [0.4, 0.55, 0.4]);
-
-    // Rear Media Wall on West Partition (x = -5.35, z = -6.0)
-    const mediaWall = new THREE.Group();
-    mediaWall.position.set(x - 5.35, y + 2.2, -6.0);
-    mediaWall.rotation.y = Math.PI * 0.5;
-    parent.add(mediaWall);
-    addBox(mediaWall, [0, 0, 0], [2.6, 1.5, 0.06], materials.metalDark);
-    addBox(mediaWall, [0, 0, 0.04], [2.48, 1.38, 0.02], materials.artLandscape, { shadow: false });
-    addBox(parent, [x - 5.15, y + 0.42, -6.0], [0.42, 0.42, 2.4], materials.woodDark);
-    addBox(parent, [x - 5.14, y + 0.64, -6.0], [0.40, 0.02, 2.3], materials.stone);
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 5.15, y + 0.45, -6.0], [0.25, 0.45, 1.25]);
   } else if (id === 'projects') {
     // =========================================================================
     // 06 · PROJECTS — FLAGSHIP SOFTWARE & AI PRODUCT EXPO PAVILION
