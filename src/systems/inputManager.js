@@ -25,6 +25,8 @@ export class InputManager {
       onJump: options.onJump || null,
       onCarouselNext: options.onCarouselNext || null,
       onCarouselPrev: options.onCarouselPrev || null,
+      onZoomIn: options.onZoomIn || null,
+      onZoomOut: options.onZoomOut || null,
       isSuspended: options.isSuspended || (() => false),
     };
 
@@ -98,6 +100,17 @@ export class InputManager {
     }
 
     if (event.code === 'Space' && event.repeat) return;
+
+    // 3. Manual camera zoom (+ / = to zoom in, - / _ to zoom out)
+    if (!event.ctrlKey && !event.metaKey) {
+      if (event.key === '+' || event.key === '=' || event.code === 'Equal' || event.code === 'NumpadAdd') {
+        event.preventDefault();
+        if (this.callbacks.onZoomIn) this.callbacks.onZoomIn();
+      } else if (event.key === '-' || event.key === '_' || event.code === 'Minus' || event.code === 'NumpadSubtract') {
+        event.preventDefault();
+        if (this.callbacks.onZoomOut) this.callbacks.onZoomOut();
+      }
+    }
 
     this.keys.add(event.code);
   }

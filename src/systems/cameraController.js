@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 /**
  * CameraController - Manages third-person follow camera, occlusion raycasting,
- * indoor ceiling clamping, orbit angles, and overview/aerial mode.
+ * indoor ceiling clamping, orbit angles, overview/aerial mode, and manual user zoom.
  * Adheres to Single Responsibility Principle (SRP) and High Performance rendering guidelines.
  */
 export class CameraController {
@@ -11,13 +11,14 @@ export class CameraController {
     this.cameraBlockers = options.cameraBlockers || [];
     this.roofGroup = options.roofGroup || null;
 
-    // Orbit state
+    // Orbit & manual distance state (default 4.6m, stays stable, no auto zoom-out)
     this.yaw = options.yaw || 0;
     this.pitch = options.pitch || 0.35;
-    this.userZoom = 1.0;
-    this.cameraDistance = 6.8;
-    this.cameraDistanceGoal = 6.8;
-    this.cameraSafeDistance = 6.8;
+    this.targetDistance = options.distance || 4.6;
+    this.cameraDistance = options.distance || 4.6;
+    this.cameraSafeDistance = options.distance || 4.6;
+    this.minDistance = 1.6;
+    this.maxDistance = 14.0;
     this.lastCollisionCheck = 0;
 
     // Overview / Aerial Map mode
@@ -34,6 +35,16 @@ export class CameraController {
     this.cameraTarget = new THREE.Vector3();
     this.dampVector = new THREE.Vector3();
     this.lookPoint = new THREE.Vector3();
+  }
+
+  get userZoom() {
+    return this.targetDistance / 4.6;
+  }
+
+  set userZoom(val) {
+    if (typeof val === 'number' && Number.isFinite(val)) {
+      this.targetDistance = THREE.MathUtils.clamp(val * 4.6, this.minDistance, this.maxDistance);
+    }
   }
 
   setRoofGroup(group) {
@@ -57,8 +68,20 @@ export class CameraController {
     this.pitch = THREE.MathUtils.clamp(this.pitch + deltaPitch, -0.42, 0.88);
   }
 
+  zoomIn(amount = 0.45) {
+    this.targetDistance = Math.max(this.minDistance, this.targetDistance - amount);
+  }
+
+  zoomOut(amount = 0.45) {
+    this.targetDistance = Math.min(this.maxDistance, this.targetDistance + amount);
+  }
+
   zoom(delta) {
-    this.userZoom = THREE.MathUtils.clamp(this.userZoom + delta, 0.45, 2.2);
+    this.targetDistance = THREE.MathUtils.clamp(this.targetDistance + delta, this.minDistance, this.maxDistance);
+  }
+
+  setDistance(dist) {
+    this.targetDistance = THREE.MathUtils.clamp(dist, this.minDistance, this.maxDistance);
   }
 
   isInsideHouse(x, z) {
@@ -112,9 +135,6 @@ export class CameraController {
     }
 
     const isPortrait = this.camera.aspect < 1.0;
-    const baseDistance = inHouse ? (isPortrait ? 3.2 : 3.4) : (isPortrait ? 7.6 : 6.8);
-    this.cameraDistanceGoal = baseDistance * this.userZoom;
-
     const targetY = physY + (isPortrait ? 1.35 : 1.25);
     this.cameraTarget.set(physX, targetY, physZ);
 
@@ -123,24 +143,32 @@ export class CameraController {
     const minPitch = inHouse ? -0.38 : -0.52;
     this.pitch = THREE.MathUtils.clamp(this.pitch, minPitch, maxPitch);
 
-    // Keyboard rotation controls (Q, [, ], PageUp, PageDown)
+    // Keyboard rotation controls and continuous zoom controls (+ / = for Zoom In, - / _ for Zoom Out)
     if (keys && !activeStates.panelOpen && !activeStates.settingsOpen && !activeStates.tourActive) {
       if (keys.has('KeyQ')) this.yaw += 2.4 * dt;
       if (keys.has('BracketLeft')) this.yaw += 2.4 * dt;
       if (keys.has('BracketRight')) this.yaw -= 2.4 * dt;
       if (keys.has('PageUp')) this.pitch = THREE.MathUtils.clamp(this.pitch + 1.6 * dt, minPitch, maxPitch);
       if (keys.has('PageDown')) this.pitch = THREE.MathUtils.clamp(this.pitch - 1.6 * dt, minPitch, maxPitch);
+
+      // Continuous manual zoom via keyboard keys
+      if (keys.has('Equal') || keys.has('NumpadAdd')) {
+        this.zoomIn(4.5 * dt);
+      }
+      if (keys.has('Minus') || keys.has('NumpadSubtract')) {
+        this.zoomOut(4.5 * dt);
+      }
     }
 
-    // Over-the-shoulder offset for cinematic depth
-    const horizontal = this.cameraDistance * Math.cos(this.pitch);
+    // Over-the-shoulder offset for cinematic depth using user's chosen targetDistance
+    const horizontal = this.targetDistance * Math.cos(this.pitch);
     const shoulderOffset = isPortrait ? 0 : 0.22;
     const shoulderX = Math.cos(this.yaw) * shoulderOffset;
     const shoulderZ = -Math.sin(this.yaw) * shoulderOffset;
 
     this.cameraDesired.set(
       physX + Math.sin(this.yaw) * horizontal + shoulderX,
-      physY + (inHouse ? 1.38 : 1.52) + Math.sin(this.pitch) * this.cameraDistance,
+      physY + (inHouse ? 1.38 : 1.52) + Math.sin(this.pitch) * this.targetDistance,
       physZ + Math.cos(this.yaw) * horizontal + shoulderZ
     );
 
@@ -163,14 +191,14 @@ export class CameraController {
       this.lastCollisionCheck = timestamp;
       this.cameraOrigin.copy(this.cameraTarget);
       this.raycaster.set(this.cameraTarget, this.dampVector);
-      this.raycaster.far = desiredDistance;
+      this.raycaster.far = this.targetDistance;
       this.raycaster.intersectObjects(this.cameraBlockers, false, this.rayHits);
-      this.cameraSafeDistance = this.rayHits.length ? Math.max(1.8, this.rayHits[0].distance - 0.35) : desiredDistance;
+      this.cameraSafeDistance = this.rayHits.length ? Math.max(1.6, this.rayHits[0].distance - 0.35) : this.targetDistance;
       this.rayHits.length = 0;
     }
 
-    const effectiveDistance = Math.min(this.cameraSafeDistance, desiredDistance);
-    const dampSpeed = this.cameraSafeDistance < this.cameraDistance ? 16.0 : 5.0;
+    const effectiveDistance = Math.min(this.cameraSafeDistance, this.targetDistance);
+    const dampSpeed = this.cameraSafeDistance < this.cameraDistance ? 18.0 : 8.0;
     this.cameraDistance = THREE.MathUtils.damp(this.cameraDistance, effectiveDistance, dampSpeed, dt);
 
     this.cameraDesired.copy(this.cameraTarget).addScaledVector(this.dampVector, this.cameraDistance);
@@ -183,4 +211,3 @@ export class CameraController {
     this.camera.lookAt(this.lookPoint);
   }
 }
-

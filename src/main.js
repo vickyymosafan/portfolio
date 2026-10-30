@@ -232,6 +232,16 @@ const inputManager = new InputManager({
     }
     return false;
   },
+  onZoomIn: () => {
+    if (cinematicDirector && cinematicDirector.isActive()) return;
+    if (worldInteractions && worldInteractions.isActive()) return;
+    if (cameraController) cameraController.zoomIn(0.45);
+  },
+  onZoomOut: () => {
+    if (cinematicDirector && cinematicDirector.isActive()) return;
+    if (worldInteractions && worldInteractions.isActive()) return;
+    if (cameraController) cameraController.zoomOut(0.45);
+  },
   isSuspended: () => {
     return panelOpen || settingsOpen || tourActive ||
       (cinematicDirector && cinematicDirector.isInputLocked()) ||
@@ -323,7 +333,7 @@ function createRenderer() {
 
   const initialAspect = window.innerWidth / window.innerHeight;
   camera = new THREE.PerspectiveCamera(initialAspect < 1.0 ? 64 : 48, initialAspect, 0.4, 215);
-  cameraController = new CameraController(camera, { cameraBlockers, yaw, pitch });
+  cameraController = new CameraController(camera, { cameraBlockers, yaw, pitch, distance: cameraDistance });
   return renderer;
 }
 
@@ -1940,7 +1950,6 @@ function updateCamera(dt, timestamp) {
   if (cameraController) {
     cameraController.yaw = yaw;
     cameraController.pitch = pitch;
-    cameraController.userZoom = userZoom;
     cameraController.overviewMode = overviewMode;
     cameraController.teleportOverride = teleportCameraOverride;
 
@@ -2157,11 +2166,21 @@ function bindEvents() {
     renderer.domElement.addEventListener('pointerup', releasePointer);
     renderer.domElement.addEventListener('pointercancel', releasePointer);
     renderer.domElement.addEventListener('lostpointercapture', releasePointer);
-    renderer.domElement.addEventListener('wheel', (event) => {
+    const handleWheelZoom = (event) => {
       if ((cinematicDirector && cinematicDirector.isActive()) || (worldInteractions && worldInteractions.isActive())) return;
+      if (panelOpen || settingsOpen) return;
+      if (event.target && event.target.closest && event.target.closest('.detail-panel, .settings-panel, .tour-toast, pre, code')) {
+        return;
+      }
       event.preventDefault();
-      userZoom = THREE.MathUtils.clamp(userZoom + Math.sign(event.deltaY) * 0.07, 0.45, 2.2);
-    }, { passive: false });
+      if (!cameraController) return;
+      if (event.deltaY < 0) {
+        cameraController.zoomIn(0.45);
+      } else if (event.deltaY > 0) {
+        cameraController.zoomOut(0.45);
+      }
+    };
+    window.addEventListener('wheel', handleWheelZoom, { passive: false });
   }
 
   const joystick = $('joystick');
@@ -2438,6 +2457,11 @@ async function init() {
       }
     };
     window.__getPlayerPos = () => ({ x: physX, y: physY, z: physZ });
+    window.__cameraController = cameraController;
+    window.__getCameraDistance = () => cameraController?.cameraDistance;
+    window.__getTargetDistance = () => cameraController?.targetDistance;
+    window.__zoomIn = (amount) => cameraController?.zoomIn(amount);
+    window.__zoomOut = (amount) => cameraController?.zoomOut(amount);
     window.__setRoom = setRoom;
     window.__startExperience = startExperience;
     window.__dispatchInteraction = dispatchInteraction;
@@ -2475,6 +2499,10 @@ async function init() {
 
     bindEvents();
     const urlParams = new URLSearchParams(window.location.search);
+    const distParam = parseFloat(urlParams.get('dist'));
+    if (!isNaN(distParam) && cameraController) {
+      cameraController.setDistance(distParam);
+    }
     const qParam = urlParams.get('quality');
     if (qParam && (qParam === 'auto' || qualityPresets[qParam])) {
       quality = qParam;
