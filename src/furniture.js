@@ -69,7 +69,7 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
       id: spec.id,
       title: roomInfo ? roomInfo.title : spec.subtitle,
       position: new THREE.Vector3(beaconX, spec.y + 0.9, beaconZ),
-      radius: spec.id === 'bathroom' ? 5.6 : 6.8,
+      radius: spec.id === 'bathroom' ? 4.2 : 4.8,
       action: () => openDetailsCallback(spec.id),
       getLabel: () => `Explore ${roomInfo ? roomInfo.title : spec.subtitle}`,
     });

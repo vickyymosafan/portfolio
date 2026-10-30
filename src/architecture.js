@@ -1086,12 +1086,13 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
     type: 'door',
     title: 'Front entrance glass doors',
     position: new THREE.Vector3(0, 0.7, 3.8),
-    radius: 3.2,
+    radius: 3.8,
     controls: frontControls,
     action: () => {
       const manager = window.__worldInteractions;
       if (manager) {
-        return manager.toggleDoor(frontControls, window.__playerCameraState ? window.__playerCameraState() : {});
+        const ok = manager.toggleDoor(frontControls, window.__playerCameraState ? window.__playerCameraState() : {});
+        if (ok) return true;
       }
       return toggle();
     },

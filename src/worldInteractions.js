@@ -480,7 +480,7 @@ export class WorldInteractionManager {
     const doorCenterZ = 3.92;
 
     const distToDoor = Math.hypot(char.position.x - 0, char.position.z - doorCenterZ);
-    if (distToDoor > 4.2) {
+    if (distToDoor > 4.6) {
       this.lifecycleState = InteractionState.IDLE;
       return false;
     }

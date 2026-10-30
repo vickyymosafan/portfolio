@@ -1175,6 +1175,78 @@ function setPromptUI(visible, key = '', label = '', touch = 'Interact') {
   uiManager.setPrompt(visible, key, label, touch);
 }
 
+/**
+ * Verifies whether an architectural room exhibit beacon can be interacted with from the player's position.
+ * Prevents interacting through exterior glass curtain walls, closed entrance doors, or second-floor balconies.
+ */
+function canInteractWithRoom(roomItem, px, py, pz, doorControls) {
+  if (!roomItem || roomItem.type === 'door') return false;
+  const id = roomItem.id;
+  const isUpper = py >= 3.0;
+
+  // 1. Ground Floor (py < 3.0)
+  if (!isUpper) {
+    if (id === 'contact') {
+      // Contact is in the Garden Terrace (outdoor rear pavilion): z < -8.2
+      // If player is inside the mansion (z >= -8.2), they must go through the terrace door to interact.
+      return pz < -8.2 && Math.abs(px) <= 12.0;
+    }
+
+    // All other ground floor exhibits (about, projects, skills, garage) are INDOOR:
+    // When character is OUTSIDE in the front yard / porch (pz > 3.8):
+    // They MUST NOT interact with indoor exhibits through the closed doors or glass walls!
+    if (pz > 3.8) return false;
+
+    // When character is OUTSIDE on the rear garden terrace (pz < -8.2):
+    if (pz < -8.2) return false;
+
+    // When character is OUTSIDE past the west wall (px < -16.0) or east wall (px > 26.0):
+    if (px < -16.0 || px > 26.0) return false;
+
+    // Room-specific bay verification to prevent bleeding into adjacent rooms:
+    if (id === 'about') {
+      // Grand Living Room / Rotunda: x in [-5.5, 5.5], z in [-8.2, 3.8]
+      return Math.abs(px) <= 5.8 && pz <= 3.8 && pz >= -8.2;
+    }
+    if (id === 'projects') {
+      // West Gallery: x in [-16.0, -4.8], z in [-8.2, 3.8]
+      return px >= -16.0 && px <= -4.8 && pz <= 3.8 && pz >= -8.2;
+    }
+    if (id === 'skills') {
+      // East Office: x in [4.8, 16.0], z in [-8.2, 3.8]
+      return px >= 4.8 && px <= 16.0 && pz <= 3.8 && pz >= -8.2;
+    }
+    if (id === 'garage') {
+      // Far East Garage: x in [15.5, 26.0], z in [-8.2, 3.8]
+      return px >= 15.5 && px <= 26.0 && pz <= 3.8 && pz >= -8.2;
+    }
+    return true;
+  }
+
+  // 2. Second Floor (py >= 3.0)
+  if (isUpper) {
+    // When character is on the second floor balcony (pz > 3.8):
+    if (pz > 3.8) return false;
+    if (pz < -8.2 || px < -16.0 || px > 26.0) return false;
+
+    if (id === 'bedroom') {
+      return px >= -16.0 && px <= -4.8 && pz <= 3.8 && pz >= -8.2;
+    }
+    if (id === 'bathroom') {
+      return Math.abs(px) <= 5.8 && pz <= 3.8 && pz >= -8.2;
+    }
+    if (id === 'experience') {
+      return px >= 4.8 && px <= 16.0 && pz <= 3.8 && pz >= -8.2;
+    }
+    if (id === 'process') {
+      return px >= 15.5 && px <= 26.0 && pz <= 3.8 && pz >= -8.2;
+    }
+    return true;
+  }
+
+  return false;
+}
+
 function findInteraction() {
   if (cinematicDirector && cinematicDirector.isActive()) {
     setPromptUI(false);
@@ -1223,13 +1295,14 @@ function findInteraction() {
     }
   }
 
-  // Room exhibit beacons (E)
+  // Room exhibit beacons (E) - filtered by architectural accessibility check
   let bestRoom = null;
   let bestRoomDist = Infinity;
   for (let i = 0; i < interactionPoints.length; i += 1) {
     const item = interactionPoints[i];
     if (item.type === 'door') continue;
     if (item.position?.y !== undefined && Math.abs(physY - item.position.y) > 2.8) continue;
+    if (!canInteractWithRoom(item, physX, physY, physZ, doorControls)) continue;
     const dist = Math.hypot(physX - item.position.x, physZ - item.position.z);
     if (dist < item.radius && dist < bestRoomDist) {
       bestRoom = item;
@@ -1241,12 +1314,12 @@ function findInteraction() {
   const seatDist = nearbySeat ? Math.hypot(physX - nearbySeat.pos[0], physZ - nearbySeat.pos[2]) : Infinity;
 
   // Clear single-target prompt priority:
-  // 1. Door (E) takes top priority when in doorway clearance
+  // 1. Door (E) takes top priority when in doorway clearance or when outside facing the entrance
   // 2. Bench/Seat (C) takes priority over room beacons if closer or in garden/lounge
-  // 3. Room Exhibit (E)
+  // 3. Room Exhibit (E) - strictly requires character to be inside the room
   // 4. Environmental Inspection (F)
   let chosen = null;
-  if (doorCandidate) {
+  if (doorCandidate && (physZ > 3.8 || !bestRoom || doorCandidate.dist < 1.6)) {
     const pt = doorCandidate.point;
     const isDoorOpen = pt.controls?.isOpen?.() ?? false;
     chosen = {
@@ -1272,6 +1345,16 @@ function findInteraction() {
       target: bestRoom,
     };
     currentInteraction = bestRoom;
+  } else if (doorCandidate) {
+    const pt = doorCandidate.point;
+    const isDoorOpen = pt.controls?.isOpen?.() ?? false;
+    chosen = {
+      key: 'E',
+      label: pt.getLabel ? pt.getLabel() : (isDoorOpen ? 'Close door' : 'Open door'),
+      touch: isDoorOpen ? 'Close' : 'Open',
+      target: pt,
+    };
+    currentInteraction = pt;
   } else if (nearbySeat) {
     chosen = {
       key: 'C',
@@ -1357,11 +1440,12 @@ function dispatchInteraction(code) {
     }
 
     if (!target) {
-      // Priority 2: Check nearest room exhibit
+      // Priority 2: Check nearest room exhibit (strictly requiring canInteractWithRoom)
       let bestDist = Infinity;
       for (const item of interactionPoints) {
         if (item.type === 'door') continue;
         if (item.position?.y !== undefined && Math.abs(physY - item.position.y) > 2.8) continue;
+        if (!canInteractWithRoom(item, physX, physY, physZ, doorControls)) continue;
         const dist = Math.hypot(physX - item.position.x, physZ - item.position.z);
         if (dist < item.radius && dist < bestDist) {
           bestDist = dist;
@@ -1931,7 +2015,34 @@ function updateRoomFromPosition(timestamp = 0) {
   lastRoomCheck = timestamp || performance.now();
   let nearest = portfolio.rooms[0];
   let nearestDistance = Infinity;
+
+  // Ground floor outdoor zones
+  if (physY < 3.0) {
+    if (physZ > 3.8) {
+      // In front yard / front driveway / porch: always 'yard'
+      nearest = portfolio.rooms.find((r) => r.id === 'yard') || portfolio.rooms[0];
+      if (nearest.id !== lastRoomVisited) {
+        lastRoomVisited = nearest.id;
+        currentRoom = nearest;
+        updateRoomLabel(nearest);
+      }
+      return;
+    }
+    if (physZ < -8.2) {
+      // In rear garden terrace / contact lounge: 'contact'
+      nearest = portfolio.rooms.find((r) => r.id === 'contact') || nearest;
+      if (nearest.id !== lastRoomVisited) {
+        lastRoomVisited = nearest.id;
+        currentRoom = nearest;
+        updateRoomLabel(nearest);
+      }
+      return;
+    }
+  }
+
   for (const room of portfolio.rooms) {
+    // Skip yard when inside the house
+    if (room.id === 'yard' && physZ <= 3.8 && physZ >= -8.2 && physX >= -16 && physX <= 26) continue;
     const dx = room.position[0] - physX;
     const dy = (room.position[1] !== undefined ? room.position[1] : 1.12) - physY;
     const dz = room.position[2] - physZ;
@@ -1941,7 +2052,7 @@ function updateRoomFromPosition(timestamp = 0) {
       nearest = room;
     }
   }
-  if (nearest.id !== lastRoomVisited && nearestDistance < 25) {
+  if (nearest.id !== lastRoomVisited && nearestDistance < 36) {
     lastRoomVisited = nearest.id;
     currentRoom = nearest;
     updateRoomLabel(nearest);
@@ -2438,6 +2549,16 @@ async function init() {
         teleportCameraOverride = { cam: cCoords, target: tCoords };
         camera.position.set(cCoords[0], cCoords[1], cCoords[2]);
         camera.lookAt(tCoords[0], tCoords[1], tCoords[2]);
+      }
+    }
+    const posParam = urlParams.get('pos');
+    if (posParam) {
+      const coords = posParam.split(',').map(Number);
+      if (coords.length >= 3) {
+        const facing = coords.length >= 4 ? coords[3] : Math.PI;
+        const camYaw = coords.length >= 5 ? coords[4] : 0;
+        const camPitch = coords.length >= 6 ? coords[5] : 0.22;
+        window.__teleport(coords[0], coords[1], coords[2], facing, camYaw, camPitch);
       }
     }
     renderer.render(scene, camera);
