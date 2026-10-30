@@ -2529,6 +2529,9 @@ async function init() {
         window.__teleport(coords[0], coords[1], coords[2], facing, camYaw, camPitch);
       }
     }
+    if (urlParams.get('garage') === 'open' && doorControls?.garage) {
+      doorControls.garage.toggle();
+    }
     renderer.render(scene, camera);
     renderer.render(scene, camera);
     renderer.setAnimationLoop(animate);

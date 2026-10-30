@@ -485,11 +485,8 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   // Bay 3: Home Office Front Glass (x: [5.85, 15.65])
   addGlassFacade(5.85, 15.65, 0.06, 4.75, 4);
 
-  // Bay 4: Garage Showroom Tinted Glass Curtain Wall (x: [16.8, 25.2], y: [0.06, 4.15])
-  addGlassFacade(16.8, 25.2, 0.06, 4.15, 4, {
-    glassMat: materials.garageGlass,
-    transoms: [1.05, 2.05, 3.05],
-  });
+  // Bay 4: Garage Showroom Front - Operated by Interactive Overhead Sectional Glass Garage Door
+  // Created dynamically with smooth upward lifting tracks & Rapier physics in createInteractiveDoors()
 
   // =========================================================================
   // 4. INTERIOR PARTITION WALLS & ARCHWAYS (Ground Floor, y: [0, 5.2])
@@ -1357,15 +1354,248 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
     },
   });
 
+  // -----------------------------------------------------------------
+  // 4. OVERHEAD SECTIONAL GLASS GARAGE DOOR (x: 21.0, z = 3.80)
+  // Opens upwards into the garage ceiling along curved overhead tracks
+  // -----------------------------------------------------------------
+  const garageFrameGroup = new THREE.Group();
+  scene.add(garageFrameGroup);
+
+  // Vertical Guide Rails / Tracks (running from floor y = 0.06 to header y = 4.15)
+  // Left jamb vertical track at x = 16.74, z = 3.80
+  addBox(garageFrameGroup, [16.74, 2.10, 3.80], [0.08, 4.10, 0.12], frameMat);
+  addBox(garageFrameGroup, [16.77, 2.10, 3.80], [0.04, 4.10, 0.05], materials.metalDark);
+  // Right jamb vertical track at x = 25.26, z = 3.80
+  addBox(garageFrameGroup, [25.26, 2.10, 3.80], [0.08, 4.10, 0.12], frameMat);
+  addBox(garageFrameGroup, [25.23, 2.10, 3.80], [0.04, 4.10, 0.05], materials.metalDark);
+
+  // Horizontal Ceiling Guide Tracks (extending 4.3m back into garage ceiling at y = 4.18)
+  addBox(garageFrameGroup, [16.74, 4.18, 1.65], [0.08, 0.06, 4.30], frameMat);
+  addBox(garageFrameGroup, [25.26, 4.18, 1.65], [0.08, 0.06, 4.30], frameMat);
+
+  // Ceiling Steel Hanger Brackets supporting the horizontal tracks from y = 5.10
+  for (const hangZ of [2.8, 0.6]) {
+    addBox(garageFrameGroup, [16.74, 4.64, hangZ], [0.04, 0.92, 0.04], frameMat);
+    addBox(garageFrameGroup, [25.26, 4.64, hangZ], [0.04, 0.92, 0.04], frameMat);
+  }
+
+  // Torsion Spring Assembly & Central Motor Unit above the header (y = 4.30, z = 3.65)
+  addCylinder(garageFrameGroup, [21.0, 4.30, 3.65], 0.035, 0.035, 8.4, frameMat, { segments: 12 }, [0, 0, Math.PI / 2]);
+  addCylinder(garageFrameGroup, [17.5, 4.30, 3.65], 0.065, 0.065, 0.75, materials.metalDark, { segments: 12 }, [0, 0, Math.PI / 2]);
+  addCylinder(garageFrameGroup, [24.5, 4.30, 3.65], 0.065, 0.065, 0.75, materials.metalDark, { segments: 12 }, [0, 0, Math.PI / 2]);
+  // Commercial electric door opener motor
+  addBox(garageFrameGroup, [21.0, 4.32, 3.42], [0.65, 0.32, 0.50], materials.metalDark);
+  addBox(garageFrameGroup, [21.0, 4.24, 3.16], [0.24, 0.10, 0.04], materials.goldBrass);
+  addBox(garageFrameGroup, [21.0, 4.32, 1.80], [0.06, 0.06, 3.50], frameMat);
+
+  // Wall-Mounted Control Station with Illuminated LED Status (x = 16.35, y = 1.35, z = 3.86)
+  addBox(garageFrameGroup, [16.35, 1.35, 3.86], [0.16, 0.26, 0.03], materials.metalDark);
+  addBox(garageFrameGroup, [16.35, 1.35, 3.87], [0.18, 0.28, 0.01], materials.brass);
+  const garageIndicator = addBox(garageFrameGroup, [16.35, 1.35, 3.88], [0.07, 0.07, 0.02], materials.glow);
+
+  // 4 Horizontal Sectional Glass Panels (each 1.01m tall, 8.44m wide)
+  const garagePanels = [];
+  const PANEL_WIDTH = 8.44;
+  const PANEL_HEIGHT = 1.01;
+  const MULLION_X = [-2.50, -0.83, 0.83, 2.50];
+  const PANE_CENTERS = [-3.34, -1.67, 0, 1.67, 3.34];
+
+  for (let k = 0; k < 4; k += 1) {
+    const panelGroup = new THREE.Group();
+    panelGroup.userData.isDynamic = true;
+
+    // Perimeter Aluminum Frame
+    addBox(panelGroup, [0, 0.46, 0], [PANEL_WIDTH, 0.08, 0.06], frameMat);
+    addBox(panelGroup, [0, -0.46, 0], [PANEL_WIDTH, 0.08, 0.06], frameMat);
+    addBox(panelGroup, [-4.18, 0, 0], [0.08, 0.98, 0.06], frameMat);
+    addBox(panelGroup, [4.18, 0, 0], [0.08, 0.98, 0.06], frameMat);
+
+    // 4 Intermediate Vertical Mullions (creating 5 panoramic bays)
+    for (const mx of MULLION_X) {
+      addBox(panelGroup, [mx, 0, 0], [0.06, 0.88, 0.05], frameMat);
+    }
+
+    // 5 Tinted Architectural Glass Panes
+    for (const cx of PANE_CENTERS) {
+      addBox(panelGroup, [cx, 0, 0], [1.58, 0.86, 0.03], materials.garageGlass, { shadow: false });
+    }
+
+    // Heavy-duty side roller shafts
+    addCylinder(panelGroup, [-4.22, 0.40, 0], 0.022, 0.022, 0.06, materials.metalDark, { segments: 8 }, [0, 0, Math.PI / 2]);
+    addCylinder(panelGroup, [4.22, 0.40, 0], 0.022, 0.022, 0.06, materials.metalDark, { segments: 8 }, [0, 0, Math.PI / 2]);
+
+    // Bottom Panel (k = 0): Rubber weather seal and center lift handle
+    if (k === 0) {
+      addBox(panelGroup, [0, -0.49, 0], [PANEL_WIDTH, 0.06, 0.08], materials.metalDark);
+      addBox(panelGroup, [0, -0.32, 0.05], [0.36, 0.04, 0.04], materials.brass);
+    }
+
+    mergeSubtreeMeshes(panelGroup, false);
+    scene.add(panelGroup);
+    garagePanels.push(panelGroup);
+  }
+
+  // Rapier Static Physical Collider across the garage opening (active when closed)
+  const garageColliders = [];
+  if (world && RAPIER) {
+    const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(21.0, 2.05, 3.80));
+    const collider = world.createCollider(RAPIER.ColliderDesc.cuboid(4.25, 2.05, 0.15), body);
+    garageColliders.push(collider);
+    if (doorColliders) doorColliders.push(collider);
+  }
+
+  // Kinematic Door Slide State
+  let garageState = 'closed';
+  let garageFrom = 0;
+  let garageTo = 0;
+  let garageClock = 0;
+  let garagePendingCallback = null;
+  const GARAGE_DURATION = 1.35;
+
+  const setGarageSlide = (progress) => {
+    const eased = easeInOut(progress);
+    const d = 4.30 * eased; // Travel distance along track
+
+    for (let k = 0; k < 4; k += 1) {
+      const panel = garagePanels[k];
+      const s = 0.52 + k * 1.01 + d;
+
+      let y, z, rotX;
+      if (s <= 3.65) {
+        // Vertical lift path
+        y = s;
+        z = 3.80;
+        rotX = 0;
+      } else if (s <= 4.25) {
+        // 90-degree curved bend into ceiling
+        const u = (s - 3.65) / 0.60;
+        const alpha = u * (Math.PI * 0.5);
+        y = 3.65 + 0.50 * Math.sin(alpha);
+        z = 3.80 - 0.50 * (1 - Math.cos(alpha));
+        rotX = -alpha;
+      } else {
+        // Overhead horizontal ceiling track
+        const h = s - 4.25;
+        y = 4.15;
+        z = 3.30 - h;
+        rotX = -Math.PI * 0.5;
+      }
+
+      panel.position.set(21.0, y, z);
+      panel.rotation.set(rotX, 0, 0);
+    }
+  };
+
+  // Initialize panels in closed position
+  setGarageSlide(0);
+
+  const playGarageSound = (opening) => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      const base = opening ? 120 : 100;
+      osc.frequency.setValueAtTime(base, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(base + (opening ? 22 : -15), ctx.currentTime + 1.2);
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(320, ctx.currentTime);
+
+      gain.gain.setValueAtTime(0.04, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.2);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.35);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 1.4);
+    } catch {}
+  };
+
+  const finishGarage = () => {
+    setGarageSlide(garageTo);
+    garageState = garageTo > 0 ? 'open' : 'closed';
+    if (garageState === 'closed') {
+      for (const col of garageColliders) col.setEnabled(true);
+    }
+    const cb = garagePendingCallback;
+    garagePendingCallback = null;
+    if (cb) cb(garageState === 'open');
+  };
+
+  const updateGarage = (dt) => {
+    if (garageState !== 'opening' && garageState !== 'closing') return;
+    garageClock += dt;
+    const t = Math.min(1, garageClock / GARAGE_DURATION);
+    setGarageSlide(garageFrom + (garageTo - garageFrom) * t);
+    if (t >= 1) finishGarage();
+  };
+
+  const toggleGarage = (onComplete) => {
+    if (garageState === 'opening' || garageState === 'closing') return false;
+    const opening = garageState === 'closed';
+    garageFrom = garageState === 'closed' ? 0 : 1;
+    garageTo = opening ? 1 : 0;
+    garageClock = 0;
+    garageState = opening ? 'opening' : 'closing';
+    garagePendingCallback = onComplete || null;
+
+    // Immediately disable collider when opening to allow character walkthrough
+    if (opening) {
+      for (const col of garageColliders) col.setEnabled(false);
+    }
+
+    playGarageSound(opening);
+    return true;
+  };
+
+  const settleGarage = () => {
+    if (garageState === 'opening' || garageState === 'closing') finishGarage();
+  };
+
+  const garageControls = {
+    toggle: toggleGarage,
+    settle: settleGarage,
+    update: updateGarage,
+    isOpen: () => garageState === 'open',
+    isBusy: () => garageState === 'opening' || garageState === 'closing',
+    getState: () => garageState,
+    panels: garagePanels,
+  };
+
+  interactionPoints.push({
+    id: 'door_garage',
+    type: 'door',
+    title: 'Garage overhead glass door',
+    position: new THREE.Vector3(21.0, 1.2, 3.80),
+    radius: 4.8,
+    controls: garageControls,
+    action: () => toggleGarage(),
+    getLabel: () => {
+      if (garageState === 'opening') return 'Opening garage door...';
+      if (garageState === 'closing') return 'Closing garage door...';
+      return garageState === 'open' ? 'Close garage door' : 'Open garage door';
+    },
+  });
+
   return {
     front: frontControls,
     rear: rearControls,
     balcony: balconyControls,
+    garage: garageControls,
     toggle: (cb) => frontControls.toggle(cb),
-    settle: () => { frontControls.settle(); rearControls.settle(); balconyControls.settle(); },
-    update: (dt) => { frontControls.update(dt); rearControls.update(dt); balconyControls.update(dt); },
-    isOpen: () => frontControls.isOpen() || rearControls.isOpen() || balconyControls.isOpen(),
-    isBusy: () => frontControls.isBusy() || rearControls.isBusy() || balconyControls.isBusy(),
+    settle: () => { frontControls.settle(); rearControls.settle(); balconyControls.settle(); garageControls.settle(); },
+    update: (dt) => { frontControls.update(dt); rearControls.update(dt); balconyControls.update(dt); garageControls.update(dt); },
+    isOpen: () => frontControls.isOpen() || rearControls.isOpen() || balconyControls.isOpen() || garageControls.isOpen(),
+    isBusy: () => frontControls.isBusy() || rearControls.isBusy() || balconyControls.isBusy() || garageControls.isBusy(),
     getState: () => frontControls.getState(),
     panels: {
       doorLeft,
@@ -1374,6 +1604,7 @@ export function createInteractiveDoors(scene, world, RAPIER, doorColliders, inte
       rearDoorRight,
       balconyDoorLeft,
       balconyDoorRight,
+      garagePanels,
     },
     hingeWorld: frontControls.hingeWorld,
   };
