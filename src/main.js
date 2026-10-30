@@ -444,15 +444,11 @@ async function createScene() {
 
   // Tiered Cartoon Trees outside expanded estate perimeter (x: -38.5 to 44.5)
   const treeCoords = [
-    [-38.5, 9.5, 1.2, 12],
-    [44.5, 9.2, 1.2, 24],
-    [-38.5, -1.0, 1.1, 36],
     [44.5, -1.0, 1.1, 48],
     [-38.5, -9.5, 1.15, 60],
     [44.5, -9.5, 1.15, 72],
     [-38.5, -17.5, 1.05, 84],
     [44.5, -17.5, 1.05, 96],
-    [44.5, 16.0, 0.9, 144],
   ];
   for (const [tx, tz, ts, seed] of treeCoords) {
     const tree = createCartoonTree(tx, tz, ts, seed);
