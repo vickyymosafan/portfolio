@@ -105,11 +105,12 @@ export function createDriveway(scene, world, RAPIER, staticBodies) {
   createOutdoorParkingLot(scene, world, RAPIER, staticBodies);
 
   // 3. Landscaping Islands with Ornamental Cypress Trees & Lavender
+  // Balanced setback from curbs (curbs at x = 10.8 and x = 26.2) to prevent any clipping onto roadway
   const islandSpecs = [
-    { x: 9.2, z: 7.5, r: 1.8 },
-    { x: 9.2, z: 18.5, r: 1.8 },
-    { x: 27.2, z: 7.5, r: 1.6 },
-    { x: 27.2, z: 18.5, r: 1.6 },
+    { x: 8.6, z: 7.5, r: 1.4 },
+    { x: 8.6, z: 18.5, r: 1.4 },
+    { x: 28.4, z: 7.5, r: 1.4 },
+    { x: 28.4, z: 18.5, r: 1.4 },
   ];
 
   for (const isl of islandSpecs) {
@@ -145,10 +146,10 @@ export function createDriveway(scene, world, RAPIER, staticBodies) {
     }
   }
 
-  // 4. Victorian Cast-Iron Street Lanterns along Driveway
+  // 4. Victorian Cast-Iron Street Lanterns along Driveway (cleanly positioned on lawn verge)
   const lampPositions = [
-    [10.5, 13.0],
-    [26.5, 13.0],
+    [9.2, 13.0],
+    [27.8, 13.0],
     [18.5, 21.5],
   ];
 
