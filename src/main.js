@@ -408,7 +408,7 @@ async function createScene() {
   riceZone = createRiceFields(scene, world, RAPIER, staticBodies);
   await yieldToMain();
 
-  for (const [bx, bz, brot] of [[-11.5, 18.0, 0.0], [7.8, 9.8, -0.35]]) {
+  for (const [bx, bz, brot] of [[7.8, 9.8, -0.35]]) {
     createGardenBench(scene, bx, 0, bz, brot);
     const benchBody = world.createRigidBody(
       RAPIER.RigidBodyDesc.fixed()
@@ -452,8 +452,6 @@ async function createScene() {
     [44.5, -9.5, 1.15, 72],
     [-38.5, -17.5, 1.05, 84],
     [44.5, -17.5, 1.05, 96],
-    [-14.2, 17.5, 0.98, 108],
-    [-38.5, 16.0, 0.9, 132],
     [44.5, 16.0, 0.9, 144],
   ];
   for (const [tx, tz, ts, seed] of treeCoords) {
@@ -472,9 +470,7 @@ async function createScene() {
     [14.2, 4.8, 0.85, 44],
     [-34.5, 4.8, 0.95, 55],
     [40.5, 4.8, 0.95, 66],
-    [-7.5, 17.0, 0.88, 77],
     [5.2, 16.5, 0.80, 88],
-    [-14.5, 14.2, 0.9, 99],
     [9.8, 11.8, 0.75, 110],
     [-35.0, -6.5, 0.95, 121],
     [41.0, -6.5, 0.95, 132],
