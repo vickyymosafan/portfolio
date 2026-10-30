@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { materials, palette } from './materials.js';
 import { addBox, addCylinder, addSphere, BatchCollector } from './geometry.js';
+import { createOutdoorParkingLot } from './vehicles.js';
 
 /**
  * Creates Zone B & C: Paved Driveway, Parking Court & Fountain Roundabout
@@ -100,12 +101,8 @@ export function createDriveway(scene, world, RAPIER, staticBodies) {
   batch.addBox([10.8, 0.08, 13.5], [0.35, 0.16, 17.0], materials.stoneWarm);
   batch.addBox([26.2, 0.08, 13.5], [0.35, 0.16, 17.0], materials.stoneWarm);
 
-  // Painted parking bay guide lines for visitors (x: [14.0, 25.0], z: [8.0, 15.0])
-  const stallZs = [8.5, 11.5, 14.5];
-  for (const sz of stallZs) {
-    batch.addBox([15.5, 0.045, sz], [5.2, 0.008, 0.12], materials.trim);
-  }
-  batch.addBox([13.0, 0.045, 11.5], [0.12, 0.008, 6.2], materials.trim);
+  // Luxury Outdoor Resident & Guest Parking Court: 2 Sports Cars + 2 Motorcycles
+  createOutdoorParkingLot(scene, world, RAPIER, staticBodies);
 
   // 3. Landscaping Islands with Ornamental Cypress Trees & Lavender
   const islandSpecs = [

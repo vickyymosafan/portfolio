@@ -259,6 +259,29 @@ export const materials = {
   m4InteriorLeather: std(0x1a1c1e, 0.72, { roughness: 0.78 }),
   m4BucketAccent: std(0xf59e0b, 0.48),
 
+  // Additional Luxury Automotive & Motorcycle Finishes (Outdoor Parked Vehicles)
+  m4PaintRed: std(0xce1818, 0.15, { metalness: 0.30 }),        // Rosso Corsa / Toronto Red Metallic
+  m4PaintGreen: std(0x135e43, 0.16, { metalness: 0.35 }),      // Isle of Man Green Metallic
+  m4PaintBlue: std(0x1a5bb8, 0.15, { metalness: 0.32 }),       // Portimao Blue Metallic
+  m4PlateRed: new THREE.MeshStandardMaterial({
+    map: createGermanPlateTexture('L 1998 VK'),
+    roughness: 0.28,
+    metalness: 0.08,
+  }),
+  m4PlateGreen: new THREE.MeshStandardMaterial({
+    map: createGermanPlateTexture('L 2026 VM'),
+    roughness: 0.28,
+    metalness: 0.08,
+  }),
+  bikePaintTricolor: std(0xf4f4f5, 0.18, { metalness: 0.20 }),  // SuperSport Alpine White & M Tricolor
+  bikePaintCyan: std(0x06b6d4, 0.18, { metalness: 0.28 }),      // HyperNaked Cyber Neon Cyan
+  bikeTrellisOrange: std(0xf97316, 0.25, { metalness: 0.15 }),  // Trellis Frame Sport Orange
+  bikeExhaustTitanium: std(0x9ca3af, 0.18, { metalness: 0.88 }), // Brushed Titanium Exhaust
+  parkingLineWhite: std(0xffffff, 0.35, { metalness: 0.05 }),   // Thermoplastic Road Marking
+  parkingLineYellow: std(0xfacc15, 0.35, { metalness: 0.05 }),  // Safety Motorcycle Bay Marking
+  parkingCurbRubber: std(0x1f2421, 0.70, { metalness: 0.05 }),  // Wheel Stop Rubber Curb
+  parkingPlateSteel: std(0x94a3b8, 0.25, { metalness: 0.90 }),  // Diamond Plate Kickstand Pad
+
   // Leisure & Water (Zero multi-pass transmission overhead for 60 FPS)
   poolWater: new THREE.MeshStandardMaterial({
     color: 0x48b8c8,
