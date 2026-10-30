@@ -407,7 +407,7 @@ async function createScene() {
   riceZone = createRiceFields(scene, world, RAPIER, staticBodies);
   await yieldToMain();
 
-  for (const [bx, bz, brot] of [[-11.5, 18.0, 0.0], [9.2, 9.8, -0.35]]) {
+  for (const [bx, bz, brot] of [[-11.5, 18.0, 0.0], [7.8, 9.8, -0.35]]) {
     createGardenBench(scene, bx, 0, bz, brot);
     const benchBody = world.createRigidBody(
       RAPIER.RigidBodyDesc.fixed()
@@ -428,7 +428,7 @@ async function createScene() {
   // Rich flower beds framing the expanded estate grounds
   const flowerBedSpecs = [
     [-9.5, 5.2, 7.5, 1.4, 21],
-    [9.5, 5.2, 7.5, 1.4, 47],
+    [12.0, 4.8, 4.8, 0.9, 47],
     [-17.5, -3.5, 1.4, 7.5, 63],
     [27.0, -3.5, 1.4, 7.5, 85],
     [-17.5, -12.5, 1.4, 7.5, 101],
@@ -468,13 +468,13 @@ async function createScene() {
     [-5.2, 5.2, 1.15, 11],
     [5.2, 5.2, 1.15, 22],
     [-13.5, 5.0, 1.05, 33],
-    [9.8, 5.0, 0.95, 44],
+    [14.2, 4.8, 0.85, 44],
     [-34.5, 4.8, 0.95, 55],
     [40.5, 4.8, 0.95, 66],
     [-7.5, 17.0, 0.88, 77],
-    [7.5, 17.0, 0.88, 88],
+    [5.2, 16.5, 0.80, 88],
     [-14.5, 14.2, 0.9, 99],
-    [9.8, 14.2, 0.85, 110],
+    [9.8, 11.8, 0.75, 110],
     [-35.0, -6.5, 0.95, 121],
     [41.0, -6.5, 0.95, 132],
     [-35.0, -15.5, 0.9, 143],
