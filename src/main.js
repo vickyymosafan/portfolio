@@ -189,10 +189,7 @@ const inputManager = new InputManager({
       toggleOverviewMode();
     }
   },
-  onSit: () => {
-    if (!renderer || !started) return;
-    dispatchInteraction('KeyC');
-  },
+  onSit: null,
   onInteract: () => {
     if (!renderer) { startExperience(); return; }
     if (!started) startExperience();
@@ -1249,17 +1246,6 @@ function findInteraction() {
 
   // 1. If currently interacting, display active interaction lifecycle status
   if (worldInteractions && worldInteractions.isActive()) {
-    if (worldInteractions.mode === InteractionMode.SITTING) {
-      if (worldInteractions.lifecycleState === InteractionState.APPROACHING) {
-        setPromptUI(true, 'C', 'Sitting down...', '...');
-      } else if (worldInteractions.lifecycleState === InteractionState.RESTORING) {
-        setPromptUI(true, 'C', 'Standing up...', '...');
-      } else {
-        setPromptUI(true, 'C', 'Stand up', 'Stand');
-      }
-      return;
-    }
-
     if (worldInteractions.mode === InteractionMode.DOOR) {
       const doorState = doorControls?.getState?.();
       setPromptUI(true, 'E', doorState === 'closing' ? 'Closing the garden door...' : 'Opening the garden door...', '...');
@@ -1267,9 +1253,7 @@ function findInteraction() {
     }
   }
 
-  // 2. We are in normal locomotion: evaluate available targets
-  const nearbySeat = worldInteractions ? worldInteractions.getNearbySeat(physX, physZ, physY) : null;
-
+  // 2. We are in normal locomotion: evaluate available targets (Door & Room Exhibits only, sitting disabled)
   // Door interaction candidate (E) - front entrance, rear terrace, or second floor balcony glass doors
   let doorCandidate = null;
   let bestDoorDist = Infinity;
@@ -1298,13 +1282,9 @@ function findInteraction() {
     }
   }
 
-  // Distance to seat
-  const seatDist = nearbySeat ? Math.hypot(physX - nearbySeat.pos[0], physZ - nearbySeat.pos[2]) : Infinity;
-
   // Clear single-target prompt priority:
   // 1. Door (E) takes top priority when in doorway clearance or when outside facing the entrance
-  // 2. Bench/Seat (C) takes priority over room beacons if closer or in garden/lounge
-  // 3. Room Exhibit (E) - strictly requires character to be inside the room
+  // 2. Room Exhibit (E) - strictly requires character to be inside the room
   let chosen = null;
   if (doorCandidate && (physZ > 3.8 || !bestRoom || doorCandidate.dist < 1.6)) {
     const pt = doorCandidate.point;
@@ -1316,14 +1296,6 @@ function findInteraction() {
       target: pt,
     };
     currentInteraction = pt;
-  } else if (nearbySeat && (seatDist <= bestRoomDist)) {
-    chosen = {
-      key: 'C',
-      label: `Sit down (${nearbySeat.label})`,
-      touch: 'Sit',
-      target: nearbySeat,
-    };
-    currentInteraction = null;
   } else if (bestRoom) {
     chosen = {
       key: 'E',
@@ -1342,14 +1314,6 @@ function findInteraction() {
       target: pt,
     };
     currentInteraction = pt;
-  } else if (nearbySeat) {
-    chosen = {
-      key: 'C',
-      label: `Sit down (${nearbySeat.label})`,
-      touch: 'Sit',
-      target: nearbySeat,
-    };
-    currentInteraction = null;
   } else {
     currentInteraction = null;
   }
@@ -1382,17 +1346,7 @@ function dispatchInteraction(code) {
 
   let result = false;
   if (code === 'KeyC') {
-    // KeyC: ONLY seat sitting & standing. NEVER triggers door or exhibits!
-    if (w.mode === InteractionMode.SITTING) {
-      result = w.standUp();
-    } else if (w.mode !== InteractionMode.NONE) {
-      return reject('other_interaction_active');
-    } else {
-      const seat = w.getNearbySeat(physX, physZ, physY);
-      if (!seat) return reject('no_seat_in_range');
-      if (import.meta.env.DEV) console.log('[Interaction] KeyC -> sit on seat:', seat.id);
-      result = w.toggleSit(physX, physZ, { cameraDistance, yaw, pitch }, physY);
-    }
+    return reject('sit_disabled');
   } else if (code === 'KeyE') {
     // KeyE: ONLY doors and room exhibits. NEVER triggers sitting!
     if (w.mode !== InteractionMode.NONE) return reject('other_interaction_active');

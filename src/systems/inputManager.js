@@ -77,10 +77,13 @@ export class InputManager {
       return;
     }
 
+    // KeyC (sit down) disabled per user request
+    /*
     if (event.code === 'KeyC' && !event.repeat) {
       if (this.callbacks.onSit) this.callbacks.onSit();
       return;
     }
+    */
 
     if (event.code === 'KeyE' && !event.repeat) {
       if (this.callbacks.onInteract) this.callbacks.onInteract();

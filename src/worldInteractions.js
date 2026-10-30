@@ -147,129 +147,17 @@ export class WorldInteractionManager {
   }
 
   /**
-   * Find nearest interactable seat within range
+   * Find nearest interactable seat within range (temporarily disabled)
    */
   getNearbySeat(px, pz, py = undefined) {
-    if (!isFiniteNumber(px) || !isFiniteNumber(pz)) return null;
-    let nearest = null;
-    let nearestDist = Infinity;
-    for (const seat of this.seats) {
-      if (py !== undefined && isFiniteNumber(py) && Math.abs(py - seat.pos[1]) > 2.4) {
-        continue;
-      }
-      const dx = px - seat.pos[0];
-      const dz = pz - seat.pos[2];
-      const dist = Math.hypot(dx, dz);
-      if (dist < seat.radius && dist < nearestDist) {
-        nearest = seat;
-        nearestDist = dist;
-      }
-    }
-    return nearest;
+    return null; // Sit down feature disabled per user request
   }
 
   /**
-   * State Machine Lifecycle: Sitting Interaction
-   * IDLE -> VALIDATING -> APPROACHING -> PLAYING_CINEMATIC (Seated Idle) -> RESTORING -> IDLE
+   * State Machine Lifecycle: Sitting Interaction (temporarily disabled)
    */
   toggleSit(px, pz, playerState = {}, py = undefined) {
-    // 1. If currently seated, stand up
-    if (this.mode === InteractionMode.SITTING) {
-      if (this.lifecycleState === InteractionState.PLAYING_CINEMATIC) {
-        return this.standUp();
-      }
-      // If currently approaching or restoring, reject spam input
-      return false;
-    }
-
-    // 2. Reject if any other interaction is running
-    if (this.lifecycleState !== InteractionState.IDLE || this.mode !== InteractionMode.NONE) {
-      return false;
-    }
-
-    // 3. VALIDATING
-    this.lifecycleState = InteractionState.VALIDATING;
-    const seat = this.getNearbySeat(px, pz, py);
-    if (!seat) {
-      this.lifecycleState = InteractionState.IDLE;
-      return false;
-    }
-
-    const char = this.characterRig?.character;
-    if (!char) {
-      this.lifecycleState = InteractionState.IDLE;
-      return false;
-    }
-
-    // Capture initial gameplay camera parameters
-    this.savedCameraDistance = isFiniteNumber(playerState.cameraDistance) ? playerState.cameraDistance : 4.4;
-    this.savedYaw = isFiniteNumber(playerState.yaw) ? playerState.yaw : 0;
-    this.savedPitch = isFiniteNumber(playerState.pitch) ? playerState.pitch : 0.25;
-
-    this.activeSeat = seat;
-    this.mode = InteractionMode.SITTING;
-    // Procedural pose (the rig is mesh-based; there is no AnimationClip). It blends in while the
-    // root moves onto the seat so the character never pops into the seated pose.
-    this.characterRig?.setActionState(seat.isDesk ? 'WORKING_DESK' : 'SITTING');
-
-    // 4. APPROACHING PHASE
-    this.lifecycleState = InteractionState.APPROACHING;
-    this.stateClock = 0;
-    this.stateDuration = 0.38; // Smooth, intentional character approach
-    this.watchdogClock = 0;
-
-    // Start character transform
-    this._charStartPos.copy(char.position);
-    this._charStartRot = char.rotation.y;
-
-    // Target seat position and rotation
-    this._charTargetPos.set(seat.pos[0], seat.pos[1] + SIT_ROOT_OFFSET, seat.pos[2]);
-    this._charTargetRot = seat.charFacing;
-
-    // Start camera framing: start look-at ALWAYS derived from character head, never getWorldDirection dirt
-    if (this.camera) {
-      this._camStartPos.copy(this.camera.position);
-      this._camStartLook.set(char.position.x, char.position.y + 1.25, char.position.z);
-      this._currentLook.copy(this._camStartLook);
-
-      // Camera sits at 3/4 hero composition facing the seated subject
-      if (seat.cameraShot) {
-        this._camTargetPos.set(seat.cameraShot.pos[0], seat.cameraShot.pos[1], seat.cameraShot.pos[2]);
-        this._camTargetLook.set(seat.cameraShot.look[0], seat.cameraShot.look[1], seat.cameraShot.look[2]);
-      } else {
-        const camAngle = seat.charFacing + 0.60;
-        const camDist = 3.6;
-        let targetCamZ = seat.pos[2] + Math.cos(camAngle) * camDist;
-        if (seat.id === 'sofa_living') {
-          targetCamZ = Math.min(3.4, targetCamZ);
-        }
-        this._camTargetPos.set(
-          seat.pos[0] + Math.sin(camAngle) * camDist,
-          seat.pos[1] + 1.52,
-          targetCamZ
-        );
-        this._camTargetLook.set(seat.pos[0], seat.pos[1] + 1.15, seat.pos[2]);
-      }
-
-      // Clamp to designated interior room boundaries if defined
-      if (seat.roomBounds) {
-        const b = seat.roomBounds;
-        this._camTargetPos.x = THREE.MathUtils.clamp(this._camTargetPos.x, b.minX, b.maxX);
-        this._camTargetPos.z = THREE.MathUtils.clamp(this._camTargetPos.z, b.minZ, b.maxZ);
-      }
-
-      // Resolve physical camera obstruction using raycasting against building walls and obstacles
-      this.resolveCameraObstruction(this._camTargetPos, this._camTargetLook);
-    }
-
-    this.logDebug('SIT_APPROACHING', {
-      seatId: seat.id,
-      from: [char.position.x, char.position.z],
-      to: [seat.pos[0], seat.pos[2]],
-    });
-
-    if (this.onStateChange) this.onStateChange(this.lifecycleState);
-    return true;
+    return false; // Sit down feature disabled per user request
   }
 
   getStandPosition(seat) {
