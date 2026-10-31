@@ -2515,7 +2515,12 @@ async function init() {
     }
     const trafficLightParam = urlParams.get('trafficLight');
     if (trafficLightParam && window.__TRAFFIC_SYSTEM__) {
-      window.__TRAFFIC_SYSTEM__.setLightState(trafficLightParam.toUpperCase(), true);
+      const p = trafficLightParam.toUpperCase();
+      if (p === 'RED' || p === 'ALL_RED') window.__TRAFFIC_SYSTEM__.setPhase('ALL_RED_PED', true);
+      else if (p === 'WB_GREEN' || p === 'WEST') window.__TRAFFIC_SYSTEM__.setPhase('WB_GREEN', true);
+      else if (p === 'EB_GREEN' || p === 'EAST') window.__TRAFFIC_SYSTEM__.setPhase('EB_GREEN', true);
+      else if (p === 'YELLOW' || p === 'WB_YELLOW') window.__TRAFFIC_SYSTEM__.setPhase('WB_YELLOW', true);
+      else if (window.__TRAFFIC_SYSTEM__.setPhase) window.__TRAFFIC_SYSTEM__.setPhase(p, true);
     }
     renderer.render(scene, camera);
     renderer.render(scene, camera);
