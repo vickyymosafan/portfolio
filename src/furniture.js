@@ -559,15 +559,6 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
       addCylinder(parent, [x - 4.35, ty + 0.17, z + 0.2], 0.48, 0.48, 0.03, materials.brass, { segments: 18 });
     }
     addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.35, y + 0.7, z + 0.2], [0.5, 0.7, 0.5]);
-
-    // East Partition Wall (x + 5.05, z - 1.5): System Architecture Blueprint Whiteboard
-    const wb = new THREE.Group();
-    wb.position.set(x + 5.05, y + 2.6, z - 1.5);
-    wb.rotation.y = -Math.PI * 0.5;
-    parent.add(wb);
-    addBox(wb, [0, 0, 0], [4.0, 2.0, 0.06], materials.trim);
-    addBox(wb, [0, 0, 0.04], [3.8, 1.8, 0.02], materials.whiteboardDiagram, { shadow: false });
-    addBox(wb, [0, -0.95, 0.08], [2.8, 0.04, 0.12], materials.metalDark);
   } else if (id === 'garage') {
     // =========================================================================
     // 05 · LICENSES & CERTIFICATIONS — EXECUTIVE CREDENTIAL VAULT & BMW M4 SHOWROOM
