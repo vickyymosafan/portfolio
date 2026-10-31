@@ -152,7 +152,20 @@ let cameraDistance = 7.2;
 let cameraDistanceGoal = 7.2;
 let cameraSafeDistance = 7.2;
 let panelReturnFocus = null;
-let mobile = matchMedia('(pointer: coarse)').matches || window.innerWidth <= 860;
+
+function detectMobileDevice() {
+  const hasTouch = (typeof window !== 'undefined') && (
+    'ontouchstart' in window ||
+    (navigator?.maxTouchPoints > 0) ||
+    window.matchMedia?.('(pointer: coarse)').matches
+  );
+  const isMobileUA = (typeof navigator !== 'undefined') &&
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator?.userAgent || '');
+  const isNarrow = (typeof window !== 'undefined') && window.innerWidth <= 860;
+  return Boolean(hasTouch || isMobileUA || isNarrow);
+}
+
+let mobile = detectMobileDevice();
 let elapsed = 0;
 let accumulator = 0;
 let physX = 0;
@@ -167,7 +180,7 @@ const inputManager = new InputManager({
       return;
     }
     if (worldInteractions && worldInteractions.cancelAny()) {
-      findInteraction();
+      findInteraction(true);
       return;
     }
     if (overviewMode) {
@@ -295,16 +308,16 @@ const qualityPresets = {
     fogFar: 185,
   },
   mobile: {
-    pixelRatio: 0.9,
+    pixelRatio: 0.85,
     shadows: false,
     shadowSize: 0,
     shadowType: THREE.BasicShadowMap,
     shadowUpdateInterval: 0,
     npcUpdateInterval: 3,
     physicsSubsteps: 1,
-    cullDistance: 165,
-    fogNear: 68,
-    fogFar: 168,
+    cullDistance: 155,
+    fogNear: 65,
+    fogFar: 158,
   },
 };
 let activeQualityKey = mobile ? 'mobile' : 'medium';
@@ -315,12 +328,28 @@ function createRenderer() {
   if (!('WebGL2RenderingContext' in window)) {
     throw new Error('This browser does not support WebGL2.');
   }
-  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
+  renderer = new THREE.WebGLRenderer({
+    antialias: !mobile,
+    precision: mobile ? 'mediump' : 'highp',
+    powerPreference: 'high-performance',
+    preserveDrawingBuffer: true,
+  });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.08;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.0));
-  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  // Three.js Official Responsive Manual: Cap pixel count to prevent mobile GPU fillrate choke
+  const clientWidth = window.innerWidth;
+  const clientHeight = window.innerHeight;
+  let dpr = Math.min(window.devicePixelRatio || 1, mobile ? 0.85 : 1.0);
+  const maxPixelBudget = mobile ? 921600 : 3840 * 2160;
+  const rawPixelCount = (clientWidth * dpr) * (clientHeight * dpr);
+  if (rawPixelCount > maxPixelBudget) {
+    const scale = Math.sqrt(maxPixelBudget / rawPixelCount);
+    dpr = Math.max(0.55, dpr * scale);
+  }
+  renderer.setPixelRatio(dpr);
+  renderer.setSize(clientWidth, clientHeight);
   renderer.shadowMap.enabled = !mobile;
   renderer.shadowMap.autoUpdate = false;
   renderer.shadowMap.type = THREE.BasicShadowMap;
@@ -329,7 +358,7 @@ function createRenderer() {
   sceneHost.appendChild(renderer.domElement);
 
   const initialAspect = window.innerWidth / window.innerHeight;
-  camera = new THREE.PerspectiveCamera(initialAspect < 1.0 ? 64 : 48, initialAspect, 0.4, 215);
+  camera = new THREE.PerspectiveCamera(initialAspect < 1.0 ? 64 : 48, initialAspect, 0.4, mobile ? 155 : 215);
   cameraController = new CameraController(camera, { cameraBlockers, yaw, pitch, distance: cameraDistance });
   return renderer;
 }
@@ -584,9 +613,20 @@ function applyQuality(sceneRef, nextQuality, autoUpdate = true) {
   activeQualityKey = selected;
   activePreset = preset;
 
-  const dprLimit = Math.min(window.devicePixelRatio || 1, preset.pixelRatio, renderScale);
+  const clientWidth = window.innerWidth;
+  const clientHeight = window.innerHeight;
+  let dprLimit = Math.min(window.devicePixelRatio || 1, preset.pixelRatio, renderScale);
+
+  // Three.js Official Responsive Manual: Cap total pixel count to prevent mobile GPU fillrate choke
+  const maxPixelBudget = mobile ? 921600 : 3840 * 2160;
+  const rawPixelCount = (clientWidth * dprLimit) * (clientHeight * dprLimit);
+  if (rawPixelCount > maxPixelBudget) {
+    const scale = Math.sqrt(maxPixelBudget / rawPixelCount);
+    dprLimit = Math.max(0.55, dprLimit * scale);
+  }
+
   renderer.setPixelRatio(dprLimit);
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(clientWidth, clientHeight);
 
   const shadowsOn = Boolean(preset.shadows) && !mobile;
   renderer.shadowMap.enabled = shadowsOn;
@@ -1238,7 +1278,12 @@ function canInteractWithRoom(roomItem, px, py, pz, doorControls) {
   return false;
 }
 
-function findInteraction() {
+let lastInteractionCheck = 0;
+function findInteraction(force = false) {
+  const now = performance.now();
+  if (!force && mobile && now - lastInteractionCheck < 100) return;
+  lastInteractionCheck = now;
+
   if (cinematicDirector && cinematicDirector.isActive()) {
     setPromptUI(false);
     return;
@@ -1391,7 +1436,7 @@ function dispatchInteraction(code) {
     result = target.action() !== false;
   }
 
-  findInteraction();
+  findInteraction(true);
   return Boolean(result);
 }
 
@@ -1402,7 +1447,7 @@ function setPaused(value) {
   $('pause-button').setAttribute('aria-label', paused ? 'Resume exploration' : 'Pause exploration');
   $('pause-button').classList.toggle('is-visible', paused || panelOpen || settingsOpen);
   if (paused) ui.prompt.classList.remove('is-visible');
-  if (!paused && currentInteraction) findInteraction();
+  if (!paused && currentInteraction) findInteraction(true);
 }
 
 const tourStops = [
@@ -1917,6 +1962,7 @@ function updateCamera(dt, timestamp) {
         tourActive,
         cinematicActive: false,
         interactionActive: false,
+        mobile,
       },
       keys
     );
@@ -2188,7 +2234,7 @@ function updateJoystick(event) {
 }
 
 function onResize() {
-  mobile = matchMedia('(pointer: coarse)').matches || window.innerWidth <= 860;
+  mobile = detectMobileDevice();
   if ($('controls-note')) $('controls-note').hidden = mobile;
   if (!renderer || !camera || !scene) return;
   const aspect = window.innerWidth / window.innerHeight;
@@ -2233,14 +2279,19 @@ function animate(timestamp) {
   accumulator += Math.min(dt, 0.06);
 
   const fixedStep = 1 / 60;
-  const maxSubsteps = activePreset?.physicsSubsteps || 2;
+  const maxSubsteps = mobile ? 1 : (activePreset?.physicsSubsteps || 2);
   let substeps = 0;
   while (accumulator >= fixedStep && substeps < maxSubsteps) {
     updatePhysics(fixedStep);
     accumulator -= fixedStep;
     substeps += 1;
   }
-  if (substeps === maxSubsteps && accumulator > fixedStep) accumulator = fixedStep;
+  // Prevent Physics Spiral of Doom on low-IPC mobile cores
+  if (mobile) {
+    if (accumulator > fixedStep) accumulator = 0;
+  } else if (substeps === maxSubsteps && accumulator > fixedStep) {
+    accumulator = fixedStep;
+  }
 
   updateCharacterRig(characterRig, dt, elapsed, moveAmount, grounded);
   if (doorControls?.update) doorControls.update(dt);
@@ -2264,6 +2315,7 @@ function animate(timestamp) {
   }
 
   if (
+    !mobile &&
     renderer.shadowMap.enabled &&
     activePreset?.shadowUpdateInterval > 0 &&
     frameCounter % activePreset.shadowUpdateInterval === 0 &&
@@ -2335,7 +2387,7 @@ async function init() {
         keys.clear();
         currentVelX = 0;
         currentVelZ = 0;
-        findInteraction();
+        findInteraction(true);
       }
     };
     window.__cinematic = cinematicDirector;
@@ -2373,7 +2425,7 @@ async function init() {
         }
       },
       onStateChange: () => {
-        findInteraction();
+        findInteraction(true);
       },
     });
     window.__worldInteractions = worldInteractions;

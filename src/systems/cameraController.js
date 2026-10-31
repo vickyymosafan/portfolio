@@ -186,8 +186,9 @@ export class CameraController {
     const desiredDistance = Math.hypot(dx, dy, dz);
     this.dampVector.set(dx, dy, dz).normalize();
 
-    // Collision raycasting throttled to ~30Hz to prevent main-thread bottleneck
-    if (timestamp - this.lastCollisionCheck > 32) {
+    // Collision raycasting throttled (15Hz on mobile, 30Hz on desktop) to prevent main-thread CPU bottleneck
+    const collisionThrottle = activeStates?.mobile ? 66 : 32;
+    if (timestamp - this.lastCollisionCheck > collisionThrottle) {
       this.lastCollisionCheck = timestamp;
       this.cameraOrigin.copy(this.cameraTarget);
       this.raycaster.set(this.cameraTarget, this.dampVector);
