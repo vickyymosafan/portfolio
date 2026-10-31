@@ -62,57 +62,67 @@ export function createCharacter(scene) {
   const sneakerMat = devMat(0xf8fafc, 0.55); // Crisp clean white leather
   const sneakerDarkMat = devMat(0x1e293b, 0.6); // Obsidian leather panels
   const sneakerAccentMat = devMat(0x10b981, 0.45); // Emerald accent detail
+  const nailMat = devMat(0xffece3, 0.40); // Subtle cartoon fingernail sheen
 
   // 1. Sleek, natural fit torso (modern tech-wear streetwear — NOT bulky, NOT kekar)
-  // Base lower waist & abdomen
-  const bodyMesh = addSphere(torsoGroup, [0, 0.06, 0], [0.24, 0.22, 0.18], teeMat, { shadow: true });
-  // Upper torso in sleek matte obsidian jacket
-  addBox(torsoGroup, [0, 0.20, 0], [0.46, 0.32, 0.26], jacketMat);
-  // Soft rounded jacket side contours
-  addCylinder(torsoGroup, [-0.21, 0.20, 0], 0.12, 0.12, 0.32, jacketMat, { segments: 12 });
-  addCylinder(torsoGroup, [0.21, 0.20, 0], 0.12, 0.12, 0.32, jacketMat, { segments: 12 });
-  // Inner tee center reveal (crisp streetwear contrast)
-  addBox(torsoGroup, [0, 0.20, 0.08], [0.18, 0.30, 0.12], teeMat);
-  // Open jacket lapels
-  addBox(torsoGroup, [-0.10, 0.20, 0.135], [0.032, 0.32, 0.025], jacketMat);
-  addBox(torsoGroup, [0.10, 0.20, 0.135], [0.032, 0.32, 0.025], jacketMat);
-  // Minimalist terminal code prompt symbol "<_" on inner tee
-  addBox(torsoGroup, [-0.03, 0.24, 0.142], [0.035, 0.008, 0.010], devMat(0x0f172a, 0.7), { shadow: false });
-  addBox(torsoGroup, [0.02, 0.22, 0.142], [0.025, 0.006, 0.010], teeTrimMat, { shadow: false });
-  // Left chest minimalist tech badge with tiny emerald indicator
-  addBox(torsoGroup, [0.14, 0.24, 0.138], [0.06, 0.045, 0.02], jacketMat);
-  addSphere(torsoGroup, [0.155, 0.24, 0.150], [0.008, 0.008, 0.005], teeTrimMat, { shadow: false });
+  // Main jacket torso body (lean, tailored developer fit)
+  const bodyMesh = addBox(torsoGroup, [0, 0.17, 0], [0.36, 0.34, 0.22], jacketMat, { shadow: true });
+  // Natural rounded jacket side contours
+  addCylinder(torsoGroup, [-0.155, 0.17, 0], 0.08, 0.08, 0.34, jacketMat, { segments: 14 });
+  addCylinder(torsoGroup, [0.155, 0.17, 0], 0.08, 0.08, 0.34, jacketMat, { segments: 14 });
+  // Lower jacket ribbed hem
+  addBox(torsoGroup, [0, 0.0, 0], [0.35, 0.04, 0.21], devMat(0x141820, 0.85));
 
-  // Jacket collar & well-proportioned athletic neck
-  addCylinder(torsoGroup, [0, 0.35, 0], 0.13, 0.15, 0.06, jacketMat, { segments: 16 });
-  addCylinder(torsoGroup, [0, 0.44, 0], 0.086, 0.105, 0.13, materials.skin, { segments: 14 });
+  // Inner streetwear tee (clean flat panel, cleanly tucked, sharp contrast!)
+  addBox(torsoGroup, [0, 0.18, 0.08], [0.16, 0.28, 0.065], teeMat);
+  addCylinder(torsoGroup, [0, 0.33, 0.035], 0.080, 0.084, 0.024, teeMat, { segments: 14 });
+
+  // Symmetrical open jacket lapels framing inner tee
+  addBox(torsoGroup, [-0.085, 0.18, 0.115], [0.030, 0.32, 0.018], jacketMat);
+  addBox(torsoGroup, [0.085, 0.18, 0.115], [0.030, 0.32, 0.018], jacketMat);
+
+  // Minimalist terminal prompt "< / >" on inner tee
+  addBox(torsoGroup, [-0.026, 0.22, 0.120], [0.020, 0.005, 0.006], devMat(0x0f172a, 0.7), { shadow: false });
+  addBox(torsoGroup, [0, 0.22, 0.120], [0.005, 0.018, 0.006], teeTrimMat, { shadow: false });
+  addBox(torsoGroup, [0.026, 0.22, 0.120], [0.020, 0.005, 0.006], devMat(0x0f172a, 0.7), { shadow: false });
+
+  // Left chest tech vertical zip pocket
+  addBox(torsoGroup, [0.12, 0.21, 0.115], [0.005, 0.036, 0.005], devMat(0x475569, 0.3, { metalness: 0.7 }), { shadow: false });
+  addSphere(torsoGroup, [0.128, 0.225, 0.116], [0.005, 0.005, 0.003], teeTrimMat, { shadow: false });
+
+  // Standup jacket collar & well-proportioned athletic neck
+  addCylinder(torsoGroup, [0, 0.34, 0], 0.105, 0.125, 0.05, jacketMat, { segments: 16 });
+  addCylinder(torsoGroup, [0, 0.44, 0], 0.086, 0.100, 0.14, materials.skin, { segments: 14 });
 
   // Tactical belt with gunmetal buckle
-  addBox(torsoGroup, [0, -0.06, 0], [0.44, 0.06, 0.25], beltMat);
-  addBox(torsoGroup, [0, -0.06, 0.13], [0.06, 0.05, 0.02], watchMat, { shadow: false });
+  addBox(torsoGroup, [0, -0.045, 0], [0.34, 0.05, 0.20], beltMat);
+  addBox(torsoGroup, [0, -0.045, 0.105], [0.048, 0.04, 0.015], watchMat, { shadow: false });
 
   // Sleek over-ear headphones resting comfortably around collar (AirPods Max style)
-  const phones = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.018, 8, 20, Math.PI * 1.25), phoneMat);
+  const phones = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.016, 8, 20, Math.PI * 1.25), phoneMat);
   phones.position.set(0, 0.39, 0.02);
   phones.rotation.set(Math.PI * 0.5 + 0.30, 0, Math.PI * 0.875);
   torsoGroup.add(phones);
   for (const side of [-1, 1]) {
-    addCylinder(torsoGroup, [side * 0.14, 0.39, 0.06], 0.055, 0.055, 0.038, phoneMat, {
+    addCylinder(torsoGroup, [side * 0.13, 0.39, 0.05], 0.050, 0.050, 0.035, phoneMat, {
       rotation: [0.35, 0, Math.PI * 0.5], segments: 16,
     });
-    addCylinder(torsoGroup, [side * 0.162, 0.39, 0.06], 0.035, 0.035, 0.008, phoneAccentMat, {
+    addCylinder(torsoGroup, [side * 0.150, 0.39, 0.05], 0.032, 0.032, 0.008, phoneAccentMat, {
       rotation: [0.35, 0, Math.PI * 0.5], segments: 16, shadow: false,
     });
   }
 
-  // Minimalist waterproof tech backpack with slim ergonomic shoulder straps
-  addBox(torsoGroup, [0, 0.16, -0.20], [0.38, 0.44, 0.12], packMat);
-  addBox(torsoGroup, [0, 0.02, -0.27], [0.28, 0.20, 0.035], packMat);
-  addBox(torsoGroup, [0, 0.35, -0.22], [0.30, 0.022, 0.05], teeTrimMat, { shadow: false });
+  // Minimalist ergonomic tech backpack (sleek contoured silhouette)
+  addBox(torsoGroup, [0, 0.17, -0.14], [0.26, 0.32, 0.08], packMat);
+  addCylinder(torsoGroup, [0, 0.31, -0.14], 0.11, 0.11, 0.24, packMat, { rotation: [0, 0, Math.PI * 0.5], segments: 14 });
+  addBox(torsoGroup, [0, 0.06, -0.18], [0.20, 0.14, 0.025], devMat(0x161b22, 0.8));
+  addBox(torsoGroup, [0, 0.35, -0.10], [0.08, 0.016, 0.03], devMat(0x141820, 0.9));
+  addBox(torsoGroup, [0, 0.25, -0.18], [0.14, 0.014, 0.010], teeTrimMat, { shadow: false });
   for (const side of [-1, 1]) {
-    // Slim ergonomic straps resting cleanly on shoulders without dominating chest
-    addBox(torsoGroup, [side * 0.16, 0.18, 0.13], [0.026, 0.36, 0.018], packMat, { rotation: [-0.08, 0, side * 0.04] });
-    addBox(torsoGroup, [side * 0.16, 0.34, -0.03], [0.026, 0.018, 0.32], packMat);
+    // Slim ergonomic straps resting naturally over shoulders
+    addBox(torsoGroup, [side * 0.12, 0.31, -0.01], [0.024, 0.016, 0.24], packMat);
+    addBox(torsoGroup, [side * 0.12, 0.22, 0.105], [0.020, 0.16, 0.014], packMat, { rotation: [-0.04, 0, side * 0.02] });
+    addBox(torsoGroup, [side * 0.12, 0.13, 0.112], [0.024, 0.016, 0.008], watchMat, { shadow: false });
   }
 
   mergeSubtreeMeshes(torsoGroup, false, true);
@@ -186,58 +196,100 @@ export function createCharacter(scene) {
   mergeSubtreeMeshes(headGroup, false, true);
   const mergedHeadMesh = headGroup.children.find((c) => c.isMesh) || headMesh;
 
-  // 3. Natural, stylish arms (natural modern stance — NOT bulky, NOT kekar)
+  // 3. Natural, stylish arms & articulate hands (natural modern stance — NOT bulky, NOT kekar)
   const leftArm = new THREE.Group();
-  leftArm.position.set(-0.29, 0.36, 0);
+  leftArm.position.set(-0.225, 0.32, 0);
   const rightArm = new THREE.Group();
-  rightArm.position.set(0.29, 0.36, 0);
+  rightArm.position.set(0.225, 0.32, 0);
   torsoGroup.add(leftArm, rightArm);
 
   const leftForearm = new THREE.Group();
-  leftForearm.position.set(0, -0.26, 0);
+  leftForearm.position.set(0, -0.20, 0);
   const rightForearm = new THREE.Group();
-  rightForearm.position.set(0, -0.26, 0);
+  rightForearm.position.set(0, -0.20, 0);
 
   const leftHand = new THREE.Group();
-  leftHand.position.set(0, -0.24, 0);
+  leftHand.position.set(0, -0.19, 0);
   const rightHand = new THREE.Group();
-  rightHand.position.set(0, -0.24, 0);
+  rightHand.position.set(0, -0.19, 0);
 
   for (const [armGroup, forearmGroup, handGroup, side] of [
     [leftArm, leftForearm, leftHand, -1],
     [rightArm, rightForearm, rightHand, 1],
   ]) {
-    // Sleek jacket sleeve shoulder cap
-    addSphere(armGroup, [side * 0.01, 0.0, 0], [0.10, 0.11, 0.10], jacketMat);
+    // Smooth jacket sleeve shoulder cap (seamlessly integrates with torso without bulky balls)
+    addSphere(armGroup, [0, 0, 0], [0.054, 0.052, 0.054], jacketMat);
     // Jacket upper sleeve
-    addCylinder(armGroup, [0, -0.10, 0], 0.088, 0.082, 0.16, jacketMat);
-    // Rolled cuff detail
-    addCylinder(armGroup, [0, -0.18, 0], 0.085, 0.085, 0.03, devMat(0x12161c, 0.8));
-    // Forearm skin
-    addCylinder(armGroup, [0, -0.22, 0], 0.072, 0.068, 0.06, materials.skin);
+    addCylinder(armGroup, [0, -0.11, 0], 0.054, 0.048, 0.22, jacketMat, { segments: 14 });
+    // Sleeve ribbed cuff detail
+    addCylinder(armGroup, [0, -0.21, 0], 0.051, 0.051, 0.026, devMat(0x141820, 0.85), { segments: 14 });
+    // Vibrant emerald trim line on cuff
+    addCylinder(armGroup, [0, -0.20, 0], 0.052, 0.052, 0.005, teeTrimMat, { segments: 14, shadow: false });
     mergeSubtreeMeshes(armGroup, false, true);
-    armGroup.add(forearmGroup);
 
-    // Natural tapered forearm
-    addCylinder(forearmGroup, [0, -0.11, 0], 0.068, 0.060, 0.20, materials.skin);
+    // Elbow back curve
+    addSphere(forearmGroup, [0, 0, -0.01], [0.042, 0.042, 0.042], materials.skin);
+    // Smooth tapered forearm skin
+    addCylinder(forearmGroup, [0, -0.11, 0], 0.044, 0.036, 0.22, materials.skin, { segments: 14 });
 
     if (side === -1) {
       // Left wrist: Titanium smartwatch (Apple Watch Ultra style) with emerald UI indicator
-      addCylinder(forearmGroup, [0, -0.19, 0], 0.064, 0.064, 0.032, watchMat);
-      addBox(forearmGroup, [0, -0.19, 0.058], [0.046, 0.042, 0.014], phoneMat, { shadow: false });
-      addSphere(forearmGroup, [0, -0.19, 0.066], [0.010, 0.010, 0.005], teeTrimMat, { shadow: false });
+      addCylinder(forearmGroup, [0, -0.19, 0], 0.042, 0.042, 0.024, watchMat, { segments: 14 });
+      addBox(forearmGroup, [0, -0.19, 0.042], [0.030, 0.028, 0.006], devMat(0x0a0e17, 0.2, { metalness: 0.85 }), { shadow: false });
+      addSphere(forearmGroup, [0, -0.19, 0.046], [0.005, 0.005, 0.003], teeTrimMat, { shadow: false });
     } else {
       // Right wrist: Minimalist black tactical cord bracelet
-      addCylinder(forearmGroup, [0, -0.19, 0], 0.062, 0.062, 0.016, braceletMat);
+      addCylinder(forearmGroup, [0, -0.19, 0], 0.038, 0.038, 0.014, braceletMat, { segments: 14 });
+    }
+    mergeSubtreeMeshes(forearmGroup, false, true);
+
+    // Clearly defined stylized cartoon hand (palm, distinct thumb, 4 articulated fingers)
+    // Heel of palm / wrist connection
+    addSphere(handGroup, [0, -0.006, 0], [0.032, 0.022, 0.024], materials.skin);
+    // Sculpted palm body
+    addBox(handGroup, [0, -0.032, 0], [0.060, 0.050, 0.028], materials.skin);
+    addSphere(handGroup, [0, -0.032, 0.006], [0.026, 0.022, 0.010], materials.skin);
+    // Fleshy thenar eminence (base of thumb)
+    addSphere(handGroup, [side * 0.024, -0.024, 0.012], [0.018, 0.020, 0.016], materials.skin);
+
+    // Distinct opposable thumb (angled forward and inward)
+    addCylinder(handGroup, [side * 0.032, -0.032, 0.016], 0.0090, 0.0082, 0.026, materials.skin, {
+      segments: 8,
+      rotation: [0.36, side * 0.38, side * 0.20],
+    });
+    addSphere(handGroup, [side * 0.040, -0.044, 0.024], [0.0090, 0.010, 0.0090], materials.skin);
+    addBox(handGroup, [side * 0.040, -0.044, 0.032], [0.008, 0.006, 0.002], nailMat, {
+      rotation: [0.36, side * 0.38, side * 0.20],
+      shadow: false,
+    });
+
+    // 4 distinct articulated cartoon fingers (index, middle, ring, pinky)
+    const fingers = [
+      { x: side * -0.019, len: 0.040, rad: 0.0085, curl: 0.14 },
+      { x: side * -0.006, len: 0.045, rad: 0.0090, curl: 0.18 },
+      { x: side * 0.006, len: 0.040, rad: 0.0085, curl: 0.20 },
+      { x: side * 0.019, len: 0.032, rad: 0.0075, curl: 0.24 },
+    ];
+    for (const f of fingers) {
+      // Knuckle base
+      addSphere(handGroup, [f.x, -0.055, 0], [f.rad * 1.05, f.rad * 0.85, f.rad * 1.05], materials.skin);
+      // Finger shaft with natural relaxed curl
+      addCylinder(handGroup, [f.x, -0.058 - f.len * 0.45, f.len * 0.09], f.rad, f.rad * 0.88, f.len, materials.skin, {
+        segments: 8,
+        rotation: [f.curl, 0, 0],
+      });
+      // Rounded fingertip
+      addSphere(handGroup, [f.x, -0.058 - f.len, f.len * 0.18], [f.rad * 0.95, f.rad * 1.05, f.rad * 0.95], materials.skin);
+      // Subtle clean fingernail accent on dorsal side
+      addBox(handGroup, [f.x, -0.058 - f.len + 0.002, f.len * 0.18 - f.rad * 0.88], [f.rad * 1.3, 0.006, 0.002], nailMat, {
+        rotation: [f.curl, 0, 0],
+        shadow: false,
+      });
     }
 
+    mergeSubtreeMeshes(handGroup, false, true);
     forearmGroup.add(handGroup);
-    // Relaxed stylized cartoon hand
-    addSphere(handGroup, [0, -0.025, 0], [0.062, 0.072, 0.055], materials.skin);
-    addSphere(handGroup, [side * 0.038, -0.012, 0.028], [0.026, 0.034, 0.026], materials.skin, {
-      rotation: [0.3, side * 0.35, side * 0.25],
-    });
-    mergeSubtreeMeshes(forearmGroup, false, true);
+    armGroup.add(forearmGroup);
   }
 
   // 4. Slim-straight tapered dark denim & designer modern sneakers
@@ -257,22 +309,24 @@ export function createCharacter(scene) {
   const rightShoe = new THREE.Group();
   rightShoe.position.set(0, -0.36, 0.03);
 
-  // Hip connection block
-  addSphere(pelvisGroup, [0, -0.12, 0], [0.24, 0.12, 0.19], denimMat);
+  // Lean, tapered hip & pelvis block (clean silhouette, NO bulky diaper bulge!)
+  addBox(pelvisGroup, [0, -0.09, 0], [0.30, 0.10, 0.18], denimMat);
+  addCylinder(pelvisGroup, [-0.11, -0.09, 0], 0.072, 0.072, 0.10, denimMat, { segments: 12 });
+  addCylinder(pelvisGroup, [0.11, -0.09, 0], 0.072, 0.072, 0.10, denimMat, { segments: 12 });
 
   for (const [thighGroup, calfGroup, shoeGroup] of [
     [leftLeg, leftLowerLeg, leftShoe],
     [rightLeg, rightLowerLeg, rightShoe],
   ]) {
-    // Slim-straight denim thighs
-    addCylinder(thighGroup, [0, -0.18, 0], 0.108, 0.098, 0.36, denimMat);
-    addSphere(thighGroup, [0, -0.06, 0.01], [0.108, 0.12, 0.108], denimMat);
+    // Slim-straight denim thighs (modern tailored fit)
+    addCylinder(thighGroup, [0, -0.18, 0], 0.088, 0.080, 0.36, denimMat);
+    addSphere(thighGroup, [0, -0.06, 0.01], [0.088, 0.10, 0.088], denimMat);
     mergeSubtreeMeshes(thighGroup, false, true);
     thighGroup.add(calfGroup);
 
     // Tapered calves with clean trouser cuff
-    addCylinder(calfGroup, [0, -0.18, 0], 0.095, 0.084, 0.34, denimMat);
-    addCylinder(calfGroup, [0, -0.34, 0], 0.090, 0.090, 0.04, devMat(0x1e2430, 0.8));
+    addCylinder(calfGroup, [0, -0.18, 0], 0.080, 0.072, 0.34, denimMat);
+    addCylinder(calfGroup, [0, -0.34, 0], 0.076, 0.076, 0.04, devMat(0x1e2430, 0.8));
     mergeSubtreeMeshes(calfGroup, false, true);
     calfGroup.add(shoeGroup);
 
@@ -443,8 +497,8 @@ export function updateCharacterRig(rig, dt, elapsed, moveAmount, grounded) {
     rightForearm.rotation.x = THREE.MathUtils.lerp(0.12, 0.45, sprintWeight) + Math.max(0, rightArmForward) * 0.42 * walkWeight;
 
     // Natural resting outward arm flare
-    leftArm.rotation.z = 0.12 + sprintWeight * 0.08;
-    rightArm.rotation.z = -0.12 - sprintWeight * 0.08;
+    leftArm.rotation.z = -0.14 - sprintWeight * 0.08;
+    rightArm.rotation.z = 0.14 + sprintWeight * 0.08;
 
     // --- TORSO ---
     // Forward lean into movement
@@ -479,8 +533,8 @@ export function updateCharacterRig(rig, dt, elapsed, moveAmount, grounded) {
     // Arms spread out for balance
     leftArm.rotation.x = THREE.MathUtils.damp(leftArm.rotation.x, -0.25, 6.0, dt);
     rightArm.rotation.x = THREE.MathUtils.damp(rightArm.rotation.x, -0.25, 6.0, dt);
-    leftArm.rotation.z = THREE.MathUtils.damp(leftArm.rotation.z, 0.38, 6.0, dt);
-    rightArm.rotation.z = THREE.MathUtils.damp(rightArm.rotation.z, -0.38, 6.0, dt);
+    leftArm.rotation.z = THREE.MathUtils.damp(leftArm.rotation.z, -0.38, 6.0, dt);
+    rightArm.rotation.z = THREE.MathUtils.damp(rightArm.rotation.z, 0.38, 6.0, dt);
 
     torsoGroup.rotation.x = THREE.MathUtils.damp(torsoGroup.rotation.x, -0.06, 6.0, dt);
     torsoGroup.position.y = THREE.MathUtils.damp(torsoGroup.position.y, 0, 6.0, dt);
@@ -501,8 +555,8 @@ export function updateCharacterRig(rig, dt, elapsed, moveAmount, grounded) {
     // Arms relax at sides with gentle breathing sway
     leftArm.rotation.x = THREE.MathUtils.damp(leftArm.rotation.x, idleSin * 0.03, 7.0, dt);
     rightArm.rotation.x = THREE.MathUtils.damp(rightArm.rotation.x, -idleSin * 0.03, 7.0, dt);
-    leftArm.rotation.z = THREE.MathUtils.damp(leftArm.rotation.z, 0.11, 7.0, dt);
-    rightArm.rotation.z = THREE.MathUtils.damp(rightArm.rotation.z, -0.11, 7.0, dt);
+    leftArm.rotation.z = THREE.MathUtils.damp(leftArm.rotation.z, -0.15, 7.0, dt);
+    rightArm.rotation.z = THREE.MathUtils.damp(rightArm.rotation.z, 0.15, 7.0, dt);
     leftForearm.rotation.x = THREE.MathUtils.damp(leftForearm.rotation.x, 0.06, 7.0, dt);
     rightForearm.rotation.x = THREE.MathUtils.damp(rightForearm.rotation.x, 0.06, 7.0, dt);
 
@@ -545,8 +599,8 @@ export function updateCharacterRig(rig, dt, elapsed, moveAmount, grounded) {
       // Hands rest gently on thighs, clearing armrests
       leftArm.rotation.x = THREE.MathUtils.lerp(leftArm.rotation.x, -0.24, aw);
       rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, -0.24, aw);
-      leftArm.rotation.z = THREE.MathUtils.lerp(leftArm.rotation.z, 0.12, aw);
-      rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, -0.12, aw);
+      leftArm.rotation.z = THREE.MathUtils.lerp(leftArm.rotation.z, -0.12, aw);
+      rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, 0.12, aw);
       leftForearm.rotation.x = THREE.MathUtils.lerp(leftForearm.rotation.x, 0.65, aw);
       rightForearm.rotation.x = THREE.MathUtils.lerp(rightForearm.rotation.x, 0.65, aw);
       leftForearm.rotation.y = THREE.MathUtils.lerp(leftForearm.rotation.y, -0.16, aw);
@@ -581,8 +635,8 @@ export function updateCharacterRig(rig, dt, elapsed, moveAmount, grounded) {
       rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, -0.72, aw);
       leftForearm.rotation.x = THREE.MathUtils.lerp(leftForearm.rotation.x, 0.58, aw);
       rightForearm.rotation.x = THREE.MathUtils.lerp(rightForearm.rotation.x, 0.58, aw);
-      leftArm.rotation.z = THREE.MathUtils.lerp(leftArm.rotation.z, 0.14, aw);
-      rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, -0.14, aw);
+      leftArm.rotation.z = THREE.MathUtils.lerp(leftArm.rotation.z, -0.14, aw);
+      rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, 0.14, aw);
       leftHand.rotation.x = THREE.MathUtils.lerp(leftHand.rotation.x, Math.sin(elapsed * 12) * 0.12, aw);
       rightHand.rotation.x = THREE.MathUtils.lerp(rightHand.rotation.x, Math.sin(elapsed * 12 + Math.PI) * 0.12, aw);
       torsoGroup.rotation.x = THREE.MathUtils.lerp(torsoGroup.rotation.x, 0.08, aw);
