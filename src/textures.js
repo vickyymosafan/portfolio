@@ -858,7 +858,9 @@ export function createStripedAwningTexture(stripeColor = '#2b5876', creamColor =
 /**
  * Creates luxury entrance monument plaque texture matching Vicky's World Map
  */
-export function createMonumentSignTexture(variant = 'main', width = 1024, height = 512) {
+export function createMonumentSignTexture(variant = 'main', customWidth, customHeight) {
+  const width = customWidth ?? (variant === 'welcome' ? 2048 : (variant === 'main' ? 1536 : 1024));
+  const height = customHeight ?? (variant === 'welcome' ? 432 : 512);
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -932,61 +934,141 @@ export function createMonumentSignTexture(variant = 'main', width = 1024, height
     ctx.letterSpacing = '5px';
     ctx.fillText('DEVELOPER   •   CREATOR   •   EXPLORER', width * 0.5, height * 0.80);
   } else if (variant === 'welcome') {
-    // Luxury welcome plaque
-    const bgGrad = ctx.createLinearGradient(0, 0, width, height);
-    bgGrad.addColorStop(0, '#1c252d');
-    bgGrad.addColorStop(1, '#11171d');
+    // Luxury panoramic welcome plaque (2048 x 432 px, aspect ~4.74:1 matching 7.8 x 1.65m box)
+    const bgGrad = ctx.createLinearGradient(0, 0, width, 0);
+    bgGrad.addColorStop(0, '#0f151c');
+    bgGrad.addColorStop(0.5, '#19222c');
+    bgGrad.addColorStop(1, '#0f151c');
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, width, height);
 
-    // Gold frame
+    // Double Gold Frame
     ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 8;
-    ctx.strokeRect(14, 14, width - 28, height - 28);
-    ctx.lineWidth = 2.5;
-    ctx.strokeRect(24, 24, width - 48, height - 48);
+    ctx.lineWidth = 10;
+    ctx.strokeRect(16, 16, width - 32, height - 32);
+    ctx.strokeStyle = '#f8df88';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(28, 28, width - 56, height - 56);
 
-    // Coral V badge on the left
-    const badgeX = 60;
-    const badgeY = 96;
-    const badgeSize = 148;
-    const bGrad = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeSize, badgeY + badgeSize);
-    bGrad.addColorStop(0, '#f06c53');
-    bGrad.addColorStop(1, '#d8482f');
-    ctx.fillStyle = bGrad;
+    // Decorative corner rosettes / rivets
+    ctx.fillStyle = '#f5d76e';
+    for (const [rx, ry] of [[44, 44], [width - 44, 44], [44, height - 44], [width - 44, height - 44]]) {
+      ctx.beginPath();
+      ctx.arc(rx, ry, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#b89222';
+      ctx.beginPath();
+      ctx.arc(rx, ry, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#f5d76e';
+    }
+
+    // 1. Left Monument Badge: Coral "V" Monogram Shield
+    const b1X = 125;
+    const b1Y = 121;
+    const bSize = 190;
+    const bGrad1 = ctx.createLinearGradient(b1X, b1Y, b1X + bSize, b1Y + bSize);
+    bGrad1.addColorStop(0, '#f06c53');
+    bGrad1.addColorStop(1, '#c83a22');
+    ctx.fillStyle = bGrad1;
     ctx.beginPath();
-    ctx.roundRect(badgeX, badgeY, badgeSize, badgeSize, 34);
+    ctx.roundRect(b1X, b1Y, bSize, bSize, 38);
     ctx.fill();
 
     // Gold rim around V badge
     ctx.strokeStyle = '#f8df88';
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    // Inner subtle glow rim
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 2;
     ctx.stroke();
 
     // White "V" inside badge
     ctx.fillStyle = '#ffffff';
-    ctx.font = '900 94px "Nunito", sans-serif';
+    ctx.font = '900 120px "Nunito", sans-serif';
     ctx.textAlign = 'center';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-    ctx.shadowBlur = 8;
-    ctx.fillText('V', badgeX + badgeSize * 0.5, badgeY + badgeSize * 0.74);
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+    ctx.shadowBlur = 12;
+    ctx.fillText('V', b1X + bSize * 0.5, b1Y + 138);
     ctx.shadowBlur = 0;
 
-    // Text on the right
-    const textLeft = 248;
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#a9b9c4';
-    ctx.font = '600 26px "DM Sans", sans-serif';
-    ctx.fillText('Welcome to', textLeft, 145);
+    // 2. Right Monument Badge: Sapphire Developer Code Shield `</>`
+    const b2X = width - 125 - bSize;
+    const b2Y = 121;
+    const bGrad2 = ctx.createLinearGradient(b2X, b2Y, b2X + bSize, b2Y + bSize);
+    bGrad2.addColorStop(0, '#1e293b');
+    bGrad2.addColorStop(1, '#0f172a');
+    ctx.fillStyle = bGrad2;
+    ctx.beginPath();
+    ctx.roundRect(b2X, b2Y, bSize, bSize, 38);
+    ctx.fill();
 
+    // Gold rim around right badge
+    ctx.strokeStyle = '#f8df88';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    // Inner cyan rim
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Golden `</>` code emblem inside right badge
+    ctx.fillStyle = '#fce280';
+    ctx.font = '900 74px "DM Sans", monospace';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(252, 226, 128, 0.45)';
+    ctx.shadowBlur = 10;
+    ctx.fillText('</>', b2X + bSize * 0.5, b2Y + 122);
+    ctx.shadowBlur = 0;
+
+    // 3. Majestic Centered Typography & Filigree (x = 1024)
+    ctx.textAlign = 'center';
+
+    // Top Eyebrow with gold stars
+    ctx.fillStyle = '#b0c4de';
+    ctx.font = '700 24px "DM Sans", sans-serif';
+    ctx.letterSpacing = '6px';
+    ctx.fillText('★   WELCOME TO   ★', 1024, 115);
+
+    // Main Title: M. VICKY MOSAFAN
+    ctx.shadowColor = 'rgba(245, 215, 110, 0.55)';
+    ctx.shadowBlur = 20;
     ctx.fillStyle = '#ffffff';
-    ctx.font = '900 48px "Nunito", sans-serif';
-    ctx.fillText('VICKY MOSAFAN', textLeft, 202);
+    ctx.font = '900 68px "Nunito", "Montserrat", sans-serif';
+    ctx.letterSpacing = '2px';
+    ctx.fillText('M. VICKY MOSAFAN', 1024, 198);
+    ctx.shadowBlur = 0;
 
-    ctx.fillStyle = '#f5d76e';
-    ctx.font = '800 24px "DM Sans", sans-serif';
+    // Decorative Gold Filigree Divider
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(560, 238);
+    ctx.lineTo(1488, 238);
+    ctx.stroke();
+
+    // Center Gold Diamond
+    ctx.fillStyle = '#fce280';
+    ctx.beginPath();
+    ctx.moveTo(1024, 226);
+    ctx.lineTo(1036, 238);
+    ctx.lineTo(1024, 250);
+    ctx.lineTo(1012, 238);
+    ctx.closePath();
+    ctx.fill();
+
+    // Subtitle: CREATIVE DEVELOPER & ARCHITECT
+    ctx.fillStyle = '#fce280';
+    ctx.font = '800 28px "DM Sans", sans-serif';
+    ctx.letterSpacing = '5px';
+    ctx.fillText('CREATIVE DEVELOPER   •   FULL-STACK & 3D WEB ARCHITECT', 1024, 290);
+
+    // Bottom Tagline
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '600 20px "DM Sans", sans-serif';
     ctx.letterSpacing = '3px';
-    ctx.fillText('CREATIVE DEVELOPER', textLeft, 242);
+    ctx.fillText('ESTATE EXPLORATION   •   PORTFOLIO & LIFE SIMULATION', 1024, 345);
   } else if (variant === 'security') {
     // 24/7 Security Checkpoint Badge
     ctx.fillStyle = '#0f1720';

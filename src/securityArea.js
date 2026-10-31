@@ -213,21 +213,31 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
   // High-resolution illuminated South-facing display plaque
   batch.addBox([monMidX, 1.75, monZ + 0.46], [5.2, 1.75, 0.05], materials.monumentSignMain);
 
-  // Raised curved stone planter bed in front of monument
+  // Raised stone planter bed in front of monument ("VICKY'S WORLD")
   const monPlanterZ = monZ + 1.1;
-  batch.addBox([monMidX, 0.3, monPlanterZ], [6.0, 0.5, 0.78], materials.stoneWarm);
-  batch.addBox([monMidX, 0.54, monPlanterZ], [5.8, 0.06, 0.64], materials.soil);
-  // Colorful flower spheres & lush rounded hedges
+  batch.addBox([monMidX, 0.24, monPlanterZ], [6.0, 0.46, 0.76], materials.stoneWarm);
+  batch.addBox([monMidX, 0.48, monPlanterZ], [6.14, 0.06, 0.84], materials.perimeterCap);
+  batch.addBox([monMidX, 0.49, monPlanterZ], [5.8, 0.04, 0.62], materials.soil);
+
+  // Manicured low boxwood hedge along back of planter
+  batch.addBox([monMidX, 0.56, monPlanterZ - 0.10], [5.4, 0.14, 0.28], materials.foliageDeep);
   for (let fx = -2.4; fx <= 2.4; fx += 0.8) {
-    batch.addSphere([monMidX + fx, 0.68, monPlanterZ], [0.32, 0.24, 0.28], materials.hedgeGreen);
-    const flColor = (Math.abs(fx) < 0.9) ? materials.flowerYellow : materials.flowerCoral;
-    batch.addSphere([monMidX + fx, 0.82, monPlanterZ], [0.16, 0.16, 0.16], flColor);
+    batch.addSphere([monMidX + fx, 0.60, monPlanterZ - 0.08], [0.34, 0.11, 0.22], (Math.abs(fx) % 1.6 < 0.8) ? materials.foliageMid : materials.foliageDeep, { smooth: true });
+  }
+
+  // Botanical flower blossoms & river pebbles in front
+  const monFlowerColors = [materials.flowerCoral, materials.flowerYellow, materials.flowerWhite];
+  for (let fx = -2.2; fx <= 2.2; fx += 0.55) {
+    const fMat = monFlowerColors[Math.abs(Math.round(fx * 3)) % monFlowerColors.length];
+    batch.addSphere([monMidX + fx, 0.52, monPlanterZ + 0.12], [0.07, 0.04, 0.07], fMat, { smooth: true });
+    batch.addSphere([monMidX + fx + 0.14, 0.50, monPlanterZ + 0.15], [0.04, 0.025, 0.04], materials.stoneCream, { smooth: true });
   }
 
   // Twin brass ground floodlights washing up at VICKY'S WORLD sign
   for (const lx of [-1.8, 1.8]) {
-    batch.addBox([monMidX + lx, 0.45, monPlanterZ + 0.28], [0.18, 0.14, 0.18], materials.brass);
-    batch.addSphere([monMidX + lx, 0.52, monPlanterZ + 0.28], [0.08, 0.08, 0.08], materials.glow, { shadow: false });
+    batch.addBox([monMidX + lx, 0.51, monPlanterZ + 0.22], [0.18, 0.08, 0.16], materials.brass);
+    batch.addCylinder([monMidX + lx, 0.56, monPlanterZ + 0.22], 0.05, 0.05, 0.04, materials.brass, { segments: 12, smooth: true, rotation: [-0.4, 0, 0] });
+    batch.addSphere([monMidX + lx, 0.57, monPlanterZ + 0.20], [0.05, 0.03, 0.05], materials.glow, { shadow: false });
   }
 
   // Monument physics collider
@@ -254,13 +264,31 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
   // High-resolution welcome plaque with V icon
   batch.addBox([welMidX, 1.65, monZ + 0.42], [7.8, 1.65, 0.05], materials.monumentSignWelcome);
 
-  // Planter bed in front of welcome wall
+  // Raised stone planter bed in front of welcome wall ("Welcome to VICKY MOSAFAN")
   const welPlanterZ = monZ + 1.0;
-  batch.addBox([welMidX, 0.28, welPlanterZ], [8.8, 0.45, 0.7], materials.stoneWarm);
-  batch.addBox([welMidX, 0.5, welPlanterZ], [8.6, 0.06, 0.56], materials.soil);
-  for (let fx = -3.2; fx <= 3.2; fx += 1.1) {
-    batch.addSphere([welMidX + fx, 0.64, welPlanterZ], [0.34, 0.24, 0.3], materials.hedgeGreen);
-    batch.addSphere([welMidX + fx, 0.78, welPlanterZ], [0.15, 0.15, 0.15], materials.flowerYellow);
+  batch.addBox([welMidX, 0.22, welPlanterZ], [8.8, 0.44, 0.68], materials.stoneWarm);
+  batch.addBox([welMidX, 0.45, welPlanterZ], [8.96, 0.06, 0.76], materials.perimeterCap);
+  batch.addBox([welMidX, 0.46, welPlanterZ], [8.6, 0.04, 0.54], materials.soil);
+
+  // Manicured low boxwood hedge along back of planter (stays comfortably below sign frame y = 0.825)
+  batch.addBox([welMidX, 0.53, welPlanterZ - 0.08], [8.2, 0.12, 0.28], materials.foliageDeep);
+  for (let fx = -3.6; fx <= 3.6; fx += 0.8) {
+    batch.addSphere([welMidX + fx, 0.57, welPlanterZ - 0.06], [0.36, 0.11, 0.22], (Math.abs(fx) % 1.6 < 0.8) ? materials.foliageMid : materials.foliageDeep, { smooth: true });
+  }
+
+  // Botanical flower blossoms & river pebbles in front
+  const welFlowerColors = [materials.flowerCoral, materials.flowerYellow, materials.flowerWhite];
+  for (let fx = -3.5; fx <= 3.5; fx += 0.5) {
+    const fMat = welFlowerColors[Math.abs(Math.round(fx * 3)) % welFlowerColors.length];
+    batch.addSphere([welMidX + fx, 0.49, welPlanterZ + 0.12], [0.07, 0.04, 0.07], fMat, { smooth: true });
+    batch.addSphere([welMidX + fx + 0.12, 0.48, welPlanterZ + 0.15], [0.04, 0.025, 0.04], materials.stoneCream, { smooth: true });
+  }
+
+  // Triple brass ground floodlights illuminating welcome sign
+  for (const lx of [-2.6, 0.0, 2.6]) {
+    batch.addBox([welMidX + lx, 0.48, welPlanterZ + 0.18], [0.18, 0.08, 0.16], materials.brass);
+    batch.addCylinder([welMidX + lx, 0.53, welPlanterZ + 0.18], 0.05, 0.05, 0.04, materials.brass, { segments: 12, smooth: true, rotation: [-0.4, 0, 0] });
+    batch.addSphere([welMidX + lx, 0.54, welPlanterZ + 0.16], [0.05, 0.03, 0.05], materials.glow, { shadow: false });
   }
 
   const welBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(welMidX, 1.4, monZ));

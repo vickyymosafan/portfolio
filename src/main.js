@@ -97,9 +97,9 @@ const staticBodies = [];
 const WORLD_MARKERS = [
   { id: 'farm', label: 'Peternakan', sub: 'Sapi, Ayam, Ikan', icon: '🐮', pos: [-28.0, 3.8, -32.0], targetRoom: 'farm' },
   { id: 'rice', label: 'Sawah', sub: 'Pertanian Modern', icon: '🌾', pos: [14.0, 3.8, -32.0], targetRoom: 'rice' },
-  { id: 'road', label: 'Jalan Utama', sub: 'Akses Menuju Rumah', icon: '🚗', pos: [32.0, 3.5, 32.0], targetRoom: 'road' },
+  { id: 'road', label: 'Jalan Utama', sub: 'Akses Menuju Rumah', icon: '🚗', pos: [0.0, 3.2, 35.5], targetRoom: 'road' },
   { id: 'pool', label: 'Kolam Renang', sub: 'Swim & Relax', icon: '🏊', pos: [-25.0, 3.5, -5.0], targetRoom: 'pool' },
-  { id: 'security', label: 'Security', sub: '24/7 Guard', icon: '🛡️', pos: [-18.0, 3.5, 24.0], targetRoom: 'security' },
+  { id: 'security', label: 'Security', sub: '24/7 Guard', icon: '🛡️', pos: [-11.75, 4.2, 25.5], targetRoom: 'security' },
   { id: 'living', label: '01 · About Me', sub: 'Garden Pavilion', icon: '🏛️', pos: [-10.5, 3.8, 10.5], targetRoom: 'about' },
   { id: 'library', label: '02 · Work Experience', sub: 'Library Nook · 5 Roles', icon: '💼', pos: [10.75, 10.2, 2.0], targetRoom: 'experience' },
   { id: 'bedroom', label: '03 · Education', sub: 'UNMUH Jember · GPA 3.75', icon: '🎓', pos: [-11.0, 10.2, 2.0], targetRoom: 'bedroom' },
@@ -1077,9 +1077,9 @@ function onMarkerClick(marker) {
     } else if (marker.targetRoom === 'zen') {
       teleportToZone(33.0, 1.12, -4.5, -0.45);
     } else if (marker.targetRoom === 'security') {
-      teleportToZone(0.0, 1.12, 26.0, 0);
+      teleportToZone(-7.5, 1.12, 26.5, 0);
     } else if (marker.targetRoom === 'road') {
-      teleportToZone(0.0, 1.12, 33.0, 0);
+      teleportToZone(0.0, 1.12, 35.5, 0);
     }
   }
 }
@@ -2418,6 +2418,7 @@ async function init() {
     window.__zoomOut = (amount) => cameraController?.zoomOut(amount);
     window.__setRoom = setRoom;
     window.__startExperience = startExperience;
+    window.__toggleOverviewMode = toggleOverviewMode;
     window.__dispatchInteraction = dispatchInteraction;
     window.__interactionPoints = interactionPoints;
     window.__findInteraction = findInteraction;
@@ -2465,6 +2466,10 @@ async function init() {
     }
     if (urlParams.get('start') === '1') {
       startExperience();
+    }
+    if (urlParams.get('map') === '1') {
+      if (!started) startExperience();
+      toggleOverviewMode(true);
     }
     const sectionParam = urlParams.get('section');
     if (sectionParam && portfolio.content[sectionParam]) {
