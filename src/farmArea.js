@@ -5,7 +5,7 @@ import { addBox, addCylinder, addSphere, BatchCollector } from './geometry.js';
 /**
  * Creates Zone G: Peternakan (Farm & Livestock Area)
  * Features Red Barn, Silo, Cattle Pasture with Holstein Cows,
- * Chicken Coop with Chickens, and Aquaculture Fish Ponds with swimming fish.
+ * and Chicken Coop with Chickens.
  * Spans x: [-45.0, -13.0], z: [-46.0, -19.0]
  */
 export function createFarmArea(scene, world, RAPIER, staticBodies) {
@@ -15,7 +15,6 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
 
   const animatedCows = [];
   const animatedChickens = [];
-  const animatedFish = [];
   let farmWorker = null;
 
   // Farm ground gravel/dirt foundation (z: [-46.0, -19.0], x: [-45.0, -13.0])
@@ -361,73 +360,7 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
   });
 
   // =========================================================================
-  // 5. Aquaculture Fish Ponds & Swimming Fish (x: [-24.0, -14.0], z: [-29.0, -21.0])
-  // =========================================================================
-  const pondX = -19.0;
-  const pondZ = -25.0;
-  const pondW = 9.0;
-  const pondD = 7.5;
-
-  // Raised stone perimeter basin
-  batch.addBox([pondX, 0.3, pondZ], [pondW, 0.6, pondD], materials.stoneWarm);
-  // Recessed crystal blue water surface
-  const waterMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(pondW - 0.8, 0.05, pondD - 0.8),
-    materials.waterfallPond
-  );
-  waterMesh.position.set(pondX, 0.45, pondZ);
-  waterMesh.receiveShadow = true;
-  farmGroup.add(waterMesh);
-
-  // Central dividing walkway / pier with safety handrail
-  batch.addBox([pondX, 0.55, pondZ], [1.2, 0.15, pondD - 0.2], materials.woodWarm);
-  for (let z = pondZ - 3.0; z <= pondZ + 3.0; z += 1.5) {
-    batch.addCylinder([pondX - 0.55, 0.95, z], 0.04, 0.04, 0.8, materials.woodDark);
-    batch.addCylinder([pondX + 0.55, 0.95, z], 0.04, 0.04, 0.8, materials.woodDark);
-  }
-  // Rope handrail
-  batch.addBox([pondX - 0.55, 1.3, pondZ], [0.04, 0.04, pondD - 0.8], materials.strawHat);
-  batch.addBox([pondX + 0.55, 1.3, pondZ], [0.04, 0.04, pondD - 0.8], materials.strawHat);
-
-  // Wooden fish feeding bucket on the pier
-  batch.addCylinder([pondX, 0.78, pondZ], 0.2, 0.24, 0.35, materials.woodLight);
-  batch.addCylinder([pondX, 0.9, pondZ], 0.18, 0.18, 0.05, materials.hayGolden);
-
-  // Pond physics collider
-  const pondBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(pondX, 0.35, pondZ));
-  world.createCollider(RAPIER.ColliderDesc.cuboid(pondW * 0.5, 0.35, pondD * 0.5), pondBody);
-  staticBodies.push(pondBody);
-
-  // 6 Stylized Swimming Koi / Fish in the ponds (InstancedMesh for single draw call)
-  const fb = new BatchCollector();
-  fb.addSphere([0, 0, 0], [0.12, 0.15, 0.38], materials.yellowSun);
-  fb.addBox([0, 0, -0.38], [0.02, 0.22, 0.18], materials.coral);
-  fb.addBox([0.14, 0, 0.05], [0.14, 0.02, 0.1], materials.coral, { rotation: [0, 0.3, 0] });
-  fb.addBox([-0.14, 0, 0.05], [0.14, 0.02, 0.1], materials.coral, { rotation: [0, -0.3, 0] });
-  const fishGeo = fb.toMergedGeometry();
-  const fishInstMesh = new THREE.InstancedMesh(fishGeo, vertexColorFamilies.matte, 6);
-  fishInstMesh.userData.isDynamic = true;
-  farmGroup.add(fishInstMesh);
-
-  for (let i = 0; i < 6; i += 1) {
-    const westSide = i < 3;
-    const centerX = westSide ? pondX - 2.4 : pondX + 2.4;
-    const centerZ = pondZ;
-    const radiusX = 1.4 + (i % 3) * 0.22;
-    const radiusZ = 2.0 + (i % 3) * 0.25;
-    const speed = 0.85 + (i % 3) * 0.15;
-    const angle = (i / 6) * Math.PI * 2;
-    const fx = centerX + Math.cos(angle) * radiusX;
-    const fz = centerZ + Math.sin(angle) * radiusZ;
-    npcDummy.position.set(fx, 0.35, fz);
-    npcDummy.rotation.set(0, -angle + Math.PI * 0.5, 0);
-    npcDummy.updateMatrix();
-    fishInstMesh.setMatrixAt(i, npcDummy.matrix);
-    animatedFish.push({ idx: i, centerX, centerZ, radiusX, radiusZ, speed, angle });
-  }
-
-  // =========================================================================
-  // 6. Farm Worker NPC (Peternak in Overalls & Straw Hat)
+  // 5. Farm Worker NPC (Peternak in Overalls & Straw Hat)
   // =========================================================================
   const workerX = -28.5;
   const workerZ = -28.0;
@@ -511,18 +444,7 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
         chkInstMesh.setMatrixAt(chk.idx, npcDummy.matrix);
       }
       chkInstMesh.instanceMatrix.needsUpdate = true;
-      // 3. Animate swimming fish (swimming in elliptical paths via InstancedMesh)
-      for (const f of animatedFish) {
-        f.angle += delta * f.speed;
-        const fx = f.centerX + Math.cos(f.angle) * f.radiusX;
-        const fz = f.centerZ + Math.sin(f.angle) * f.radiusZ;
-        npcDummy.position.set(fx, 0.35 + Math.sin(f.angle * 2.0) * 0.04, fz);
-        npcDummy.rotation.set(0, -f.angle + Math.PI * 0.5, 0);
-        npcDummy.updateMatrix();
-        fishInstMesh.setMatrixAt(f.idx, npcDummy.matrix);
-      }
-      fishInstMesh.instanceMatrix.needsUpdate = true;
-      // 4. Farm worker idle
+      // 3. Farm worker idle
       if (farmWorker) {
         farmWorker.clock += delta;
         farmWorker.group.position.y = Math.sin(farmWorker.clock * 1.8) * 0.006;
