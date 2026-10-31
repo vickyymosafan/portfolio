@@ -2239,6 +2239,7 @@ function animate(timestamp) {
   updateCharacterRig(characterRig, dt, elapsed, moveAmount, grounded);
   if (doorControls?.update) doorControls.update(dt);
   if (drivewayZone?.update) drivewayZone.update(dt, elapsed);
+  if (securityZone?.updateTraffic) securityZone.updateTraffic(dt);
   updateRoomFromPosition(timestamp);
   findInteraction();
 
@@ -2511,6 +2512,10 @@ async function init() {
     }
     if (urlParams.get('garage') === 'open' && doorControls?.garage) {
       doorControls.garage.toggle();
+    }
+    const trafficLightParam = urlParams.get('trafficLight');
+    if (trafficLightParam && window.__TRAFFIC_SYSTEM__) {
+      window.__TRAFFIC_SYSTEM__.setLightState(trafficLightParam.toUpperCase(), true);
     }
     renderer.render(scene, camera);
     renderer.render(scene, camera);

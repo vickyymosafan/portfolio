@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { materials, palette, vertexColorFamilies } from './materials.js';
 import { addBox, addCylinder, addSphere, BatchCollector } from './geometry.js';
+import { createHighwayTraffic } from './highwayTraffic.js';
 
 /**
  * Creates Zone I: Perimeter Wall, Main Security Checkpoint,
@@ -56,50 +57,9 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
   }
 
   // =========================================================================
-  // 2. White Luxury SUV Vehicle on Public Road (x = -18.0, z = 33.2)
+  // 2. Dynamic Animated Highway Traffic & Traffic Lights System
   // =========================================================================
-  const suvX = -18.0;
-  const suvZ = 33.2;
-  const suvGroup = new THREE.Group();
-  suvGroup.position.set(suvX, 0, suvZ);
-  securityGroup.add(suvGroup);
-
-  const suvBatch = new BatchCollector();
-  suvBatch.addBox([0, 0.35, 0], [4.8, 0.32, 2.1], materials.carRubber);
-  suvBatch.addBox([0, 0.65, 0], [4.6, 0.45, 2.05], materials.carSuvWhite);
-  suvBatch.addBox([1.4, 0.85, 0], [1.6, 0.35, 1.95], materials.carSuvWhite);
-  suvBatch.addBox([2.22, 0.75, 0], [0.08, 0.38, 1.4], materials.chrome);
-  suvBatch.addBox([2.18, 0.82, 0.72], [0.1, 0.14, 0.38], materials.glow, { shadow: false });
-  suvBatch.addBox([2.18, 0.82, -0.72], [0.1, 0.14, 0.38], materials.glow, { shadow: false });
-  suvBatch.addBox([-0.4, 1.35, 0], [2.6, 0.72, 1.75], materials.carGlass);
-  suvBatch.addBox([-0.4, 1.75, 0], [2.5, 0.08, 1.72], materials.carSuvWhite);
-  suvBatch.addBox([-0.4, 1.83, 0.75], [2.2, 0.06, 0.06], materials.metalDark);
-  suvBatch.addBox([-0.4, 1.83, -0.75], [2.2, 0.06, 0.06], materials.metalDark);
-  suvBatch.addBox([-2.25, 0.68, 0], [0.18, 0.48, 1.98], materials.carSuvWhite);
-  suvBatch.addBox([-2.32, 0.88, 0.72], [0.08, 0.15, 0.36], materials.fireEmber, { shadow: false });
-  suvBatch.addBox([-2.32, 0.88, -0.72], [0.08, 0.15, 0.36], materials.fireEmber, { shadow: false });
-
-  const wheelOffsets = [
-    [1.4, 0.42, 1.05],
-    [1.4, 0.42, -1.05],
-    [-1.4, 0.42, 1.05],
-    [-1.4, 0.42, -1.05],
-  ];
-  for (const [wx, wy, wz] of wheelOffsets) {
-    suvBatch.addCylinder([wx, wy, wz], 0.42, 0.42, 0.28, materials.carRubber, {
-      rotation: [Math.PI * 0.5, 0, 0],
-      segments: 16,
-    });
-    suvBatch.addCylinder([wx, wy, wz + (wz > 0 ? 0.06 : -0.06)], 0.28, 0.28, 0.18, materials.chrome, {
-      rotation: [Math.PI * 0.5, 0, 0],
-      segments: 12,
-    });
-  }
-  suvBatch.build(suvGroup, true);
-
-  const suvBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(suvX, 0.9, suvZ));
-  world.createCollider(RAPIER.ColliderDesc.cuboid(2.4, 0.9, 1.1), suvBody);
-  staticBodies.push(suvBody);
+  const highwayTraffic = createHighwayTraffic(securityGroup, world, RAPIER, staticBodies);
 
   // =========================================================================
   // 3. Helper: Luxury Estate Wall Pillar with Carriage Lantern
@@ -605,6 +565,7 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
   return {
     group: securityGroup,
     update: (delta) => {
+      // Guard animations
       for (const g of animatedGuards) {
         g.clock += delta;
         // Subtle natural breathing & posture shift
@@ -613,5 +574,9 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
         g.group.rotation.y += Math.sin(g.clock * 0.9) * 0.0025;
       }
     },
+    updateTraffic: (dt) => {
+      highwayTraffic.update(dt);
+    },
+    traffic: highwayTraffic,
   };
 }

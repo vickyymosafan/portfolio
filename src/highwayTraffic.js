@@ -396,64 +396,82 @@ function buildTrafficLightMast(parent, polePos, facingDir = 1, options = {}) {
     rotation: [armZDir * 0.65, 0, 0]
   });
 
-  // --- Overhead 3-Aspect Traffic Signal Head ---
+  // --- Overhead 3-Aspect Traffic Signal Head (Dual-Faced for 360° visibility) ---
   const headGroup = new THREE.Group();
   headGroup.position.set(0, armY - 0.65, armEnd * 0.75);
-  // Rotate head to face oncoming traffic:
+  // Rotate head:
   // facingDir = -1 faces East (+X, for Westbound lane) -> rotation.y = Math.PI * 0.5
   // facingDir = +1 faces West (-X, for Eastbound lane) -> rotation.y = -Math.PI * 0.5
   headGroup.rotation.y = facingDir === -1 ? Math.PI * 0.5 : -Math.PI * 0.5;
   mastGroup.add(headGroup);
 
-  // Black target backboard with safety gold border
-  addBox(headGroup, [0, 0, 0], [0.65, 1.45, 0.04], trafficMats.backingBoard);
-  addBox(headGroup, [0, 0, 0.01], [0.61, 1.41, 0.02], trafficMats.borderYellow);
-  addBox(headGroup, [0, 0, 0.03], [0.55, 1.35, 0.02], trafficMats.housing);
+  const redMeshes = [];
+  const yellowMeshes = [];
+  const greenMeshes = [];
+  const pedRedMeshes = [];
+  const pedGreenMeshes = [];
 
   // Main housing body
-  addBox(headGroup, [0, 0, 0.18], [0.38, 1.15, 0.28], trafficMats.housing);
+  addBox(headGroup, [0, 0, 0], [0.42, 1.35, 0.64], trafficMats.housing);
 
-  // 3 Lenses & Visor Hoods
-  const lensRadius = 0.12;
-  const redMesh = addCylinder(headGroup, [0, 0.36, 0.33], lensRadius, lensRadius, 0.05, trafficMats.redOff, {
-    segments: 16,
-    rotation: [Math.PI * 0.5, 0, 0]
-  });
-  const yellowMesh = addCylinder(headGroup, [0, 0.0, 0.33], lensRadius, lensRadius, 0.05, trafficMats.yellowOff, {
-    segments: 16,
-    rotation: [Math.PI * 0.5, 0, 0]
-  });
-  const greenMesh = addCylinder(headGroup, [0, -0.36, 0.33], lensRadius, lensRadius, 0.05, trafficMats.greenOn, {
-    segments: 16,
-    rotation: [Math.PI * 0.5, 0, 0]
-  });
+  // Helper to build 3-aspect face
+  function addSignalFace(parent, zOffset, isNegative) {
+    const dir = isNegative ? -1 : 1;
+    // Target backboard with yellow safety border
+    addBox(parent, [0, 0, zOffset], [0.65, 1.45, 0.04], trafficMats.backingBoard);
+    addBox(parent, [0, 0, zOffset + dir * 0.01], [0.61, 1.41, 0.02], trafficMats.borderYellow);
 
-  // Sun hoods above each lens
-  for (const ly of [0.36, 0.0, -0.36]) {
-    addCylinder(headGroup, [0, ly + 0.11, 0.38], 0.13, 0.13, 0.14, trafficMats.housing, {
-      segments: 12,
+    const lensRadius = 0.12;
+    const rM = addCylinder(parent, [0, 0.36, zOffset + dir * 0.08], lensRadius, lensRadius, 0.06, trafficMats.redOff, {
+      segments: 16,
       rotation: [Math.PI * 0.5, 0, 0]
     });
+    const yM = addCylinder(parent, [0, 0.0, zOffset + dir * 0.08], lensRadius, lensRadius, 0.06, trafficMats.yellowOff, {
+      segments: 16,
+      rotation: [Math.PI * 0.5, 0, 0]
+    });
+    const gM = addCylinder(parent, [0, -0.36, zOffset + dir * 0.08], lensRadius, lensRadius, 0.06, trafficMats.greenOn, {
+      segments: 16,
+      rotation: [Math.PI * 0.5, 0, 0]
+    });
+    redMeshes.push(rM);
+    yellowMeshes.push(yM);
+    greenMeshes.push(gM);
+
+    // Sun hoods over lenses
+    for (const ly of [0.36, 0.0, -0.36]) {
+      addCylinder(parent, [0, ly + 0.11, zOffset + dir * 0.14], 0.13, 0.13, 0.14, trafficMats.housing, {
+        segments: 12,
+        rotation: [Math.PI * 0.5, 0, 0]
+      });
+    }
   }
 
-  // --- Pedestrian Signal Head at Eye Level on Post ---
+  // Primary face (front facing oncoming traffic)
+  addSignalFace(headGroup, 0.32, false);
+  // Secondary face (reverse face for oncoming reverse/crosswalk visibility)
+  addSignalFace(headGroup, -0.32, true);
+
+  // --- Pedestrian Signal Head at Eye Level on Post (facing crosswalk) ---
   const pedGroup = new THREE.Group();
-  pedGroup.position.set(0, 2.5, 0.25 * armZDir);
+  pedGroup.position.set(0, 2.5, 0.28 * armZDir);
   // Face perpendicular across crosswalk
-  pedGroup.rotation.y = isSouthSide ? 0 : Math.PI;
+  pedGroup.rotation.y = isSouthSide ? Math.PI : 0;
   mastGroup.add(pedGroup);
 
   addBox(pedGroup, [0, 0, 0], [0.28, 0.65, 0.18], trafficMats.housing);
   const pedRedMesh = addBox(pedGroup, [0, 0.14, 0.10], [0.18, 0.22, 0.04], trafficMats.pedOff);
   const pedGreenMesh = addBox(pedGroup, [0, -0.14, 0.10], [0.18, 0.22, 0.04], trafficMats.pedGreenOn);
+  pedRedMeshes.push(pedRedMesh);
+  pedGreenMeshes.push(pedGreenMesh);
 
   return {
     mastGroup,
-    redMesh,
-    yellowMesh,
-    greenMesh,
-    pedRedMesh,
-    pedGreenMesh,
+    redMeshes,
+    yellowMeshes,
+    greenMeshes,
+    pedRedMeshes,
+    pedGreenMeshes,
   };
 }
 
@@ -559,34 +577,35 @@ export function createHighwayTraffic(parent, world, RAPIER, staticBodies) {
   // =========================================================================
   // 4. Traffic Light State Machine & Controller
   // =========================================================================
-  let trafficLightState = 'GREEN'; // 'GREEN', 'YELLOW', 'RED'
+  const initialLightParam = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('trafficLight')
+    : null;
+  let trafficLightState = (initialLightParam && ['RED', 'YELLOW', 'GREEN'].includes(initialLightParam.toUpperCase()))
+    ? initialLightParam.toUpperCase()
+    : 'GREEN';
+  let holdTrafficLight = !!initialLightParam;
   let stateTimer = 0;
   const GREEN_DURATION = 10.0;
   const YELLOW_DURATION = 3.0;
   const RED_DURATION = 8.0;
 
   function updateSignalLenses() {
+    const isGreen = trafficLightState === 'GREEN';
+    const isYellow = trafficLightState === 'YELLOW';
+    const isRed = trafficLightState === 'RED';
+
+    const gMat = isGreen ? trafficMats.greenOn : trafficMats.greenOff;
+    const yMat = isYellow ? trafficMats.yellowOn : trafficMats.yellowOff;
+    const rMat = isRed ? trafficMats.redOn : trafficMats.redOff;
+    const prMat = isRed ? trafficMats.pedOff : trafficMats.pedRedOn;
+    const pgMat = isRed ? trafficMats.pedGreenOn : trafficMats.pedOff;
+
     for (const sig of signals) {
-      if (trafficLightState === 'GREEN') {
-        sig.greenMesh.material = trafficMats.greenOn;
-        sig.yellowMesh.material = trafficMats.yellowOff;
-        sig.redMesh.material = trafficMats.redOff;
-        sig.pedRedMesh.material = trafficMats.pedRedOn;
-        sig.pedGreenMesh.material = trafficMats.pedOff;
-      } else if (trafficLightState === 'YELLOW') {
-        sig.greenMesh.material = trafficMats.greenOff;
-        sig.yellowMesh.material = trafficMats.yellowOn;
-        sig.redMesh.material = trafficMats.redOff;
-        sig.pedRedMesh.material = trafficMats.pedRedOn;
-        sig.pedGreenMesh.material = trafficMats.pedOff;
-      } else {
-        // RED
-        sig.greenMesh.material = trafficMats.greenOff;
-        sig.yellowMesh.material = trafficMats.yellowOff;
-        sig.redMesh.material = trafficMats.redOn;
-        sig.pedRedMesh.material = trafficMats.pedOff;
-        sig.pedGreenMesh.material = trafficMats.pedGreenOn;
-      }
+      for (const m of sig.greenMeshes) m.material = gMat;
+      for (const m of sig.yellowMeshes) m.material = yMat;
+      for (const m of sig.redMeshes) m.material = rMat;
+      for (const m of sig.pedRedMeshes) m.material = prMat;
+      for (const m of sig.pedGreenMeshes) m.material = pgMat;
     }
   }
 
@@ -603,21 +622,23 @@ export function createHighwayTraffic(parent, world, RAPIER, staticBodies) {
 
   function update(delta) {
     const dt = Math.min(0.06, delta);
-    stateTimer += dt;
+    if (!holdTrafficLight) {
+      stateTimer += dt;
 
-    // Cycle traffic light
-    if (trafficLightState === 'GREEN' && stateTimer >= GREEN_DURATION) {
-      trafficLightState = 'YELLOW';
-      stateTimer = 0;
-      updateSignalLenses();
-    } else if (trafficLightState === 'YELLOW' && stateTimer >= YELLOW_DURATION) {
-      trafficLightState = 'RED';
-      stateTimer = 0;
-      updateSignalLenses();
-    } else if (trafficLightState === 'RED' && stateTimer >= RED_DURATION) {
-      trafficLightState = 'GREEN';
-      stateTimer = 0;
-      updateSignalLenses();
+      // Cycle traffic light
+      if (trafficLightState === 'GREEN' && stateTimer >= GREEN_DURATION) {
+        trafficLightState = 'YELLOW';
+        stateTimer = 0;
+        updateSignalLenses();
+      } else if (trafficLightState === 'YELLOW' && stateTimer >= YELLOW_DURATION) {
+        trafficLightState = 'RED';
+        stateTimer = 0;
+        updateSignalLenses();
+      } else if (trafficLightState === 'RED' && stateTimer >= RED_DURATION) {
+        trafficLightState = 'GREEN';
+        stateTimer = 0;
+        updateSignalLenses();
+      }
     }
 
     // Sort vehicles in each lane by distance along travel direction to calculate queueing
@@ -722,14 +743,21 @@ export function createHighwayTraffic(parent, world, RAPIER, staticBodies) {
     }
   }
 
-  return {
+  const api = {
     trafficGroup,
     update,
     getLightState: () => trafficLightState,
-    setLightState: (st) => {
+    setLightState: (st, hold = false) => {
       trafficLightState = st;
       stateTimer = 0;
+      holdTrafficLight = hold;
       updateSignalLenses();
     },
+    signals,
+    vehicles,
   };
+  if (typeof window !== 'undefined') {
+    window.__TRAFFIC_SYSTEM__ = api;
+  }
+  return api;
 }
