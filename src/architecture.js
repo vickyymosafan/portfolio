@@ -796,10 +796,6 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
     archBatch.addCylinder([wallHx + 0.14, by, bz], 0.04, 0.04, 0.02, materials.brass, { segments: 8 });
   }
 
-  // Under-stair modern architectural feature (minimalist warm teak plinth with ambient display ledge)
-  archBatch.addBox([stairX, 0.15, -4.0], [stairWidth - 0.1, 0.3, 3.2], materials.woodDark);
-  archBatch.addBox([stairX, 0.31, -4.0], [stairWidth - 0.2, 0.02, 3.0], materials.stone);
-
   // =========================================================================
   // 8. LUXURY PITCHED GABLED ROOF STRUCTURE (`roofGroup`)
   // Matching Vicky's World Map villa architecture:
