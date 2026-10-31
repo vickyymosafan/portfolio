@@ -315,7 +315,7 @@ function createRenderer() {
   if (!('WebGL2RenderingContext' in window)) {
     throw new Error('This browser does not support WebGL2.');
   }
-  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.08;
@@ -2216,13 +2216,19 @@ function dispose() {
 }
 
 function animate(timestamp) {
+  const dt = Math.min(0.05, Math.max(0.001, (timestamp - (animate.lastTimestamp || timestamp)) / 1000));
+  animate.lastTimestamp = timestamp;
+
+  // Keep ambient highway traffic moving smoothly even on welcome screen
+  if (securityZone?.updateTraffic && !document.hidden && !paused) {
+    securityZone.updateTraffic(dt);
+  }
+
   if (!started || paused || document.hidden) {
     renderer.render(scene, camera);
     return;
   }
   frameCounter += 1;
-  const dt = Math.min(0.05, Math.max(0.001, (timestamp - (animate.lastTimestamp || timestamp)) / 1000));
-  animate.lastTimestamp = timestamp;
   elapsed += dt;
   accumulator += Math.min(dt, 0.06);
 
@@ -2239,7 +2245,6 @@ function animate(timestamp) {
   updateCharacterRig(characterRig, dt, elapsed, moveAmount, grounded);
   if (doorControls?.update) doorControls.update(dt);
   if (drivewayZone?.update) drivewayZone.update(dt, elapsed);
-  if (securityZone?.updateTraffic) securityZone.updateTraffic(dt);
   updateRoomFromPosition(timestamp);
   findInteraction();
 

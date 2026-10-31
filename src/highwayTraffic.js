@@ -531,6 +531,7 @@ function buildTrafficLightMast(parent, polePos, facingDir = 1, options = {}) {
  */
 export function createHighwayTraffic(parent, world, RAPIER, staticBodies) {
   const trafficGroup = new THREE.Group();
+  trafficGroup.userData.isDynamic = true;
   parent.add(trafficGroup);
 
   // =========================================================================
@@ -546,8 +547,10 @@ export function createHighwayTraffic(parent, world, RAPIER, staticBodies) {
   // =========================================================================
   // North Pole on sidewalk (z = 29.3, x = 4.8) controls Westbound approaching traffic
   const northSignal = buildTrafficLightMast(trafficGroup, [4.8, 0.12, 29.3], -1, { armSpan: 4.8 });
+  northSignal.mastGroup.userData.isDynamic = true;
   // South Pole on road verge (z = 41.5, x = -4.8) controls Eastbound approaching traffic
   const southSignal = buildTrafficLightMast(trafficGroup, [-4.8, 0.02, 41.5], 1, { armSpan: 4.8 });
+  southSignal.mastGroup.userData.isDynamic = true;
 
   const signals = [northSignal, southSignal];
 
@@ -578,6 +581,7 @@ export function createHighwayTraffic(parent, world, RAPIER, staticBodies) {
       ? buildTrafficCar(spec.model, spec.mat)
       : buildTrafficMotorcycle(spec.model, spec.mat);
 
+    vObj.root.userData.isDynamic = true;
     vObj.root.position.set(spec.startX, 0, 32.8);
     // Face -X (moving left)
     vObj.root.rotation.y = -Math.PI * 0.5;
@@ -613,6 +617,7 @@ export function createHighwayTraffic(parent, world, RAPIER, staticBodies) {
       ? buildTrafficCar(spec.model, spec.mat)
       : buildTrafficMotorcycle(spec.model, spec.mat);
 
+    vObj.root.userData.isDynamic = true;
     vObj.root.position.set(spec.startX, 0, 38.2);
     // Face +X (moving right)
     vObj.root.rotation.y = Math.PI * 0.5;
@@ -639,20 +644,20 @@ export function createHighwayTraffic(parent, world, RAPIER, staticBodies) {
   // 4. Non-Simultaneous Multi-Phase Traffic Controller ("Tidak Berbarengan")
   // =========================================================================
   // Phases:
-  // 1. 'WB_GREEN' (10.0s): Westbound GREEN, Eastbound RED, Pedestrian RED
-  // 2. 'WB_YELLOW' (3.5s): Westbound YELLOW, Eastbound RED, Pedestrian RED
-  // 3. 'ALL_RED_PED' (7.0s): Westbound RED, Eastbound RED, Pedestrian GREEN (crosswalk walk!)
-  // 4. 'EB_GREEN' (10.0s): Westbound RED, Eastbound GREEN, Pedestrian RED
-  // 5. 'EB_YELLOW' (3.5s): Westbound RED, Eastbound YELLOW, Pedestrian RED
-  // 6. 'ALL_RED_CLEAR' (3.0s): Westbound RED, Eastbound RED, Pedestrian RED
+  // 1. 'WB_GREEN' (7.0s): Westbound GREEN, Eastbound RED, Pedestrian RED
+  // 2. 'WB_YELLOW' (2.0s): Westbound YELLOW, Eastbound RED, Pedestrian RED
+  // 3. 'ALL_RED_PED' (3.0s): Westbound RED, Eastbound RED, Pedestrian GREEN (crosswalk walk!)
+  // 4. 'EB_GREEN' (7.0s): Westbound RED, Eastbound GREEN, Pedestrian RED
+  // 5. 'EB_YELLOW' (2.0s): Westbound RED, Eastbound YELLOW, Pedestrian RED
+  // 6. 'ALL_RED_CLEAR' (2.0s): Westbound RED, Eastbound RED, Pedestrian RED
 
   const PHASE_DURATIONS = {
-    WB_GREEN: 10.0,
-    WB_YELLOW: 3.5,
-    ALL_RED_PED: 7.0,
-    EB_GREEN: 10.0,
-    EB_YELLOW: 3.5,
-    ALL_RED_CLEAR: 3.0,
+    WB_GREEN: 7.0,
+    WB_YELLOW: 2.0,
+    ALL_RED_PED: 3.0,
+    EB_GREEN: 7.0,
+    EB_YELLOW: 2.0,
+    ALL_RED_CLEAR: 2.0,
   };
 
   const PHASE_ORDER = ['WB_GREEN', 'WB_YELLOW', 'ALL_RED_PED', 'EB_GREEN', 'EB_YELLOW', 'ALL_RED_CLEAR'];
@@ -671,7 +676,7 @@ export function createHighwayTraffic(parent, world, RAPIER, staticBodies) {
   }
 
   let trafficPhase = PHASE_ORDER[currentPhaseIndex];
-  let holdTrafficLight = !!initialLightParam;
+  let holdTrafficLight = false;
   let phaseTimer = 0;
   let timeInGreen = { westbound: 0, eastbound: 0 };
 
@@ -802,28 +807,37 @@ export function createHighwayTraffic(parent, world, RAPIER, staticBodies) {
           leaderSpeed = leader.speed;
         }
 
-        // 3. Acceleration / Deceleration Logic with Staggered Human Reaction Delay
+        // 3. Acceleration / Deceleration Logic with Dynamic Non-Deadlocking Following
         let targetSpeed = v.cruisingSpeed;
 
-        // Sequential reaction delay when light turns green
-        const reactionWait = v.reactionDelay + (i * 0.45);
-        if (laneSignal === 'GREEN' && greenElapsed < reactionWait && distToStop > -1.0 && distToStop < 24.0) {
-          // Still reacting/waiting for lead car to pull away
-          targetSpeed = Math.min(v.speed, leaderSpeed);
-        }
-
-        if (mustStopForSignal && distToStop <= 20.0) {
-          // Smooth deceleration towards stop line (with individual stop offset)
+        // A. Red / Yellow Stop Line Braking
+        if (mustStopForSignal && distToStop > -0.5 && distToStop <= 18.0) {
           const targetStopDist = 0.8 + (v.stopOffset || 0);
-          const decelTarget = Math.max(0, (distToStop - targetStopDist) * 1.5);
-          targetSpeed = Math.min(targetSpeed, decelTarget);
+          if (distToStop <= targetStopDist) {
+            targetSpeed = 0;
+          } else {
+            const decelTarget = Math.max(0, (distToStop - targetStopDist) * 1.6);
+            targetSpeed = Math.min(targetSpeed, decelTarget);
+          }
         }
 
-        // Safe following distance buffer in queue (min buffer 2.5m for cars, 1.8m for bikes)
-        const minBuffer = v.type === 'bike' ? 1.8 : 2.6;
-        if (distToLeader < 18.0) {
-          const followTarget = Math.max(0, Math.min(leaderSpeed, (distToLeader - minBuffer) * 1.6));
-          targetSpeed = Math.min(targetSpeed, followTarget);
+        // B. Leader following & queueing: approach smoothly without deadlocking
+        const minBuffer = v.type === 'bike' ? 1.8 : 2.5;
+        if (distToLeader < 20.0) {
+          if (distToLeader <= minBuffer) {
+            // Reached vehicle bumper: match leader's speed or come to a full stop
+            targetSpeed = Math.min(targetSpeed, Math.max(0, leaderSpeed));
+          } else {
+            // Decoupled approach: vehicles drive forward to close queue gap smoothly
+            const approachSpeed = (distToLeader - minBuffer) * 1.8;
+            const maxSafeSpeed = Math.max(0, leaderSpeed) + approachSpeed;
+            targetSpeed = Math.min(targetSpeed, maxSafeSpeed);
+          }
+        }
+
+        // C. Subtle reaction wave on initial green light
+        if (laneSignal === 'GREEN' && greenElapsed < 0.25 && distToStop > -1.0 && distToStop < 16.0 && v.speed < 0.2) {
+          targetSpeed = 0;
         }
 
         // Smooth acceleration / braking

@@ -438,6 +438,7 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies) {
   // =========================================================================
   function createGuardRig(gx, gz, rotY, role = 'gate') {
     const rig = new THREE.Group();
+    rig.userData.isDynamic = true;
     rig.position.set(gx, 0, gz);
     rig.rotation.y = rotY;
     securityGroup.add(rig);
