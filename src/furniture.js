@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { materials, palette } from './materials.js';
-import { addBox, addSphere, addCylinder, BatchCollector } from './geometry.js';
+import { addBox, addSphere, addCylinder, addBranchSegment, BatchCollector } from './geometry.js';
 import { createSignTexture } from './textures.js';
 import { portfolio } from './portfolio.js';
 import { buildSportsCar } from './vehicles.js';
@@ -187,6 +187,295 @@ function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
   }
 }
 
+/**
+ * Builds a premium stylized cartoon potted tree (Fiddle-Leaf Fig / Indoor Tree)
+ * with a mid-century plant stand, flared ceramic pot with rolled rim,
+ * dark potting soil, white river pebble mulch, continuous natural woody trunk,
+ * and lush multi-tiered broad leaves with realistic leaf stems.
+ */
+function buildDetailedPottedTree(parent, pos, options = {}) {
+  const [x, y, z] = pos;
+  const scale = options.scale ?? 1.0;
+  const potMat = options.potMaterial ?? materials.ceramicTerracotta;
+  const standMat = options.standMaterial ?? materials.woodDark;
+
+  // 1. Mid-century quad plant stand
+  const legR = 0.02 * scale;
+  const legH = 0.28 * scale;
+  const spread = 0.22 * scale;
+  for (const [lx, lz] of [[-spread, -spread], [spread, -spread], [-spread, spread], [spread, spread]]) {
+    addCylinder(parent, [x + lx, y + legH * 0.5, z + lz], legR, legR, legH, standMat, { segments: 10, smooth: true });
+  }
+  // Cross braces connecting legs
+  addBox(parent, [x, y + 0.16 * scale, z], [spread * 2 + 0.02 * scale, 0.025 * scale, 0.03 * scale], standMat);
+  addBox(parent, [x, y + 0.16 * scale, z], [0.03 * scale, 0.025 * scale, spread * 2 + 0.02 * scale], standMat);
+
+  // 2. Pot & Saucer
+  const potBaseY = y + 0.16 * scale;
+  const potH = 0.60 * scale;
+  const potRTop = 0.36 * scale;
+  const potRBottom = 0.25 * scale;
+  // Brass drainage saucer
+  addCylinder(parent, [x, potBaseY + 0.02 * scale, z], potRBottom + 0.04 * scale, potRBottom + 0.03 * scale, 0.04 * scale, materials.brass, { segments: 24, smooth: true });
+  // Flared ceramic pot body
+  addCylinder(parent, [x, potBaseY + potH * 0.5, z], potRTop, potRBottom, potH, potMat, { segments: 24, smooth: true });
+  // Rolled collar / rim at the pot mouth
+  addCylinder(parent, [x, potBaseY + potH - 0.03 * scale, z], potRTop + 0.04 * scale, potRTop + 0.025 * scale, 0.07 * scale, potMat, { segments: 24, smooth: true });
+  // Brass accent inlay ring below rim
+  addCylinder(parent, [x, potBaseY + potH - 0.09 * scale, z], potRTop + 0.008 * scale, potRTop + 0.005 * scale, 0.025 * scale, materials.brass, { segments: 24, smooth: true });
+
+  // 3. Dark soil bed & white river pebble mulch
+  const soilY = potBaseY + potH - 0.04 * scale;
+  addCylinder(parent, [x, soilY, z], potRTop - 0.02 * scale, potRTop - 0.03 * scale, 0.03 * scale, materials.soil, { segments: 20 });
+  // River pebbles
+  const pebbleOffsets = [
+    [-0.14, 0.08], [0.12, 0.12], [-0.08, -0.14], [0.15, -0.06], [-0.18, -0.02], [0.04, 0.16], [-0.02, -0.18]
+  ];
+  for (const [px, pz] of pebbleOffsets) {
+    addSphere(parent, [x + px * scale, soilY + 0.02 * scale, z + pz * scale], [0.04 * scale, 0.025 * scale, 0.04 * scale], materials.stoneCream, { segments: 10, smooth: true });
+  }
+
+  // 4. Central Trunk with Sinuous Segments & Bark Nodes
+  const p0 = [x, soilY, z];
+  const p1 = [x + 0.02 * scale, soilY + 0.38 * scale, z - 0.02 * scale];
+  const p2 = [x - 0.02 * scale, soilY + 0.72 * scale, z + 0.02 * scale];
+  const p3 = [x + 0.01 * scale, soilY + 1.05 * scale, z - 0.01 * scale];
+  const pApex = [x, soilY + 1.32 * scale, z];
+
+  addBranchSegment(parent, p0, p1, 0.048 * scale, materials.bark, { segments: 10, smooth: true });
+  addBranchSegment(parent, p1, p2, 0.038 * scale, materials.bark, { segments: 10, smooth: true });
+  addBranchSegment(parent, p2, p3, 0.030 * scale, materials.bark, { segments: 10, smooth: true });
+  addBranchSegment(parent, p3, pApex, 0.022 * scale, materials.bark, { segments: 10, smooth: true });
+
+  // Node rings at joints
+  addCylinder(parent, p1, 0.052 * scale, 0.052 * scale, 0.03 * scale, materials.woodDark, { segments: 12, smooth: true });
+  addCylinder(parent, p2, 0.042 * scale, 0.042 * scale, 0.025 * scale, materials.woodDark, { segments: 12, smooth: true });
+  addCylinder(parent, p3, 0.034 * scale, 0.034 * scale, 0.020 * scale, materials.woodDark, { segments: 12, smooth: true });
+
+  // 5. Stylized Branches & Foliage
+  // Each branch starts from an exact trunk coordinate and reaches outward
+  const branchSpecs = [
+    // [origin, [targetRelX, targetRelY, targetRelZ], leafMaterial, leafScale]
+    [p1, [ 0.28, 0.18,  0.10], materials.foliageDeep,   1.05],
+    [p1, [-0.26, 0.22, -0.12], materials.foliageDeep,   1.00],
+    [p2, [ 0.12, 0.16, -0.26], materials.foliageMid,    0.95],
+    [p2, [-0.22, 0.20,  0.18], materials.foliageMid,    0.95],
+    [p3, [ 0.20, 0.15, -0.14], materials.foliageBright, 0.90],
+    [p3, [-0.14, 0.18, -0.18], materials.foliageBright, 0.90],
+    [p3, [ 0.08, 0.16,  0.22], materials.foliageBright, 0.88],
+  ];
+
+  for (const [origin, offset, lMat, lScale] of branchSpecs) {
+    const tip = [origin[0] + offset[0] * scale, origin[1] + offset[1] * scale, origin[2] + offset[2] * scale];
+    // Main branch woody arm
+    addBranchSegment(parent, origin, tip, 0.022 * scale, materials.bark, { segments: 8, smooth: true });
+
+    // 2-3 Stylized leaves fanning out from branch tip
+    const leafAngles = [-0.35, 0.0, 0.35];
+    const baseDir = new THREE.Vector3(offset[0], offset[1], offset[2]).normalize();
+
+    for (let li = 0; li < leafAngles.length; li += 1) {
+      const la = leafAngles[li];
+      const leafLen = (0.24 + li * 0.04) * lScale * scale;
+      const leafW = (0.16 + (li === 1 ? 0.03 : 0)) * lScale * scale;
+      const leafThick = 0.03 * scale;
+
+      // Calculate leaf tip position
+      const leafDir = baseDir.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), la);
+      leafDir.y = Math.max(0.1, leafDir.y + 0.15); // gentle upward arch
+      leafDir.normalize();
+
+      const leafBase = [tip[0], tip[1], tip[2]];
+      const leafCenter = [
+        tip[0] + leafDir.x * leafLen * 0.55,
+        tip[1] + leafDir.y * leafLen * 0.55 + 0.02 * scale,
+        tip[2] + leafDir.z * leafLen * 0.55
+      ];
+
+      // Green petiole stem connecting branch tip to leaf base
+      addBranchSegment(parent, leafBase, leafCenter, 0.008 * scale, materials.foliageDeep, { segments: 6 });
+
+      // Stylized cupped broad leaf blade
+      const rotY = Math.atan2(leafDir.x, leafDir.z);
+      const rotX = -Math.asin(leafDir.y) * 0.6;
+      addSphere(parent, leafCenter, [leafW, leafThick, leafLen * 0.6], lMat, {
+        smooth: true,
+        rotation: [rotX, rotY, la * 0.4]
+      });
+    }
+  }
+
+  // 6. Crown Canopy & Young Bud at the Apex
+  const crownAngles = [0, Math.PI * 0.5, Math.PI, Math.PI * 1.5];
+  for (let ci = 0; ci < crownAngles.length; ci += 1) {
+    const ca = crownAngles[ci];
+    const cDir = new THREE.Vector3(Math.cos(ca), 0.7, Math.sin(ca)).normalize();
+    const cTip = [
+      pApex[0] + cDir.x * 0.22 * scale,
+      pApex[1] + cDir.y * 0.24 * scale,
+      pApex[2] + cDir.z * 0.22 * scale
+    ];
+    addBranchSegment(parent, pApex, cTip, 0.008 * scale, materials.foliageDeep, { segments: 6 });
+    addSphere(parent, cTip, [0.14 * scale, 0.03 * scale, 0.20 * scale], materials.foliageBright, {
+      smooth: true,
+      rotation: [-0.4, ca, 0]
+    });
+  }
+  // Upright terminal young leaf bud
+  addCylinder(parent, [pApex[0], pApex[1] + 0.14 * scale, pApex[2]], 0.015 * scale, 0.025 * scale, 0.16 * scale, materials.foliageBright, { segments: 8, smooth: true });
+}
+
+/**
+ * Builds a classical architectural urn topiary with molded base,
+ * central woody trunk, formal double-sphere topiary, and flower accents.
+ */
+function buildDetailedTopiary(parent, pos, options = {}) {
+  const [x, y, z] = pos;
+  const scale = options.scale ?? 1.0;
+  const urnMat = options.urnMaterial ?? materials.stoneWarm;
+
+  // 1. Classical Pedestal / Urn
+  // Square base plinth
+  addBox(parent, [x, y + 0.06 * scale, z], [0.58 * scale, 0.12 * scale, 0.58 * scale], urnMat);
+  addBox(parent, [x, y + 0.14 * scale, z], [0.50 * scale, 0.06 * scale, 0.50 * scale], urnMat);
+  // Flared urn body
+  addCylinder(parent, [x, y + 0.38 * scale, z], 0.38 * scale, 0.22 * scale, 0.44 * scale, urnMat, { segments: 24, smooth: true });
+  // Molded rolled rim collar
+  addCylinder(parent, [x, y + 0.60 * scale, z], 0.42 * scale, 0.38 * scale, 0.08 * scale, urnMat, { segments: 24, smooth: true });
+  // Brass decorative inlay
+  addCylinder(parent, [x, y + 0.54 * scale, z], 0.385 * scale, 0.385 * scale, 0.025 * scale, materials.brass, { segments: 24, smooth: true });
+
+  // 2. Soil & base flowers
+  const soilY = y + 0.58 * scale;
+  addCylinder(parent, [x, soilY, z], 0.35 * scale, 0.35 * scale, 0.04 * scale, materials.soil, { segments: 20, smooth: true });
+  // Base flowers in soil
+  const flColors = [materials.coral, materials.yellowSun, materials.bluePastel];
+  for (let i = 0; i < 6; i += 1) {
+    const a = (i / 6) * Math.PI * 2 + 0.3;
+    const fx = x + Math.cos(a) * 0.26 * scale;
+    const fz = z + Math.sin(a) * 0.26 * scale;
+    addSphere(parent, [fx, soilY + 0.04 * scale, fz], [0.06 * scale, 0.06 * scale, 0.06 * scale], flColors[i % flColors.length], { smooth: true });
+  }
+
+  // 3. Central Woody Trunk
+  addCylinder(parent, [x, soilY + 0.30 * scale, z], 0.035 * scale, 0.045 * scale, 0.58 * scale, materials.bark, { segments: 12, smooth: true });
+
+  // 4. Formal Double-Sphere Topiary
+  // Lower large sphere
+  addSphere(parent, [x, soilY + 0.52 * scale, z], [0.38 * scale, 0.38 * scale, 0.38 * scale], materials.foliageDeep, { smooth: true });
+  addSphere(parent, [x + 0.08 * scale, soilY + 0.56 * scale, z - 0.08 * scale], [0.28 * scale, 0.28 * scale, 0.28 * scale], materials.foliageMid, { smooth: true });
+
+  // Exposed trunk segment between balls
+  addCylinder(parent, [x, soilY + 0.88 * scale, z], 0.028 * scale, 0.028 * scale, 0.24 * scale, materials.bark, { segments: 10, smooth: true });
+
+  // Upper smaller sphere
+  addSphere(parent, [x, soilY + 1.08 * scale, z], [0.26 * scale, 0.26 * scale, 0.26 * scale], materials.foliageBright, { smooth: true });
+  addSphere(parent, [x, soilY + 1.22 * scale, z], [0.10 * scale, 0.12 * scale, 0.10 * scale], materials.foliageMid, { smooth: true });
+}
+
+/**
+ * Builds a sculptural Zen Bonsai on a lacquered wooden stand with
+ * a teal ceramic tray, moss & accent stone, gnarled S-curve trunk,
+ * and 3 tiered cloud-pruned foliage pads.
+ */
+function buildDetailedBonsai(parent, pos, options = {}) {
+  const [x, y, z] = pos;
+  const scale = options.scale ?? 1.0;
+
+  // 1. Lacquered hardwood display daiza
+  addBox(parent, [x, y + 0.02 * scale, z], [0.38 * scale, 0.035 * scale, 0.26 * scale], materials.woodEspresso);
+  addBox(parent, [x - 0.14 * scale, y + 0.005 * scale, z], [0.04 * scale, 0.015 * scale, 0.20 * scale], materials.brass);
+  addBox(parent, [x + 0.14 * scale, y + 0.005 * scale, z], [0.04 * scale, 0.015 * scale, 0.20 * scale], materials.brass);
+
+  // 2. Glazed ceramic bonsai suiban tray
+  addBox(parent, [x, y + 0.07 * scale, z], [0.32 * scale, 0.07 * scale, 0.22 * scale], materials.ceramicTeal);
+  addBox(parent, [x, y + 0.10 * scale, z], [0.34 * scale, 0.02 * scale, 0.24 * scale], materials.ceramicTeal); // rolled lip
+  addBox(parent, [x, y + 0.095 * scale, z], [0.29 * scale, 0.02 * scale, 0.19 * scale], materials.soil);
+
+  // 3. Moss mounds & miniature scholar stone
+  addSphere(parent, [x + 0.05 * scale, y + 0.11 * scale, z - 0.03 * scale], [0.07 * scale, 0.03 * scale, 0.06 * scale], materials.foliageDeep, { smooth: true });
+  addSphere(parent, [x - 0.07 * scale, y + 0.11 * scale, z + 0.04 * scale], [0.05 * scale, 0.025 * scale, 0.05 * scale], materials.foliageMid, { smooth: true });
+  // Scholar stone
+  addBox(parent, [x + 0.08 * scale, y + 0.13 * scale, z + 0.04 * scale], [0.05 * scale, 0.07 * scale, 0.04 * scale], materials.stoneDark, { rotation: [0.1, 0.4, -0.1] });
+
+  // 4. Gnarled weathered trunk
+  const trunkBaseX = x - 0.04 * scale;
+  const trunkBaseY = y + 0.10 * scale;
+  // Lower leaning trunk
+  addCylinder(parent, [trunkBaseX, trunkBaseY + 0.07 * scale, z], 0.022 * scale, 0.032 * scale, 0.14 * scale, materials.bark, {
+    segments: 10,
+    smooth: true,
+    rotation: [0.05, 0, -0.38]
+  });
+  // Upper elbow curving back
+  const elbowX = trunkBaseX + 0.05 * scale;
+  const elbowY = trunkBaseY + 0.15 * scale;
+  addCylinder(parent, [elbowX, elbowY + 0.06 * scale, z], 0.016 * scale, 0.022 * scale, 0.13 * scale, materials.bark, {
+    segments: 10,
+    smooth: true,
+    rotation: [-0.08, 0, 0.32]
+  });
+
+  // 5. Tiered Cloud-Pruned Foliage Pads (Niwaki)
+  // Low cascading lateral pad (right)
+  addCylinder(parent, [elbowX + 0.08 * scale, elbowY + 0.02 * scale, z + 0.02 * scale], 0.010 * scale, 0.012 * scale, 0.09 * scale, materials.bark, { rotation: [0, 0, 0.7] });
+  addSphere(parent, [elbowX + 0.12 * scale, elbowY + 0.05 * scale, z + 0.02 * scale], [0.09 * scale, 0.045 * scale, 0.08 * scale], materials.foliageDeep, { smooth: true });
+  addSphere(parent, [elbowX + 0.12 * scale, elbowY + 0.07 * scale, z + 0.02 * scale], [0.06 * scale, 0.03 * scale, 0.05 * scale], materials.foliageBright, { smooth: true });
+
+  // Mid counterbalance pad (left)
+  addCylinder(parent, [elbowX - 0.07 * scale, elbowY + 0.06 * scale, z - 0.02 * scale], 0.009 * scale, 0.011 * scale, 0.08 * scale, materials.bark, { rotation: [0, 0, -0.65] });
+  addSphere(parent, [elbowX - 0.10 * scale, elbowY + 0.09 * scale, z - 0.02 * scale], [0.08 * scale, 0.04 * scale, 0.07 * scale], materials.foliageMid, { smooth: true });
+
+  // Crown apex pad
+  addSphere(parent, [elbowX - 0.01 * scale, elbowY + 0.15 * scale, z], [0.11 * scale, 0.05 * scale, 0.10 * scale], materials.foliageBright, { smooth: true });
+  addSphere(parent, [elbowX - 0.01 * scale, elbowY + 0.18 * scale, z], [0.07 * scale, 0.035 * scale, 0.06 * scale], materials.foliageMid, { smooth: true });
+}
+
+/**
+ * Builds a sculptural fluted ceramic vase with brass accents,
+ * arching stems, and broad layered Monstera leaves.
+ */
+function buildDetailedMonsteraVase(parent, pos, options = {}) {
+  const [x, y, z] = pos;
+  const scale = options.scale ?? 1.0;
+
+  // 1. Ceramic & Brass Fluted Vase
+  // Brass pedestal base
+  addCylinder(parent, [x, y + 0.02 * scale, z], 0.09 * scale, 0.10 * scale, 0.04 * scale, materials.brass, { segments: 20, smooth: true });
+  // Tapered ceramic vase body
+  addCylinder(parent, [x, y + 0.18 * scale, z], 0.13 * scale, 0.08 * scale, 0.28 * scale, materials.ceramicTeal, { segments: 24, smooth: true });
+  // Slender vase neck
+  addCylinder(parent, [x, y + 0.35 * scale, z], 0.07 * scale, 0.11 * scale, 0.10 * scale, materials.ceramicTeal, { segments: 20, smooth: true });
+  // Flared brass lip collar
+  addCylinder(parent, [x, y + 0.41 * scale, z], 0.10 * scale, 0.07 * scale, 0.03 * scale, materials.brass, { segments: 20, smooth: true });
+
+  // 2. Arching Monstera Stems & Leaves
+  const leaves = [
+    [-0.14, 0.12, -0.4, 0.3, 0.22, materials.foliageDeep],
+    [0.15, -0.10, 0.35, -0.25, 0.20, materials.foliageDeep],
+    [-0.08, -0.15, -0.25, -0.4, 0.19, materials.foliageMid],
+    [0.12, 0.14, 0.3, 0.35, 0.18, materials.foliageBright],
+    [0.0, 0.0, 0.05, 0.05, 0.16, materials.foliageBright],
+  ];
+
+  for (const [dx, dz, rx, rz, lsize, lmat] of leaves) {
+    const stemH = 0.30 * scale;
+    // Slender green stem
+    addCylinder(parent, [x + dx * 0.5 * scale, y + (0.42 + stemH * 0.4) * scale, z + dz * 0.5 * scale], 0.010 * scale, 0.013 * scale, stemH, materials.foliageDeep, {
+      segments: 8,
+      rotation: [rx, 0, rz]
+    });
+    // Leaf blade (broad, cupped, tilted)
+    const lx = x + dx * scale;
+    const ly = y + (0.42 + stemH * 0.85) * scale;
+    const lz = z + dz * scale;
+    addSphere(parent, [lx, ly, lz], [lsize * 1.1 * scale, lsize * 0.22 * scale, lsize * 1.3 * scale], lmat, {
+      smooth: true,
+      rotation: [rx * 1.2 + 0.2, Math.atan2(dx, dz), rz * 1.2]
+    });
+  }
+}
+
 function buildGrandEntranceGalleria(parent, world, RAPIER, staticBodies) {
   // =========================================================================
   // MANSION GROUND FLOOR: GRAND ENTRANCE GALLERIA & FOYER (x = 0, z = -2.0)
@@ -211,35 +500,30 @@ function buildGrandEntranceGalleria(parent, world, RAPIER, staticBodies) {
   }
 
   // 3. West Wall Console (x = -5.1, z = 1.7, against west partition wall)
-  addBox(parent, [-5.12, 0.46, 1.7], [0.44, 0.54, 2.6], materials.woodDark);
-  addBox(parent, [-5.10, 0.75, 1.7], [0.48, 0.05, 2.66], materials.stone);
-  addBox(parent, [-4.86, 0.46, 1.7], [0.02, 0.48, 2.5], materials.brass);
-  addFurnitureCollider(world, RAPIER, staticBodies, [-5.12, 0.45, 1.7], [0.24, 0.45, 1.35]);
+  addBox(parent, [-5.12, 0.46, 1.7], [0.44, 0.54, 2.0], materials.woodDark);
+  addBox(parent, [-5.10, 0.75, 1.7], [0.48, 0.05, 2.06], materials.stone);
+  addBox(parent, [-4.86, 0.46, 1.7], [0.02, 0.48, 1.9], materials.brass);
+  addFurnitureCollider(world, RAPIER, staticBodies, [-5.12, 0.45, 1.7], [0.24, 0.45, 1.05]);
 
   // Tall Brass Framed Arch Mirror mounted on West wall above console
   addBox(parent, [-5.32, 2.1, 1.7], [0.04, 1.9, 1.6], materials.brass);
   addBox(parent, [-5.30, 2.1, 1.7], [0.02, 1.76, 1.46], materials.mirror);
   // Architectural Fluted Vase with Monstera Foliage on West console
-  addCylinder(parent, [-5.05, 0.95, 1.7], 0.12, 0.08, 0.36, materials.ceramicTeal, { segments: 14 });
-  addSphere(parent, [-5.05, 1.25, 1.7], [0.24, 0.28, 0.24], materials.foliageBright);
+  buildDetailedMonsteraVase(parent, [-5.05, 0.77, 1.7], { scale: 1.0 });
 
-  // 4. East Wall Console (x = 4.8, z = 3.0, south of staircase foot)
-  addBox(parent, [4.82, 0.46, 3.0], [0.44, 0.54, 1.6], materials.woodDark);
-  addBox(parent, [4.80, 0.75, 3.0], [0.48, 0.05, 1.66], materials.stone);
-  addBox(parent, [4.56, 0.46, 3.0], [0.02, 0.48, 1.5], materials.brass);
-  addFurnitureCollider(world, RAPIER, staticBodies, [4.82, 0.45, 3.0], [0.24, 0.45, 0.85]);
+  // 4. East Wall Console (x = 4.8, z = 1.7, symmetrical to west console, south of staircase foot)
+  addBox(parent, [4.82, 0.46, 1.7], [0.44, 0.54, 1.6], materials.woodDark);
+  addBox(parent, [4.80, 0.75, 1.7], [0.48, 0.05, 1.66], materials.stone);
+  addBox(parent, [4.56, 0.46, 1.7], [0.02, 0.48, 1.5], materials.brass);
+  addFurnitureCollider(world, RAPIER, staticBodies, [4.82, 0.45, 1.7], [0.24, 0.45, 0.85]);
   // Warm Foyer Lamp on East console
-  addCylinder(parent, [4.75, 0.95, 3.0], 0.08, 0.12, 0.34, materials.brass, { segments: 12 });
-  addSphere(parent, [4.75, 1.22, 3.0], [0.16, 0.16, 0.16], materials.glow, { shadow: false });
+  addCylinder(parent, [4.75, 0.95, 1.7], 0.08, 0.12, 0.34, materials.brass, { segments: 12 });
+  addSphere(parent, [4.75, 1.22, 1.7], [0.16, 0.16, 0.16], materials.glow, { shadow: false });
 
-  // 5. Symmetrical Potted Fiddle-Leaf Fig Trees in Foyer Corners (x = ±4.8, z = 3.2, framing front windows safely outside doorway)
+  // 5. Symmetrical Potted Fiddle-Leaf Fig Trees in Foyer Corners (x = ±4.85, z = 3.35, framing front windows safely outside doorway)
   for (const fx of [-4.85, 4.85]) {
-    addCylinder(parent, [fx, 0.45, 3.2], 0.34, 0.24, 0.9, materials.ceramicTerracotta, { segments: 16 });
-    for (let i = 0; i < 6; i += 1) {
-      const angle = (i / 6) * Math.PI * 2;
-      addSphere(parent, [fx + Math.cos(angle) * 0.32, 1.35 + (i % 2) * 0.18, 3.2 + Math.sin(angle) * 0.32], [0.32, 0.20, 0.32], materials.foliageBright);
-    }
-    addFurnitureCollider(world, RAPIER, staticBodies, [fx, 0.55, 3.2], [0.35, 0.55, 0.35]);
+    buildDetailedPottedTree(parent, [fx, 0, 3.35], { scale: 1.05, potMaterial: materials.ceramicTerracotta, standMaterial: materials.woodDark });
+    addFurnitureCollider(world, RAPIER, staticBodies, [fx, 0.75, 3.35], [0.42, 0.75, 0.42]);
   }
 
   // 6. Rear Media Wall on West Partition (x = -5.35, z = -6.0)
@@ -326,8 +610,7 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
     addCylinder(parent, [px - 2.76, py + 0.84, pz + 0.95], 0.10, 0.12, 0.18, materials.brass, { segments: 14 });
     addSphere(parent, [px - 2.76, py + 1.02, pz + 0.95], [0.09, 0.14, 0.09], materials.gold);
     // 3. South: Sculptural Teal Ceramic Bonsai Planter
-    addCylinder(parent, [px - 2.76, py + 0.85, pz - 0.95], 0.12, 0.09, 0.20, materials.ceramicTeal, { segments: 14 });
-    addSphere(parent, [px - 2.76, py + 1.04, pz - 0.95], [0.16, 0.12, 0.16], materials.foliageBright);
+    buildDetailedBonsai(parent, [px - 2.76, py + 0.84, pz - 0.95], { scale: 1.0 });
 
     // 4. 4 ARCHITECTURAL PILLARS OF VICKY'S CRAFT (SOLID, Backend, Frontend/3D, AI SDLC)
     const pillars = [
@@ -378,9 +661,8 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
 
     // 7. Flanking Topiary Planters on front garden terrace corners
     for (const cz of [-2.8, 2.8]) {
-      addBox(parent, [px + 3.1, py + 0.3, pz + cz], [0.55, 0.6, 0.55], materials.stoneWarm);
-      addSphere(parent, [px + 3.1, py + 0.85, pz + cz], [0.38, 0.38, 0.38], materials.foliageDeep);
-      addFurnitureCollider(world, RAPIER, staticBodies, [px + 3.1, py + 0.4, pz + cz], [0.3, 0.4, 0.3]);
+      buildDetailedTopiary(parent, [px + 3.1, py + 0.05, pz + cz], { scale: 1.05, urnMaterial: materials.stoneWarm });
+      addFurnitureCollider(world, RAPIER, staticBodies, [px + 3.1, py + 0.65, pz + cz], [0.38, 0.65, 0.38]);
     }
   } else if (id === 'projects') {
     // =========================================================================

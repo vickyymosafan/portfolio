@@ -6,6 +6,7 @@ export const sharedGeometries = {
   box: new THREE.BoxGeometry(1, 1, 1),
   flatBox: new THREE.BoxGeometry(1, 1, 1),
   heroSphere: new THREE.SphereGeometry(1, 8, 6),
+  smoothSphere: new THREE.SphereGeometry(1, 16, 12),
   sphere: new THREE.SphereGeometry(1, 6, 4),
   lowSphere: new THREE.SphereGeometry(1, 5, 3),
   tinySphere: new THREE.SphereGeometry(1, 4, 2),
@@ -22,7 +23,16 @@ const cylinderCache = new Map([
   [8, sharedGeometries.smoothCylinder],
 ]);
 
-function getSharedCylinder(segments, avgRadius = 0.2) {
+function getSharedCylinder(segments, avgRadius = 0.2, forceSmooth = false) {
+  if (forceSmooth || (segments && segments > 8)) {
+    const s = Math.min(32, Math.max(12, segments || 16));
+    if (!cylinderCache.has(s)) {
+      const cyl = new THREE.CylinderGeometry(1, 1, 1, s);
+      cylinderCache.set(s, cyl);
+      sharedGeoSet.add(cyl);
+    }
+    return cylinderCache.get(s);
+  }
   if (avgRadius <= 0.14) return sharedGeometries.thinCylinder;
   if (avgRadius <= 0.36) return sharedGeometries.cylinder;
   const clamped = Math.min(8, Math.max(4, segments || 6));
@@ -97,7 +107,7 @@ export function addBox(parent, position, size, surface, options = {}) {
 
 export function addSphere(parent, position, size, surface, options = {}) {
   const maxDim = Math.max(size[0], size[1], size[2]);
-  const geo = options.lowPoly || maxDim <= 0.18 ? sharedGeometries.lowSphere : sharedGeometries.heroSphere;
+  const geo = options.smooth ? sharedGeometries.smoothSphere : (options.lowPoly || maxDim <= 0.18 ? sharedGeometries.lowSphere : sharedGeometries.heroSphere);
   const mesh = new THREE.Mesh(geo, surface);
   mesh.position.set(...position);
   mesh.scale.set(...size);
@@ -113,7 +123,7 @@ export function addSphere(parent, position, size, surface, options = {}) {
 
 export function addCylinder(parent, position, radiusTop, radiusBottom, height, surface, options = {}) {
   const avgRadius = (radiusTop + radiusBottom) * 0.5;
-  const geo = getSharedCylinder(options.segments ?? 6, avgRadius);
+  const geo = getSharedCylinder(options.segments ?? 6, avgRadius, options.smooth || (options.segments && options.segments > 8));
   const mesh = new THREE.Mesh(geo, surface);
   mesh.position.set(...position);
   mesh.scale.set(avgRadius, height, avgRadius);
@@ -123,6 +133,27 @@ export function addCylinder(parent, position, radiusTop, radiusBottom, height, s
   if (options.rotation) {
     mesh.rotation.set(...options.rotation);
   }
+  parent.add(mesh);
+  return mesh;
+}
+
+const _upDir = new THREE.Vector3(0, 1, 0);
+export function addBranchSegment(parent, p1, p2, radius, surface, options = {}) {
+  const dx = p2[0] - p1[0];
+  const dy = p2[1] - p1[1];
+  const dz = p2[2] - p1[2];
+  const len = Math.hypot(dx, dy, dz);
+  if (len < 0.001) return null;
+
+  const geo = getSharedCylinder(options.segments ?? 8, radius, options.smooth || (options.segments && options.segments > 8));
+  const mesh = new THREE.Mesh(geo, surface);
+  mesh.position.set((p1[0] + p2[0]) * 0.5, (p1[1] + p2[1]) * 0.5, (p1[2] + p2[2]) * 0.5);
+  mesh.scale.set(radius, len, radius);
+
+  const dir = new THREE.Vector3(dx, dy, dz).normalize();
+  mesh.quaternion.setFromUnitVectors(_upDir, dir);
+  mesh.castShadow = options.shadow !== undefined ? options.shadow : (len * radius > 0.01);
+  mesh.receiveShadow = options.receive ?? true;
   parent.add(mesh);
   return mesh;
 }
@@ -150,7 +181,7 @@ export class BatchCollector {
 
   addCylinder(position, radiusTop, radiusBottom, height, material, options = {}) {
     const avgRadius = (radiusTop + radiusBottom) * 0.5;
-    const baseGeo = getSharedCylinder(options.segments ?? 6, avgRadius);
+    const baseGeo = getSharedCylinder(options.segments ?? 6, avgRadius, options.smooth || (options.segments && options.segments > 8));
     const geo = baseGeo.clone();
     _tempVecPos.set(...position);
     if (options.rotation) {
@@ -167,7 +198,7 @@ export class BatchCollector {
 
   addSphere(position, size, material, options = {}) {
     const maxDim = Math.max(size[0], size[1], size[2]);
-    const baseGeo = maxDim <= 0.22 ? sharedGeometries.tinySphere : (options.lowPoly ? sharedGeometries.lowSphere : sharedGeometries.sphere);
+    const baseGeo = options.smooth ? sharedGeometries.smoothSphere : (maxDim <= 0.22 ? sharedGeometries.tinySphere : (options.lowPoly ? sharedGeometries.lowSphere : sharedGeometries.sphere));
     const geo = baseGeo.clone();
     _tempVecPos.set(...position);
     if (options.rotation) {

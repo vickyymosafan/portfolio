@@ -323,14 +323,26 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
 
   // G. Luxury Balcony Greenery & Ornamental Potted Topiaries ("Better visual di depan")
   for (const tx of [-5.8, 5.8]) {
-    archBatch.addCylinder([tx, 5.48, 5.4], 0.42, 0.32, 0.52, materials.terracotta, { segments: 16 });
-    archBatch.addCylinder([tx, 5.74, 5.4], 0.44, 0.42, 0.06, materials.terracotta, { segments: 16 });
-    archBatch.addCylinder([tx, 5.73, 5.4], 0.38, 0.38, 0.04, materials.soil, { segments: 12 });
-    archBatch.addSphere([tx, 6.22, 5.4], [0.46, 0.46, 0.46], materials.foliageBright);
-    archBatch.addSphere([tx, 6.45, 5.4], [0.34, 0.34, 0.34], materials.foliageMid);
-    archBatch.addSphere([tx - 0.2, 5.85, 5.5], [0.08, 0.08, 0.08], materials.coral);
-    archBatch.addSphere([tx + 0.2, 5.85, 5.3], [0.08, 0.08, 0.08], materials.yellow);
-    archBatch.addSphere([tx, 5.88, 5.55], [0.08, 0.08, 0.08], materials.bluePastel);
+    // Sculptural Urn with plinth & rim
+    archBatch.addBox([tx, 5.24, 5.4], [0.54, 0.06, 0.54], materials.terracotta);
+    archBatch.addCylinder([tx, 5.48, 5.4], 0.42, 0.32, 0.46, materials.terracotta, { segments: 16 });
+    archBatch.addCylinder([tx, 5.72, 5.4], 0.45, 0.41, 0.06, materials.terracotta, { segments: 16 });
+    archBatch.addCylinder([tx, 5.68, 5.4], 0.425, 0.425, 0.02, materials.brass, { segments: 16 });
+    // Soil & river pebbles
+    archBatch.addCylinder([tx, 5.71, 5.4], 0.38, 0.38, 0.04, materials.soil, { segments: 12 });
+    archBatch.addSphere([tx - 0.12, 5.74, 5.45], [0.04, 0.025, 0.04], materials.stoneCream);
+    archBatch.addSphere([tx + 0.14, 5.74, 5.36], [0.04, 0.025, 0.04], materials.stoneCream);
+    // Central woody trunk
+    archBatch.addCylinder([tx, 5.95, 5.4], 0.038, 0.048, 0.46, materials.bark, { segments: 8 });
+    // Formal Double-Sphere Topiary
+    archBatch.addSphere([tx, 6.22, 5.4], [0.42, 0.42, 0.42], materials.foliageDeep);
+    archBatch.addCylinder([tx, 6.46, 5.4], 0.026, 0.026, 0.14, materials.bark, { segments: 8 });
+    archBatch.addSphere([tx, 6.62, 5.4], [0.28, 0.28, 0.28], materials.foliageBright);
+    archBatch.addSphere([tx, 6.78, 5.4], [0.12, 0.14, 0.12], materials.foliageMid);
+    // Base flowers in soil
+    archBatch.addSphere([tx - 0.2, 5.74, 5.5], [0.07, 0.07, 0.07], materials.coral);
+    archBatch.addSphere([tx + 0.2, 5.74, 5.3], [0.07, 0.07, 0.07], materials.yellow);
+    archBatch.addSphere([tx, 5.75, 5.55], [0.07, 0.07, 0.07], materials.bluePastel);
     addColliderBox([tx, 5.85, 5.4], [0.45, 0.65, 0.45]);
   }
 

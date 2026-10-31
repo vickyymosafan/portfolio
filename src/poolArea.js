@@ -259,13 +259,51 @@ export function createPoolArea(scene, world, RAPIER, staticBodies) {
     [deckCenterX + 7.5, deckCenterZ - 9.0],
   ];
   for (const [px, pz] of palmCorners) {
-    batch.addCylinder([px, 0.5, pz], 0.45, 0.35, 0.85, materials.ceramicTerracotta, { segments: 16 });
+    // Sculptural Terracotta Planter with rolled rim & brass drainage base
+    batch.addCylinder([px, 0.04, pz], 0.38, 0.38, 0.08, materials.brass, { segments: 16 });
+    batch.addCylinder([px, 0.48, pz], 0.46, 0.34, 0.80, materials.ceramicTerracotta, { segments: 18 });
+    batch.addCylinder([px, 0.88, pz], 0.50, 0.46, 0.08, materials.ceramicTerracotta, { segments: 18 });
+    batch.addCylinder([px, 0.82, pz], 0.47, 0.47, 0.03, materials.brass, { segments: 18 });
+
+    // Potting soil & white pebble mulch
+    batch.addCylinder([px, 0.85, pz], 0.42, 0.42, 0.04, materials.soil, { segments: 14 });
+    for (const [ox, oz] of [[-0.16, 0.1], [0.15, 0.12], [-0.1, -0.15], [0.18, -0.08]]) {
+      batch.addSphere([px + ox, 0.88, pz + oz], [0.05, 0.03, 0.05], materials.stoneCream, { segments: 8 });
+    }
+
+    // Fibrous Palm Trunk
+    batch.addCylinder([px, 1.25, pz], 0.062, 0.082, 0.72, materials.bark, { segments: 10 });
+    batch.addCylinder([px, 1.15, pz], 0.074, 0.074, 0.03, materials.woodDark, { segments: 8 });
+    batch.addCylinder([px, 1.35, pz], 0.068, 0.068, 0.03, materials.woodDark, { segments: 8 });
+
+    // 6 Arching Tropical Fan Fronds
     for (let i = 0; i < 6; i += 1) {
       const angle = (i / 6) * Math.PI * 2;
-      const lx = px + Math.cos(angle) * 0.5;
-      const lz = pz + Math.sin(angle) * 0.5;
-      batch.addSphere([lx, 1.4 + (i % 2) * 0.2, lz], [0.45, 0.2, 0.45], materials.foliageBright);
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+      const midDist = 0.38;
+      const tipDist = 0.68;
+
+      // Arching green frond stem
+      batch.addCylinder([px + cosA * midDist, 1.62, pz + sinA * midDist], 0.014, 0.020, 0.42, materials.foliageDeep, {
+        segments: 6,
+        rotation: [sinA * 0.5, 0, -cosA * 0.5]
+      });
+
+      // Broad fanned palm blade clusters
+      const lx = px + cosA * tipDist;
+      const lz = pz + sinA * tipDist;
+      const ly = 1.68 + (i % 2) * 0.14;
+      batch.addSphere([lx, ly, lz], [0.38, 0.12, 0.38], i % 2 === 0 ? materials.foliageMid : materials.foliageDeep, {
+        rotation: [sinA * 0.4 + 0.1, angle, -cosA * 0.4]
+      });
+      batch.addSphere([lx * 0.85 + px * 0.15, ly + 0.08, lz * 0.85 + pz * 0.15], [0.26, 0.09, 0.26], materials.foliageBright, {
+        rotation: [sinA * 0.3, angle + 0.2, -cosA * 0.3]
+      });
     }
+
+    // Crown center emerging shoot
+    batch.addSphere([px, 1.78, pz], [0.22, 0.18, 0.22], materials.foliageBright);
   }
 
   batch.build(poolGroup, true);
