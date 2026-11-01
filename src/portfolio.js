@@ -469,6 +469,40 @@ export const portfolio = {
       lead: 'Real, high-impact systems translated from architectural PRDs into production with verified GitHub repositories and live deployments.',
       items: [
         {
+          id: 'mcp-threejs-visual-qa',
+          title: 'MCP Three.js Visual QA — Autonomous 3D WebGL Inspection Server',
+          category: 'AI Developer Tooling · Model Context Protocol (MCP) · 3D WebGL QA',
+          badge: 'TypeScript MCP Server',
+          challenge: 'Enabling autonomous AI coding agents to visually audit, critique, and repair 3D WebGL and Three.js browser scenes without manual human intervention.',
+          engineering: 'Model Context Protocol (MCP) server built with TypeScript & Puppeteer, providing high-fidelity headless browser rendering, camera angle sweeps, WebGL diagnostics, color palette contrast extraction, mesh integrity audits, and automated visual regression reporting.',
+          stack: ['TypeScript', 'Model Context Protocol (MCP)', 'Three.js', 'Puppeteer', 'WebGL', 'Node.js'],
+          features: [
+            'Headless 3D scene inspection & multi-angle camera viewport capture',
+            'Automated WebGL shader error, performance & memory leak diagnostics',
+            'Color contrast, palette extraction & stylized rendering audit',
+            'Autonomous visual feedback repair loop for AI agent pair-programming',
+          ],
+          github: 'https://github.com/vickyymosafan/MCP_threejs-visual-qa-mcp',
+          demo: null,
+        },
+        {
+          id: 'mcp-principal-agentic-harness',
+          title: 'MCP Principal Agentic Harness — Multi-Agent Engineering Governance',
+          category: 'Agentic AI Orchestration · Model Context Protocol (MCP) · Quality Governance',
+          badge: 'TypeScript MCP Server',
+          challenge: 'Governing autonomous AI multi-agent workflows across complex software delivery cycles with strict quality gates, evidence verification, and deterministic execution planning.',
+          engineering: 'Model Context Protocol (MCP) server built with TypeScript, enforcing the 70-module capability model, dependency-aware task claiming, auditable evidence recording, automated quality gate evaluation, repair iteration throttling, and dev-server lifecycle management.',
+          stack: ['TypeScript', 'Model Context Protocol (MCP)', 'Agentic Workflows', 'Quality Gates', 'Node.js'],
+          features: [
+            'Deterministic execution plan creation & dependency-aware task claiming',
+            'Auditable quality checkpoint updates & evidence verification gates',
+            'Anti-gaming repair iteration limits & automated quality evaluation',
+            'Integrated local dev server management & route discovery tools',
+          ],
+          github: 'https://github.com/vickyymosafan/MCP_principal-agentic-harness',
+          demo: null,
+        },
+        {
           id: 'Beyond-RAG-Artificial-Super-Intelligence',
           title: 'Beyond-RAG Artificial Super Intelligence',
           category: 'RAG & Intelligent Agents · Edge Serverless',
@@ -605,7 +639,17 @@ export const portfolio = {
           demo: 'https://unfollowig.vercel.app',
         },
       ],
-      tags: ['Beyond-RAG ASI', 'Posyandu Digital', 'AI SmartChat', 'System Pemerintahan', 'Destino Copytrade', 'MQL5', 'Antosa Architect'],
+      tags: [
+        'MCP Three.js Visual QA',
+        'MCP Agentic Harness',
+        'Beyond-RAG ASI',
+        'Posyandu Digital',
+        'AI SmartChat',
+        'System Pemerintahan',
+        'Destino Copytrade',
+        'MQL5',
+        'Antosa Architect',
+      ],
     },
 
     // 7. ARCHITECTURAL DOMAIN & CORE TECHNOLOGIES & TOOLING
@@ -700,8 +744,8 @@ export const portfolio = {
         months: ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
         highlights: [
           '1,039+ verified contributions in the last year across production repositories',
-          '33+ public repositories spanning Next.js 15, TypeScript, Laravel, Hono, Python & Kotlin',
-          'Active open-source maintainer of Beyond-RAG ASI, Posyandu Digital, AI SmartChat & System Pemerintahan',
+          '35+ public repositories including Model Context Protocol (MCP) tooling, Next.js 15, TypeScript, Laravel, Hono & Python',
+          'Active author of MCP Three.js Visual QA, MCP Principal Agentic Harness, Beyond-RAG ASI & Posyandu Digital',
         ],
       },
       stages: [

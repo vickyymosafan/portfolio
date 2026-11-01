@@ -669,11 +669,12 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
       addBox(parent, [x + side * 3.5, y + 4.38, z - 5.74], [2.82, 0.06, 0.08], materials.brass);
     }
 
-    // 3 Illuminated 4K Product Showcase Screens (2 flanking the central display board, 1 on West wall)
+    // 4 Illuminated 4K Product Showcase Screens (2 flanking the central display board, 1 on West wall, 1 on East wall)
     const showcases = [
       { pos: [x - 3.5, y + 2.6, z - 5.68], rotY: 0, mat: materials.screenCode, accentMat: materials.coral },
       { pos: [x + 3.5, y + 2.6, z - 5.68], rotY: 0, mat: materials.screenGlow, accentMat: materials.emeraldBright },
       { pos: [x - 4.75, y + 2.6, z - 1.8], rotY: Math.PI * 0.5, mat: materials.screenTerminal, accentMat: materials.gold },
+      { pos: [x + 4.75, y + 2.6, z - 1.8], rotY: -Math.PI * 0.5, mat: materials.screenCode, accentMat: materials.emeraldBright },
     ];
     for (const sc of showcases) {
       const frame = new THREE.Group();
@@ -733,6 +734,34 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
     addBox(parent, [x - 4.35, y + 1.08, z - 2.3], [0.42, 0.06, 0.58], materials.coral);
     addBox(parent, [x - 4.35, y + 0.90, z - 1.2], [0.32, 0.24, 0.45], materials.screenGlow, { shadow: false });
     addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.4, y + 0.5, z - 1.8], [0.38, 0.5, 1.35]);
+
+    // East Wall Console Table below the 4th Showcase Screen — Dedicated MCP Developer Suite (x + 4.4, z - 1.8)
+    addBox(parent, [x + 4.4, y + 0.48, z - 1.8], [0.65, 0.52, 2.6], materials.woodDark);
+    addBox(parent, [x + 4.38, y + 0.76, z - 1.8], [0.68, 0.04, 2.66], materials.stone);
+    addBox(parent, [x + 4.08, y + 0.48, z - 1.8], [0.02, 0.46, 2.5], materials.brass);
+
+    // 1. MCP Three.js Visual QA Hologram Station (z - 2.3)
+    // Stylized Camera Sensor Pedestal with Cyan Holographic Frustum
+    addCylinder(parent, [x + 4.35, y + 0.84, z - 2.3], 0.16, 0.20, 0.14, materials.metalDark, { segments: 12 });
+    addBox(parent, [x + 4.35, y + 0.98, z - 2.3], [0.22, 0.16, 0.26], materials.blueSky);
+    addCylinder(parent, [x + 4.22, y + 0.98, z - 2.3], 0.07, 0.07, 0.08, materials.brass, { rotation: [0, 0, Math.PI * 0.5], segments: 12 });
+    addSphere(parent, [x + 4.16, y + 0.98, z - 2.3], [0.06, 0.06, 0.06], materials.glow, { shadow: false });
+    // Visual QA Holographic Viewing Cone / Frustum
+    addCylinder(parent, [x + 4.02, y + 0.98, z - 2.3], 0.02, 0.14, 0.22, materials.screenGlow, { rotation: [0, 0, Math.PI * 0.5], segments: 8, shadow: false });
+
+    // 2. Center Brass Engraved Title Plaque (z - 1.8)
+    addBox(parent, [x + 4.35, y + 0.88, z - 1.8], [0.12, 0.18, 0.46], materials.brass);
+    addBox(parent, [x + 4.28, y + 0.88, z - 1.8], [0.02, 0.14, 0.40], materials.screenTerminal, { shadow: false });
+
+    // 3. MCP Principal Agentic Harness Governance Hub (z - 1.3)
+    // Hexagonal Server Plinth with Floating Orbital Multi-Agent Rings & Gold Core
+    addCylinder(parent, [x + 4.35, y + 0.84, z - 1.3], 0.20, 0.24, 0.14, materials.woodDark, { segments: 6 });
+    addSphere(parent, [x + 4.35, y + 1.05, z - 1.3], [0.12, 0.12, 0.12], materials.gold, { shadow: false });
+    addCylinder(parent, [x + 4.35, y + 1.05, z - 1.3], 0.24, 0.24, 0.02, materials.brass, { rotation: [0.5, 0, 0.4], segments: 16 });
+    addCylinder(parent, [x + 4.35, y + 1.05, z - 1.3], 0.22, 0.22, 0.02, materials.coral, { rotation: [-0.4, 0, -0.5], segments: 16 });
+    addBox(parent, [x + 4.35, y + 1.25, z - 1.3], [0.08, 0.08, 0.08], materials.emeraldBright, { rotation: [0, Math.PI * 0.25, 0], shadow: false });
+
+    addFurnitureCollider(world, RAPIER, staticBodies, [x + 4.4, y + 0.5, z - 1.8], [0.38, 0.5, 1.35]);
 
     // Upholstered Gallery Center Bench in Navy Velvet & Brushed Brass
     addBox(parent, [x, y + 0.46, z + 0.5], [3.2, 0.36, 1.15], materials.navy);
