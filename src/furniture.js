@@ -511,14 +511,6 @@ function buildGrandEntranceGalleria(parent, world, RAPIER, staticBodies) {
   // Architectural Fluted Vase with Monstera Foliage on West console
   buildDetailedMonsteraVase(parent, [-5.05, 0.77, 1.7], { scale: 1.0 });
 
-  // 4. East Wall Console (x = 4.8, z = 1.7, symmetrical to west console, south of staircase foot)
-  addBox(parent, [4.82, 0.46, 1.7], [0.44, 0.54, 1.6], materials.woodDark);
-  addBox(parent, [4.80, 0.75, 1.7], [0.48, 0.05, 1.66], materials.stone);
-  addBox(parent, [4.56, 0.46, 1.7], [0.02, 0.48, 1.5], materials.brass);
-  addFurnitureCollider(world, RAPIER, staticBodies, [4.82, 0.45, 1.7], [0.24, 0.45, 0.85]);
-  // Warm Foyer Lamp on East console
-  addCylinder(parent, [4.75, 0.95, 1.7], 0.08, 0.12, 0.34, materials.brass, { segments: 12 });
-  addSphere(parent, [4.75, 1.22, 1.7], [0.16, 0.16, 0.16], materials.glow, { shadow: false });
 
   // 5. Symmetrical Potted Fiddle-Leaf Fig Trees in Foyer Corners (x = ±4.85, z = 3.35, framing front windows safely outside doorway)
   for (const fx of [-4.85, 4.85]) {

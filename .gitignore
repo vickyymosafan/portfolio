@@ -48,6 +48,13 @@ desktop.ini
 *.tar.gz
 *.rar
 
+# Private Documents, CVs & Temporary Office Lockfiles
+*.docx
+*.doc
+*.pdf
+~$*
+~*.tmp
+*.tmp
 New CV - M. Vicky Mosafan.docx
 Vicky’s Developer Life World Map.png
 AGENTS.MD
