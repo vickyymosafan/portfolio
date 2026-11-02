@@ -638,16 +638,16 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
     addSphere(rotunda, [0.06, 1.08, -0.04], [0.08, 0.08, 0.08], materials.glow, { shadow: false });
     addFurnitureCollider(world, RAPIER, staticBodies, [rotTableX, py + 0.48, rotTableZ], [0.88, 0.48, 0.88]);
 
-    // 6. EXECUTIVE OUTDOOR LOUNGE ARMCHAIRS (Facing South / +Z directly forward toward visitor)
-    // Placed side-by-side along X with elegant drinks table between them
+    // 6. EXECUTIVE OUTDOOR LOUNGE ARMCHAIRS (Facing West / -X directly toward About Me display board & table)
+    // Placed on East side of the rotunda table, facing the presentation board
     const chairCoords = [
-      { x: px + 1.4, z: pz, mat: materials.cushionMint }, // x = -9.1
-      { x: px + 2.65, z: pz, mat: materials.cushionYellow }, // x = -7.85
+      { x: px + 1.25, z: pz - 0.75, rotY: -0.10, mat: materials.cushionYellow }, // South chair (x = -9.25, z = 9.75)
+      { x: px + 1.25, z: pz + 0.75, rotY: 0.10, mat: materials.cushionMint },   // North chair (x = -9.25, z = 11.25)
     ];
     for (const c of chairCoords) {
       const arm = new THREE.Group();
       arm.position.set(c.x, py + 0.16, c.z);
-      arm.rotation.y = Math.PI * 0.5; // Backrest North, cushion faces South (+Z) forward
+      arm.rotation.y = c.rotY; // Seat cushion faces West (-X) toward table and "About Me" board
       parent.add(arm);
       addBox(arm, [0, 0.16, 0], [0.88, 0.05, 0.82], materials.brass);
       addBox(arm, [0, 0.40, 0], [0.84, 0.38, 0.78], materials.terracotta);
@@ -658,8 +658,8 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
       addFurnitureCollider(world, RAPIER, staticBodies, [c.x, py + 0.45, c.z], [0.44, 0.45, 0.44]);
     }
 
-    // Elegant Pedestal Drinks Table between the 2 Armchairs
-    const sideTblX = px + 2.02; // x = -8.48
+    // Elegant Pedestal Drinks Table between the 2 Armchairs (x = -9.00, z = 10.5)
+    const sideTblX = px + 1.50; // x = -9.00
     addCylinder(parent, [sideTblX, py + 0.22, pz], 0.24, 0.28, 0.12, materials.woodDark, { segments: 14 });
     addCylinder(parent, [sideTblX, py + 0.48, pz], 0.05, 0.05, 0.44, materials.brass, { segments: 10 });
     addCylinder(parent, [sideTblX, py + 0.72, pz], 0.36, 0.36, 0.04, materials.stoneWarm, { segments: 18 });
