@@ -49,9 +49,13 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
 
     // Custom area rug for indoor non-garage pavilions
     if (spec.id !== 'garage' && spec.id !== 'contact' && spec.id !== 'about') {
-      const rugW = spec.id === 'bathroom' ? 7.6 : 8.4;
-      const rugD = spec.id === 'bathroom' ? 6.0 : 6.4;
-      addBox(building, [spec.x, spec.y + 0.02, spec.z], [rugW, 0.016, rugD], spec.rugMat, { receive: false, shadow: false });
+      const isVolunteering = spec.id === 'bathroom';
+      // For Volunteering (Lantai 2 Center): stairwell glass railing is at x = 2.05,
+      // so rug right edge is clamped cleanly at x = 1.90 (leaving a 10cm architectural tile reveal, never exceeding railing)
+      const rugX = isVolunteering ? -0.95 : spec.x;
+      const rugW = isVolunteering ? 5.7 : 8.4;
+      const rugD = isVolunteering ? 5.8 : 6.4;
+      addBox(building, [rugX, spec.y + 0.02, spec.z], [rugW, 0.016, rugD], spec.rugMat, { receive: false, shadow: false });
     }
 
     // Presentation Display Board mounted in every pavilion (all 9 sections)
