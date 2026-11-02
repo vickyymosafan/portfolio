@@ -347,17 +347,48 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   }
 
   // H. Balcony Terrace Cafe Lounge Set (Bistro Table & Chairs on East Wing)
+  // Scaled up to proper human proportions (table top 0.77m above floor, chairs seat 0.47m above floor)
+  // with solid Rapier physics colliders to prevent character clipping/penetration
   const bistroX = 3.6;
   const bistroZ = 5.2;
-  archBatch.addCylinder([bistroX, 5.25, bistroZ], 0.32, 0.32, 0.04, materials.brass, { segments: 14 });
-  archBatch.addCylinder([bistroX, 5.55, bistroZ], 0.04, 0.04, 0.56, materials.brass, { segments: 10 });
-  archBatch.addCylinder([bistroX, 5.85, bistroZ], 0.48, 0.48, 0.04, materials.ceramic, { segments: 20 });
-  archBatch.addCylinder([bistroX + 0.12, 5.92, bistroZ + 0.08], 0.06, 0.05, 0.10, materials.ceramicTeal, { segments: 10 });
-  for (const [cx, cz, rotY] of [[bistroX - 0.65, bistroZ, Math.PI * 0.5], [bistroX + 0.65, bistroZ, -Math.PI * 0.5]]) {
-    archBatch.addBox([cx, 5.48, cz], [0.44, 0.06, 0.44], materials.woodDark);
-    archBatch.addBox([cx, 5.34, cz], [0.38, 0.22, 0.38], materials.metalDark);
-    archBatch.addBox([cx, 5.52, cz], [0.42, 0.05, 0.42], materials.cushionCoral);
-    archBatch.addBox([cx + (rotY > 0 ? -0.18 : 0.18), 5.78, cz], [0.06, 0.52, 0.42], materials.woodDark);
+  // Bistro Table (Solid brass flared base, fluted stem, circular marble top with gold rim)
+  archBatch.addCylinder([bistroX, 5.24, bistroZ], 0.46, 0.50, 0.06, materials.brass, { segments: 18 });
+  archBatch.addCylinder([bistroX, 5.58, bistroZ], 0.065, 0.08, 0.62, materials.brass, { segments: 14 });
+  archBatch.addCylinder([bistroX, 5.92, bistroZ], 0.12, 0.12, 0.06, materials.brass, { segments: 14 });
+  archBatch.addCylinder([bistroX, 5.96, bistroZ], 0.68, 0.68, 0.05, materials.stoneWarm, { segments: 24 });
+  archBatch.addCylinder([bistroX, 5.965, bistroZ], 0.69, 0.69, 0.02, materials.brass, { segments: 24 });
+  // Tabletop props: ceramic tea cup, saucer & brass dessert dome
+  archBatch.addCylinder([bistroX + 0.16, 6.00, bistroZ + 0.12], 0.09, 0.09, 0.015, materials.ceramic, { segments: 12 });
+  archBatch.addCylinder([bistroX + 0.16, 6.05, bistroZ + 0.12], 0.06, 0.045, 0.09, materials.ceramicTeal, { segments: 12 });
+  archBatch.addCylinder([bistroX - 0.18, 6.00, bistroZ - 0.10], 0.14, 0.14, 0.02, materials.brass, { segments: 14 });
+  archBatch.addSphere([bistroX - 0.18, 6.06, bistroZ - 0.10], [0.12, 0.10, 0.12], materials.brass);
+  // Table physics collider
+  addColliderBox([bistroX, 5.60, bistroZ], [0.65, 0.40, 0.65]);
+
+  // Two Generous Luxury Bistro Armchairs facing table
+  const chairDistance = 0.96;
+  for (const [cx, cz, rotY] of [
+    [bistroX - chairDistance, bistroZ, Math.PI * 0.5],
+    [bistroX + chairDistance, bistroZ, -Math.PI * 0.5],
+  ]) {
+    // 4 Splayed architectural legs
+    for (const [lx, lz] of [[-0.22, -0.22], [0.22, -0.22], [-0.22, 0.22], [0.22, 0.22]]) {
+      archBatch.addCylinder([cx + lx, 5.43, cz + lz], 0.025, 0.035, 0.44, materials.brass, { segments: 8 });
+    }
+    // Chair seat frame & generous cushion (seat top at y = 5.68, 0.47m above floor)
+    archBatch.addBox([cx, 5.65, cz], [0.62, 0.06, 0.60], materials.woodDark);
+    archBatch.addBox([cx, 5.71, cz], [0.58, 0.06, 0.56], materials.cushionCoral);
+    // Ergonomic curved backrest reaching chest height (height 0.68m, top at y = 6.38)
+    const backX = cx + (rotY > 0 ? -0.26 : 0.26);
+    archBatch.addBox([backX, 6.04, cz], [0.08, 0.68, 0.58], materials.woodDark);
+    archBatch.addBox([backX + (rotY > 0 ? 0.03 : -0.03), 6.04, cz], [0.03, 0.62, 0.52], materials.cushionCoral);
+    // Sculpted brass armrests
+    for (const az of [-0.28, 0.28]) {
+      archBatch.addBox([cx, 5.92, cz + az], [0.50, 0.04, 0.06], materials.brass);
+      archBatch.addCylinder([cx + (rotY > 0 ? 0.22 : -0.22), 5.79, cz + az], 0.02, 0.02, 0.22, materials.brass, { segments: 8 });
+    }
+    // Chair physics collider (cannot be penetrated by character)
+    addColliderBox([cx, 5.80, cz], [0.38, 0.60, 0.38]);
   }
 
   // =========================================================================
@@ -568,38 +599,38 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   addColliderBox([-11.0, 5.06, -2.2], [5.5, 0.14, 6.0]);
 
   // Master Bathroom Floor Slabs & Upper Mezzanine (Bay 2: x: [-5.5, 5.5], z: [3.8, -8.2])
-  // Main bathroom & atrium floor slab (x: [-5.5, 2.6], width 8.1m, depth 12.0m)
-  addBox(building, [-1.45, 5.06, -2.2], [8.1, 0.28, 12.0], materials.bathroomTile, { shadow: false, receive: true });
-  addColliderBox([-1.45, 5.06, -2.2], [4.05, 0.14, 6.0]);
+  // Main bathroom & atrium floor slab (recessed back to x = 2.0 to provide generous 1.2m open headroom over side staircase)
+  addBox(building, [-1.75, 5.06, -2.2], [7.5, 0.28, 12.0], materials.bathroomTile, { shadow: false, receive: true });
+  addColliderBox([-1.75, 5.06, -2.2], [3.75, 0.14, 6.0]);
 
-  // Rear upper landing floor slab (connecting top of stairs to bathroom, bedroom, & library, x: [2.6, 5.5], z: [-5.6, -8.2])
-  addBox(building, [4.05, 5.06, -6.9], [2.9, 0.28, 2.6], materials.bathroomTile, { shadow: false, receive: true });
-  addColliderBox([4.05, 5.06, -6.9], [1.45, 0.14, 1.3]);
+  // Rear upper landing floor slab (connecting top of stairs to bathroom, bedroom, & library, x: [2.0, 5.5], z: [-5.6, -8.2])
+  addBox(building, [3.75, 5.06, -6.9], [3.5, 0.28, 2.6], materials.bathroomTile, { shadow: false, receive: true });
+  addColliderBox([3.75, 5.06, -6.9], [1.75, 0.14, 1.3]);
 
-  // Front upper overlook floor slab (x: [2.6, 5.5], z: [0.8, 3.8])
-  addBox(building, [4.05, 5.06, 2.3], [2.9, 0.28, 3.0], materials.bathroomTile, { shadow: false, receive: true });
-  addColliderBox([4.05, 5.06, 2.3], [1.45, 0.14, 1.5]);
+  // Front upper overlook floor slab (x: [2.0, 5.5], z: [0.8, 3.8])
+  addBox(building, [3.75, 5.06, 2.3], [3.5, 0.28, 3.0], materials.bathroomTile, { shadow: false, receive: true });
+  addColliderBox([3.75, 5.06, 2.3], [1.75, 0.14, 1.5]);
 
-  // Modern safety glass balustrades framing the stairwell opening on Lantai 2 (open well at x: [2.6, 5.5], z: [-5.6, 0.8])
+  // Modern safety glass balustrades framing the stairwell opening on Lantai 2 (open well at x: [2.0, 5.5], z: [-5.6, 0.8])
   // Architectural Code: 1.05m height safety balustrade with ergonomic handrail & brass spigots
   // Base shoe curb channels
-  archBatch.addBox([2.65, 5.26, -2.4], [0.10, 0.10, 6.4], materials.windowFrame);
-  archBatch.addBox([4.05, 5.26, 0.8], [2.7, 0.10, 0.10], materials.windowFrame);
+  archBatch.addBox([2.05, 5.26, -2.4], [0.10, 0.10, 6.4], materials.windowFrame);
+  archBatch.addBox([3.75, 5.26, 0.8], [3.3, 0.10, 0.10], materials.windowFrame);
 
-  // Inner side glass panel along x = 2.65
-  addBox(building, [2.65, 5.75, -2.4], [0.04, 0.88, 6.4], materials.glass, { shadow: false });
-  archBatch.addBox([2.65, 6.25, -2.4], [0.12, 0.08, 6.4], materials.woodDark);
-  archBatch.addBox([2.65, 6.20, -2.4], [0.14, 0.02, 6.4], materials.brass);
-  addColliderBox([2.65, 5.75, -2.4], [0.08, 0.55, 3.2]);
+  // Inner side glass panel along x = 2.05
+  addBox(building, [2.05, 5.75, -2.4], [0.04, 0.88, 6.4], materials.glass, { shadow: false });
+  archBatch.addBox([2.05, 6.25, -2.4], [0.12, 0.08, 6.4], materials.woodDark);
+  archBatch.addBox([2.05, 6.20, -2.4], [0.14, 0.02, 6.4], materials.brass);
+  addColliderBox([2.05, 5.75, -2.4], [0.08, 0.55, 3.2]);
 
-  // Front glass panel along z = 0.8 (x: [2.7, 5.4])
-  addBox(building, [4.05, 5.75, 0.8], [2.7, 0.88, 0.04], materials.glass, { shadow: false });
-  archBatch.addBox([4.05, 6.25, 0.8], [2.7, 0.08, 0.12], materials.woodDark);
-  archBatch.addBox([4.05, 6.20, 0.8], [2.7, 0.02, 0.14], materials.brass);
-  addColliderBox([4.05, 5.75, 0.8], [1.35, 0.55, 0.08]);
+  // Front glass panel along z = 0.8 (x: [2.1, 5.4])
+  addBox(building, [3.75, 5.75, 0.8], [3.3, 0.88, 0.04], materials.glass, { shadow: false });
+  archBatch.addBox([3.75, 6.25, 0.8], [3.3, 0.08, 0.12], materials.woodDark);
+  archBatch.addBox([3.75, 6.20, 0.8], [3.3, 0.02, 0.14], materials.brass);
+  addColliderBox([3.75, 5.75, 0.8], [1.65, 0.55, 0.08]);
 
   // Corner and terminal newel posts for stairwell void
-  for (const [vx, vz] of [[2.65, 0.8], [2.65, -5.6], [5.4, 0.8]]) {
+  for (const [vx, vz] of [[2.05, 0.8], [2.05, -5.6], [5.4, 0.8]]) {
     archBatch.addBox([vx, 5.75, vz], [0.16, 1.05, 0.16], materials.woodDark);
     archBatch.addBox([vx, 5.26, vz], [0.18, 0.10, 0.18], materials.brass);
     archBatch.addBox([vx, 6.30, vz], [0.18, 0.08, 0.18], materials.brass);

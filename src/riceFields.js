@@ -14,6 +14,7 @@ export function createRiceFields(scene, world, RAPIER, staticBodies) {
   scene.add(riceGroup);
   const batch = new BatchCollector();
   let farmerNPC = null;
+  const extraFarmers = [];
 
   // Farm foundation soil base (z: [-46.0, -19.0], x: [-10.0, 48.0])
   batch.addBox([19.0, -0.06, -32.5], [58.0, 0.12, 27.0], materials.paddySoil);
@@ -301,6 +302,116 @@ export function createRiceFields(scene, world, RAPIER, staticBodies) {
   farmerNPC = { group: fGroup, clock: 0 };
 
   // =========================================================================
+  // 5b. Farmer 2: Tani Tandur (Bending Down Planting Rice Seedlings in Plot 3)
+  // =========================================================================
+  const f2X = 32.5;
+  const f2Y = 0.44;
+  const f2Z = -36.5;
+  const f2Group = new THREE.Group();
+  f2Group.position.set(f2X, f2Y, f2Z);
+  f2Group.rotation.y = 0.2;
+  riceGroup.add(f2Group);
+
+  const fb2 = new BatchCollector();
+  // Rolled-up mud trousers
+  fb2.addCylinder([-0.16, 0.36, -0.06], 0.12, 0.13, 0.54, materials.guardUniform, { rotation: [-0.15, 0, 0] });
+  fb2.addCylinder([0.16, 0.36, -0.06], 0.12, 0.13, 0.54, materials.guardUniform, { rotation: [-0.15, 0, 0] });
+  // Torso bending forward over the flooded paddy
+  fb2.addBox([0, 0.90, 0.18], [0.56, 0.68, 0.36], materials.tunic, { rotation: [0.48, 0, 0] });
+  fb2.addBox([0, 0.68, 0.06], [0.58, 0.12, 0.38], materials.coral, { rotation: [0.48, 0, 0] }); // Waist sash
+  // Arms reaching down towards water planting rice seedlings
+  fb2.addCylinder([-0.28, 0.72, 0.38], 0.08, 0.08, 0.56, materials.skin, { rotation: [0.85, 0, -0.15] });
+  fb2.addCylinder([0.28, 0.72, 0.38], 0.08, 0.08, 0.56, materials.skin, { rotation: [0.85, 0, 0.15] });
+  fb2.addSphere([-0.24, 0.46, 0.56], [0.07, 0.07, 0.07], materials.skin);
+  fb2.addSphere([0.24, 0.46, 0.56], [0.07, 0.07, 0.07], materials.skin);
+  // Bundles of green rice seedlings held in hands being planted into flooded soil
+  for (const sx of [-0.24, 0.24]) {
+    fb2.addCylinder([sx, 0.42, 0.60], 0.06, 0.06, 0.18, materials.foliageBright);
+    for (const off of [-0.04, 0, 0.04]) {
+      fb2.addCylinder([sx + off, 0.52, 0.60 + off], 0.012, 0.012, 0.22, materials.foliageBright, { rotation: [off * 3, 0, off * 2] });
+    }
+  }
+  // Head tilted down toward paddy mud
+  fb2.addSphere([0, 1.25, 0.38], [0.20, 0.22, 0.20], materials.skin);
+  // Conical Indonesian Caping straw hat shielding from tropical sun
+  fb2.addCylinder([0, 1.44, 0.42], 0.02, 0.58, 0.32, materials.strawHat, { rotation: [0.48, 0, 0] });
+
+  const f2Geo = fb2.toMergedGeometry();
+  if (f2Geo) {
+    const f2Mesh = new THREE.Mesh(f2Geo, vertexColorFamilies.matte);
+    f2Mesh.castShadow = true;
+    f2Mesh.receiveShadow = true;
+    f2Mesh.matrixAutoUpdate = false;
+    f2Mesh.updateMatrix();
+    f2Group.add(f2Mesh);
+  }
+
+  const f2Body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(f2X, f2Y + 0.8, f2Z));
+  world.createCollider(RAPIER.ColliderDesc.cylinder(0.8, 0.35), f2Body);
+  staticBodies.push(f2Body);
+  extraFarmers.push({ group: f2Group, baseY: f2Y, clock: 0.5, speed: 2.4, amp: 0.012 });
+
+  // =========================================================================
+  // 5c. Farmer 3: Tani Pikulan (Carrying Harvested Rice Sheaves on Bund Path)
+  // =========================================================================
+  const f3X = 10.5;
+  const f3Y = 0.32;
+  const f3Z = -34.8;
+  const f3Group = new THREE.Group();
+  f3Group.position.set(f3X, f3Y, f3Z);
+  f3Group.rotation.y = -1.1; // Striding along the earthen bund path
+  riceGroup.add(f3Group);
+
+  const fb3 = new BatchCollector();
+  // Striding trousers & bare feet
+  fb3.addCylinder([-0.16, 0.48, 0.12], 0.12, 0.13, 0.65, materials.guardUniform, { rotation: [0.2, 0, 0] });
+  fb3.addCylinder([0.16, 0.48, -0.12], 0.12, 0.13, 0.65, materials.guardUniform, { rotation: [-0.2, 0, 0] });
+  fb3.addBox([-0.16, 0.08, 0.18], [0.15, 0.15, 0.28], materials.skin);
+  fb3.addBox([0.16, 0.08, -0.06], [0.15, 0.15, 0.28], materials.skin);
+  // Light woven tunic shirt & crimson waist sash
+  fb3.addBox([0, 1.25, 0], [0.58, 0.72, 0.38], materials.cream);
+  fb3.addBox([0, 0.92, 0], [0.62, 0.12, 0.42], materials.coral);
+  // Arms resting on the shoulder pole (pikulan)
+  fb3.addCylinder([-0.28, 1.45, 0.15], 0.08, 0.08, 0.52, materials.skin, { rotation: [-0.3, 0, 0.3] });
+  fb3.addCylinder([0.28, 1.45, 0.15], 0.08, 0.08, 0.52, materials.skin, { rotation: [-0.3, 0, -0.3] });
+  fb3.addSphere([-0.22, 1.62, 0.28], [0.07, 0.07, 0.07], materials.skin);
+  fb3.addSphere([0.22, 1.62, 0.28], [0.07, 0.07, 0.07], materials.skin);
+  // Head & Caping
+  fb3.addSphere([0, 1.82, 0], [0.21, 0.23, 0.21], materials.skin);
+  fb3.addCylinder([0, 2.05, 0], 0.02, 0.58, 0.34, materials.strawHat);
+
+  // Traditional Curved Bamboo Shoulder Yoke (Pikulan)
+  fb3.addCylinder([0, 1.60, 0], 0.032, 0.032, 2.5, materials.woodWarm, { rotation: [Math.PI * 0.5, 0, 0] });
+  // Twin Conical Woven Baskets suspended from pole ends filled with golden harvested rice
+  for (const bz of [-1.15, 1.15]) {
+    // Suspension jute cords
+    fb3.addCylinder([0, 1.18, bz], 0.008, 0.008, 0.85, materials.woodDark);
+    // Woven bamboo basket body
+    fb3.addCylinder([0, 0.72, bz], 0.38, 0.22, 0.52, materials.strawHat, { segments: 14 });
+    fb3.addCylinder([0, 0.96, bz], 0.40, 0.40, 0.04, materials.woodDark, { segments: 14 });
+    // Overflowing bundles of golden ripe harvested rice grain (gabah)
+    fb3.addSphere([0, 0.98, bz], [0.36, 0.22, 0.36], materials.hayGolden);
+    for (const a of [0, 1.2, 2.4, 3.6, 4.8]) {
+      fb3.addCylinder([Math.cos(a) * 0.22, 1.08, bz + Math.sin(a) * 0.22], 0.02, 0.04, 0.28, materials.hayGolden, { rotation: [Math.sin(a) * 0.3, 0, Math.cos(a) * 0.3] });
+    }
+  }
+
+  const f3Geo = fb3.toMergedGeometry();
+  if (f3Geo) {
+    const f3Mesh = new THREE.Mesh(f3Geo, vertexColorFamilies.matte);
+    f3Mesh.castShadow = true;
+    f3Mesh.receiveShadow = true;
+    f3Mesh.matrixAutoUpdate = false;
+    f3Mesh.updateMatrix();
+    f3Group.add(f3Mesh);
+  }
+
+  const f3Body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(f3X, f3Y + 1.0, f3Z));
+  world.createCollider(RAPIER.ColliderDesc.cylinder(1.0, 0.40), f3Body);
+  staticBodies.push(f3Body);
+  extraFarmers.push({ group: f3Group, baseY: f3Y, clock: 1.2, speed: 2.8, amp: 0.016 });
+
+  // =========================================================================
   // 6. Northern World Perimeter Boundary Wall (z = -46.5)
   // =========================================================================
   const northBoundBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(19.0, 1.5, -46.5));
@@ -315,6 +426,10 @@ export function createRiceFields(scene, world, RAPIER, staticBodies) {
       if (farmerNPC) {
         farmerNPC.clock += delta;
         farmerNPC.group.position.y = 0.32 + Math.sin(farmerNPC.clock * 2.2) * 0.008;
+      }
+      for (const ef of extraFarmers) {
+        ef.clock += delta;
+        ef.group.position.y = ef.baseY + Math.sin(ef.clock * ef.speed) * ef.amp;
       }
     },
   };

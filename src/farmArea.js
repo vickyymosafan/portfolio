@@ -16,6 +16,7 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
   const animatedCows = [];
   const animatedChickens = [];
   let farmWorker = null;
+  let cowherd = null;
 
   // Farm ground gravel/dirt foundation (z: [-46.0, -19.0], x: [-45.0, -13.0])
   batch.addBox([-29.0, -0.05, -32.5], [32.0, 0.12, 27.0], materials.soil);
@@ -418,6 +419,75 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
 
   farmWorker = { group: wGroup, clock: 0 };
 
+  // =========================================================================
+  // 6. Cattle Rancher / Cowherd NPC (Peternak Penjaga Sapi)
+  // Stationed by the cattle enclosure fence tending to the cows
+  // =========================================================================
+  const cowherdX = -17.5;
+  const cowherdZ = -31.2;
+  const cGroup = new THREE.Group();
+  cGroup.position.set(cowherdX, 0, cowherdZ);
+  cGroup.rotation.y = 0.35; // Looking towards cattle pen and approaching visitors
+  farmGroup.add(cGroup);
+
+  const cb = new BatchCollector();
+  // Heavy leather rancher boots
+  cb.addBox([-0.16, 0.12, 0], [0.2, 0.24, 0.34], materials.leatherDark);
+  cb.addBox([0.16, 0.12, 0], [0.2, 0.24, 0.34], materials.leatherDark);
+  // Sturdy denim work trousers
+  cb.addCylinder([-0.16, 0.55, 0], 0.13, 0.15, 0.68, materials.farmerOveralls);
+  cb.addCylinder([0.16, 0.55, 0], 0.13, 0.15, 0.68, materials.farmerOveralls);
+  // Leather belt & brass buckle
+  cb.addBox([0, 0.90, 0], [0.62, 0.10, 0.42], materials.leatherDark);
+  cb.addBox([0, 0.90, 0.22], [0.12, 0.08, 0.04], materials.brass);
+  // Warm flannel shirt (cream/coral)
+  cb.addBox([0, 1.35, 0], [0.60, 0.80, 0.38], materials.coral);
+  // Brown suede rancher vest over shirt
+  cb.addBox([-0.22, 1.36, 0], [0.20, 0.78, 0.41], materials.woodDark);
+  cb.addBox([0.22, 1.36, 0], [0.20, 0.78, 0.41], materials.woodDark);
+  cb.addBox([0, 1.36, -0.19], [0.62, 0.78, 0.05], materials.woodDark);
+  // Muscular arms holding wooden feed pail
+  cb.addCylinder([-0.36, 1.30, 0.15], 0.09, 0.09, 0.65, materials.skin, { rotation: [0.35, 0, 0.15] });
+  cb.addCylinder([0.36, 1.30, 0.15], 0.09, 0.09, 0.65, materials.skin, { rotation: [0.35, 0, -0.15] });
+  // Hands
+  cb.addSphere([-0.38, 0.96, 0.32], [0.08, 0.08, 0.08], materials.skin);
+  cb.addSphere([0.38, 0.96, 0.32], [0.08, 0.08, 0.08], materials.skin);
+  // Head & friendly caring face
+  cb.addSphere([0, 1.95, 0], [0.22, 0.24, 0.22], materials.skin);
+  // Rancher wide-brim straw hat with dark band
+  cb.addCylinder([0, 2.12, 0], 0.54, 0.54, 0.05, materials.strawHat);
+  cb.addCylinder([0, 2.15, 0], 0.28, 0.28, 0.06, materials.leatherDark);
+  cb.addCylinder([0, 2.24, 0], 0.26, 0.27, 0.18, materials.strawHat);
+
+  // Oak feed bucket filled with fresh alfalfa hay
+  const pailX = 0;
+  const pailY = 0.82;
+  const pailZ = 0.42;
+  cb.addCylinder([pailX, pailY, pailZ], 0.24, 0.18, 0.36, materials.woodWarm, { segments: 16 });
+  cb.addCylinder([pailX, pailY + 0.14, pailZ], 0.245, 0.245, 0.03, materials.brass, { segments: 16 });
+  cb.addCylinder([pailX, pailY - 0.12, pailZ], 0.195, 0.195, 0.03, materials.brass, { segments: 16 });
+  cb.addCylinder([pailX, pailY + 0.17, pailZ], 0.22, 0.22, 0.06, materials.hayGolden, { segments: 12 });
+  // Curved bucket wire handle held by hands
+  cb.addCylinder([pailX - 0.22, pailY + 0.12, pailZ], 0.015, 0.015, 0.28, materials.chrome);
+  cb.addCylinder([pailX + 0.22, pailY + 0.12, pailZ], 0.015, 0.015, 0.28, materials.chrome);
+
+  const cGeo = cb.toMergedGeometry();
+  if (cGeo) {
+    const cMesh = new THREE.Mesh(cGeo, vertexColorFamilies.matte);
+    cMesh.castShadow = true;
+    cMesh.receiveShadow = true;
+    cMesh.matrixAutoUpdate = false;
+    cMesh.updateMatrix();
+    cGroup.add(cMesh);
+  }
+
+  // Cowherd physics collider
+  const chBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(cowherdX, 1.0, cowherdZ));
+  world.createCollider(RAPIER.ColliderDesc.cylinder(1.0, 0.38), chBody);
+  staticBodies.push(chBody);
+
+  cowherd = { group: cGroup, clock: 0 };
+
   batch.build(farmGroup, true);
 
   return {
@@ -448,6 +518,11 @@ export function createFarmArea(scene, world, RAPIER, staticBodies) {
       if (farmWorker) {
         farmWorker.clock += delta;
         farmWorker.group.position.y = Math.sin(farmWorker.clock * 1.8) * 0.006;
+      }
+      // 4. Cowherd guardian idle breathing
+      if (cowherd) {
+        cowherd.clock += delta;
+        cowherd.group.position.y = Math.sin(cowherd.clock * 1.6) * 0.007;
       }
     },
   };

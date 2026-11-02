@@ -23,8 +23,8 @@ export class CameraController {
 
     // Overview / Aerial Map mode
     this.overviewMode = false;
-    this.overviewCamPos = new THREE.Vector3(0, 48, 62);
-    this.overviewTarget = new THREE.Vector3(0, 0, 8);
+    this.overviewCamPos = new THREE.Vector3(0, 52, 58);
+    this.overviewTarget = new THREE.Vector3(0, 0, 3);
     this.teleportOverride = null;
 
     // Reusable Three.js vectors & raycaster for zero garbage collection

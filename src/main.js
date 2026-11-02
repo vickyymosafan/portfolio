@@ -505,13 +505,10 @@ async function createScene() {
 
   // Sculpted Cartoon Bushes framing pathways and expanded estate boundary
   const bushCoords = [
-    [-5.2, 5.2, 1.15, 11],
     [5.2, 5.2, 1.15, 22],
-    [-13.5, 5.0, 1.05, 33],
     [14.2, 4.8, 0.85, 44],
     [-34.5, 4.8, 0.95, 55],
     [40.5, 4.8, 0.95, 66],
-    [5.2, 16.5, 0.80, 88],
     [9.8, 11.8, 0.75, 110],
     [-35.0, -6.5, 0.95, 121],
     [41.0, -6.5, 0.95, 132],

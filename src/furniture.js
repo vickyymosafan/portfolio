@@ -619,8 +619,10 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
     }
 
     // 5. CENTRAL IDENTITY ROTUNDA TABLE WITH 3D ARCHITECTURAL MAQUETTE OF VICKY'S ESTATE
+    const rotTableX = px - 0.3; // -10.8
+    const rotTableZ = pz; // 10.5
     const rotunda = new THREE.Group();
-    rotunda.position.set(px, py, pz);
+    rotunda.position.set(rotTableX, py, rotTableZ);
     parent.add(rotunda);
     addCylinder(rotunda, [0, 0.32, 0], 0.42, 0.52, 0.64, materials.woodDark, { segments: 20 });
     addCylinder(rotunda, [0, 0.66, 0], 0.88, 0.88, 0.06, materials.stone, { segments: 24 });
@@ -634,22 +636,36 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
       addCylinder(rotunda, [0.06 + mcx, 0.82, 0.14], 0.012, 0.012, 0.18, materials.column, { segments: 8 });
     }
     addSphere(rotunda, [0.06, 1.08, -0.04], [0.08, 0.08, 0.08], materials.glow, { shadow: false });
-    addFurnitureCollider(world, RAPIER, staticBodies, [px, py + 0.48, pz], [0.88, 0.48, 0.88]);
+    addFurnitureCollider(world, RAPIER, staticBodies, [rotTableX, py + 0.48, rotTableZ], [0.88, 0.48, 0.88]);
 
-    // 6. EXECUTIVE OUTDOOR LOUNGE ARMCHAIRS (East side of platform, facing West toward table & board)
-    for (const cz of [-0.85, 0.85]) {
+    // 6. EXECUTIVE OUTDOOR LOUNGE ARMCHAIRS (Facing South / +Z directly forward toward visitor)
+    // Placed side-by-side along X with elegant drinks table between them
+    const chairCoords = [
+      { x: px + 1.4, z: pz, mat: materials.cushionMint }, // x = -9.1
+      { x: px + 2.65, z: pz, mat: materials.cushionYellow }, // x = -7.85
+    ];
+    for (const c of chairCoords) {
       const arm = new THREE.Group();
-      arm.position.set(px + 1.7, py + 0.16, pz + cz);
-      arm.rotation.y = Math.PI * 0.5; // facing West (-X)
+      arm.position.set(c.x, py + 0.16, c.z);
+      arm.rotation.y = Math.PI * 0.5; // Backrest North, cushion faces South (+Z) forward
       parent.add(arm);
       addBox(arm, [0, 0.16, 0], [0.88, 0.05, 0.82], materials.brass);
       addBox(arm, [0, 0.40, 0], [0.84, 0.38, 0.78], materials.terracotta);
       addBox(arm, [0.34, 0.78, 0], [0.14, 0.54, 0.78], materials.terracotta, { rotation: [0, 0, -0.14] });
       addBox(arm, [0.02, 0.58, -0.36], [0.80, 0.24, 0.10], materials.woodDark);
       addBox(arm, [0.02, 0.58, 0.36], [0.80, 0.24, 0.10], materials.woodDark);
-      addBox(arm, [0.20, 0.66, 0], [0.14, 0.32, 0.40], cz > 0 ? materials.cushionYellow : materials.cushionMint);
-      addFurnitureCollider(world, RAPIER, staticBodies, [px + 1.7, py + 0.45, pz + cz], [0.45, 0.45, 0.42]);
+      addBox(arm, [0.20, 0.66, 0], [0.14, 0.32, 0.40], c.mat);
+      addFurnitureCollider(world, RAPIER, staticBodies, [c.x, py + 0.45, c.z], [0.44, 0.45, 0.44]);
     }
+
+    // Elegant Pedestal Drinks Table between the 2 Armchairs
+    const sideTblX = px + 2.02; // x = -8.48
+    addCylinder(parent, [sideTblX, py + 0.22, pz], 0.24, 0.28, 0.12, materials.woodDark, { segments: 14 });
+    addCylinder(parent, [sideTblX, py + 0.48, pz], 0.05, 0.05, 0.44, materials.brass, { segments: 10 });
+    addCylinder(parent, [sideTblX, py + 0.72, pz], 0.36, 0.36, 0.04, materials.stoneWarm, { segments: 18 });
+    addBox(parent, [sideTblX, py + 0.80, pz], [0.14, 0.12, 0.14], materials.brass);
+    addSphere(parent, [sideTblX, py + 0.88, pz], [0.06, 0.06, 0.06], materials.glow, { shadow: false });
+    addFurnitureCollider(world, RAPIER, staticBodies, [sideTblX, py + 0.42, pz], [0.36, 0.42, 0.36]);
 
     // 7. Flanking Topiary Planters on front garden terrace corners
     for (const cz of [-2.8, 2.8]) {
@@ -669,12 +685,13 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
       addBox(parent, [x + side * 3.5, y + 4.38, z - 5.74], [2.82, 0.06, 0.08], materials.brass);
     }
 
-    // 4 Illuminated 4K Product Showcase Screens (2 flanking the central display board, 1 on West wall, 1 on East wall)
+    // 4 Illuminated 4K Product Showcase Screens (2 flanking the central display board, 1 on West wall, 1 on East solid wall south of doorway)
     const showcases = [
       { pos: [x - 3.5, y + 2.6, z - 5.68], rotY: 0, mat: materials.screenCode, accentMat: materials.coral },
       { pos: [x + 3.5, y + 2.6, z - 5.68], rotY: 0, mat: materials.screenGlow, accentMat: materials.emeraldBright },
       { pos: [x - 4.75, y + 2.6, z - 1.8], rotY: Math.PI * 0.5, mat: materials.screenTerminal, accentMat: materials.gold },
-      { pos: [x + 4.75, y + 2.6, z - 1.8], rotY: -Math.PI * 0.5, mat: materials.screenCode, accentMat: materials.emeraldBright },
+      // Placed on solid East wall partition at z = 1.6 (z + 3.6), completely clearing the living room walkthrough doorway at z: [-0.45, -3.75]
+      { pos: [x + 4.75, y + 2.6, z + 3.6], rotY: -Math.PI * 0.5, mat: materials.screenCode, accentMat: materials.emeraldBright },
     ];
     for (const sc of showcases) {
       const frame = new THREE.Group();
@@ -706,9 +723,9 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
     }
     addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.3, y + 0.85, z - 3.4], [0.75, 0.85, 0.75]);
 
-    // East Island Kiosk (x + 3.3, z - 3.4): Destino Copytrade & MQL5 Algo-Trading Bullish Candlestick Pod
+    // East Island Kiosk (x + 2.8, z - 5.0): Destino Copytrade & MQL5 Algo-Trading Bullish Candlestick Pod (repositioned safely clear of doorway)
     const algoPod = new THREE.Group();
-    algoPod.position.set(x + 3.3, y, z - 3.4);
+    algoPod.position.set(x + 2.8, y, z - 5.0);
     parent.add(algoPod);
     addCylinder(algoPod, [0, 0.12, 0], 0.85, 0.92, 0.24, materials.woodDark, { segments: 16 });
     addCylinder(algoPod, [0, 0.58, 0], 0.56, 0.64, 0.72, materials.stone, { segments: 16 });
@@ -725,7 +742,7 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
       addCylinder(algoPod, [c.dx, c.y0, 0], 0.015, 0.015, c.h + 0.18, materials.brass, { segments: 8 });
       addBox(algoPod, [c.dx, c.y0, 0], [0.10, c.h, 0.10], c.mat);
     }
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 3.3, y + 0.85, z - 3.4], [0.75, 0.85, 0.75]);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x + 2.8, y + 0.85, z - 5.0], [0.75, 0.85, 0.75]);
 
     // West Wall Console Table below the 3rd Showcase Screen (x - 4.4, z - 1.8)
     addBox(parent, [x - 4.4, y + 0.48, z - 1.8], [0.65, 0.52, 2.6], materials.woodDark);
@@ -735,33 +752,33 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
     addBox(parent, [x - 4.35, y + 0.90, z - 1.2], [0.32, 0.24, 0.45], materials.screenGlow, { shadow: false });
     addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.4, y + 0.5, z - 1.8], [0.38, 0.5, 1.35]);
 
-    // East Wall Console Table below the 4th Showcase Screen — Dedicated MCP Developer Suite (x + 4.4, z - 1.8)
-    addBox(parent, [x + 4.4, y + 0.48, z - 1.8], [0.65, 0.52, 2.6], materials.woodDark);
-    addBox(parent, [x + 4.38, y + 0.76, z - 1.8], [0.68, 0.04, 2.66], materials.stone);
-    addBox(parent, [x + 4.08, y + 0.48, z - 1.8], [0.02, 0.46, 2.5], materials.brass);
+    // East Wall Console Table below the 4th Showcase Screen — Dedicated MCP Developer Suite (x + 4.4, z + 3.6, mounted on solid wall safely clear of doorway)
+    addBox(parent, [x + 4.4, y + 0.48, z + 3.6], [0.65, 0.52, 2.6], materials.woodDark);
+    addBox(parent, [x + 4.38, y + 0.76, z + 3.6], [0.68, 0.04, 2.66], materials.stone);
+    addBox(parent, [x + 4.08, y + 0.48, z + 3.6], [0.02, 0.46, 2.5], materials.brass);
 
-    // 1. MCP Three.js Visual QA Hologram Station (z - 2.3)
+    // 1. MCP Three.js Visual QA Hologram Station (z + 3.1)
     // Stylized Camera Sensor Pedestal with Cyan Holographic Frustum
-    addCylinder(parent, [x + 4.35, y + 0.84, z - 2.3], 0.16, 0.20, 0.14, materials.metalDark, { segments: 12 });
-    addBox(parent, [x + 4.35, y + 0.98, z - 2.3], [0.22, 0.16, 0.26], materials.blueSky);
-    addCylinder(parent, [x + 4.22, y + 0.98, z - 2.3], 0.07, 0.07, 0.08, materials.brass, { rotation: [0, 0, Math.PI * 0.5], segments: 12 });
-    addSphere(parent, [x + 4.16, y + 0.98, z - 2.3], [0.06, 0.06, 0.06], materials.glow, { shadow: false });
+    addCylinder(parent, [x + 4.35, y + 0.84, z + 3.1], 0.16, 0.20, 0.14, materials.metalDark, { segments: 12 });
+    addBox(parent, [x + 4.35, y + 0.98, z + 3.1], [0.22, 0.16, 0.26], materials.blueSky);
+    addCylinder(parent, [x + 4.22, y + 0.98, z + 3.1], 0.07, 0.07, 0.08, materials.brass, { rotation: [0, 0, Math.PI * 0.5], segments: 12 });
+    addSphere(parent, [x + 4.16, y + 0.98, z + 3.1], [0.06, 0.06, 0.06], materials.glow, { shadow: false });
     // Visual QA Holographic Viewing Cone / Frustum
-    addCylinder(parent, [x + 4.02, y + 0.98, z - 2.3], 0.02, 0.14, 0.22, materials.screenGlow, { rotation: [0, 0, Math.PI * 0.5], segments: 8, shadow: false });
+    addCylinder(parent, [x + 4.02, y + 0.98, z + 3.1], 0.02, 0.14, 0.22, materials.screenGlow, { rotation: [0, 0, Math.PI * 0.5], segments: 8, shadow: false });
 
-    // 2. Center Brass Engraved Title Plaque (z - 1.8)
-    addBox(parent, [x + 4.35, y + 0.88, z - 1.8], [0.12, 0.18, 0.46], materials.brass);
-    addBox(parent, [x + 4.28, y + 0.88, z - 1.8], [0.02, 0.14, 0.40], materials.screenTerminal, { shadow: false });
+    // 2. Center Brass Engraved Title Plaque (z + 3.6)
+    addBox(parent, [x + 4.35, y + 0.88, z + 3.6], [0.12, 0.18, 0.46], materials.brass);
+    addBox(parent, [x + 4.28, y + 0.88, z + 3.6], [0.02, 0.14, 0.40], materials.screenTerminal, { shadow: false });
 
-    // 3. MCP Principal Agentic Harness Governance Hub (z - 1.3)
+    // 3. MCP Principal Agentic Harness Governance Hub (z + 4.1)
     // Hexagonal Server Plinth with Floating Orbital Multi-Agent Rings & Gold Core
-    addCylinder(parent, [x + 4.35, y + 0.84, z - 1.3], 0.20, 0.24, 0.14, materials.woodDark, { segments: 6 });
-    addSphere(parent, [x + 4.35, y + 1.05, z - 1.3], [0.12, 0.12, 0.12], materials.gold, { shadow: false });
-    addCylinder(parent, [x + 4.35, y + 1.05, z - 1.3], 0.24, 0.24, 0.02, materials.brass, { rotation: [0.5, 0, 0.4], segments: 16 });
-    addCylinder(parent, [x + 4.35, y + 1.05, z - 1.3], 0.22, 0.22, 0.02, materials.coral, { rotation: [-0.4, 0, -0.5], segments: 16 });
-    addBox(parent, [x + 4.35, y + 1.25, z - 1.3], [0.08, 0.08, 0.08], materials.emeraldBright, { rotation: [0, Math.PI * 0.25, 0], shadow: false });
+    addCylinder(parent, [x + 4.35, y + 0.84, z + 4.1], 0.20, 0.24, 0.14, materials.woodDark, { segments: 6 });
+    addSphere(parent, [x + 4.35, y + 1.05, z + 4.1], [0.12, 0.12, 0.12], materials.gold, { shadow: false });
+    addCylinder(parent, [x + 4.35, y + 1.05, z + 4.1], 0.24, 0.24, 0.02, materials.brass, { rotation: [0.5, 0, 0.4], segments: 16 });
+    addCylinder(parent, [x + 4.35, y + 1.05, z + 4.1], 0.22, 0.22, 0.02, materials.coral, { rotation: [-0.4, 0, -0.5], segments: 16 });
+    addBox(parent, [x + 4.35, y + 1.25, z + 4.1], [0.08, 0.08, 0.08], materials.emeraldBright, { rotation: [0, Math.PI * 0.25, 0], shadow: false });
 
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 4.4, y + 0.5, z - 1.8], [0.38, 0.5, 1.35]);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x + 4.4, y + 0.5, z + 3.6], [0.38, 0.5, 1.35]);
 
     // Upholstered Gallery Center Bench in Navy Velvet & Brushed Brass
     addBox(parent, [x, y + 0.46, z + 0.5], [3.2, 0.36, 1.15], materials.navy);
