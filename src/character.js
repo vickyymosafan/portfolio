@@ -452,6 +452,7 @@ export function updateCharacterRig(rig, dt, elapsed, moveAmount, grounded) {
   );
 
   // 4. Ground Contact Shadow Dynamic Scaling
+  shadow.visible = state.actionState !== 'RIDING_BIKE';
   if (grounded) {
     shadow.scale.setScalar(1.0 + (1.0 - state.squash) * 0.5);
     shadow.material.opacity = 0.32;

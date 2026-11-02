@@ -324,8 +324,11 @@ export function mergeSubtreeMeshes(rootGroup, castShadow = false, forceSingleOpa
     const mesh = new THREE.Mesh(merged, material);
     mesh.castShadow = castShadow && !material.transparent && !material.isMeshBasicMaterial;
     mesh.receiveShadow = !material.transparent && !material.isMeshBasicMaterial;
-    mesh.matrixAutoUpdate = false;
-    mesh.updateMatrix();
+    const isDynamic = Boolean(rootGroup.userData?.isDynamic);
+    mesh.matrixAutoUpdate = isDynamic;
+    if (!isDynamic) {
+      mesh.updateMatrix();
+    }
     rootGroup.add(mesh);
   }
 }

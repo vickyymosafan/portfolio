@@ -74,10 +74,12 @@ export class MotorcycleController {
   getNearestMotorcycle(px, py, pz, maxDist = 2.8) {
     let nearest = null;
     let minDist = maxDist;
+    const worldPos = new THREE.Vector3();
     for (const bike of this.motorcycles) {
       if (!bike || !bike.position) continue;
-      const dist = Math.hypot(px - bike.position.x, pz - bike.position.z);
-      if (dist < minDist && Math.abs(py - bike.position.y) < 2.0) {
+      bike.getWorldPosition(worldPos);
+      const dist = Math.hypot(px - worldPos.x, pz - worldPos.z);
+      if (dist < minDist && Math.abs(py - worldPos.y) < 2.5) {
         minDist = dist;
         nearest = bike;
       }
@@ -240,9 +242,34 @@ export class MotorcycleController {
     if (bike.userData.headlightSpot) bike.userData.headlightSpot.intensity = 2.6;
     if (bike.userData.headlightGlow) bike.userData.headlightGlow.intensity = 1.9;
 
-    // Move parked static collider away so it does not block the rider
+    // Disable parked static collider so it does not block the rider or vehicle
     if (bike.userData.colliderBody) {
+      if (typeof bike.userData.colliderBody.setEnabled === 'function') {
+        bike.userData.colliderBody.setEnabled(false);
+      }
+      if (typeof bike.userData.collider?.setEnabled === 'function') {
+        bike.userData.collider.setEnabled(false);
+      }
       bike.userData.colliderBody.setTranslation({ x: 0, y: -100, z: 0 }, true);
+    }
+
+    // Teleport player body and character rig directly onto the motorcycle saddle
+    const saddleOffsetX = -Math.sin(this.bikeYaw) * 0.16;
+    const saddleOffsetZ = -Math.cos(this.bikeYaw) * 0.16;
+    const riderY = bike.position.y + 1.08;
+    const charX = bike.position.x + saddleOffsetX;
+    const charZ = bike.position.z + saddleOffsetZ;
+
+    if (this.playerBody) {
+      this.playerBody.setTranslation({ x: bike.position.x, y: bike.position.y + 0.6, z: bike.position.z }, true);
+      if (this.playerBody.setNextKinematicTranslation) {
+        this.playerBody.setNextKinematicTranslation({ x: bike.position.x, y: bike.position.y + 0.6, z: bike.position.z });
+      }
+    }
+
+    if (this.characterRig?.character) {
+      this.characterRig.character.position.set(charX, riderY, charZ);
+      this.characterRig.character.rotation.set(0, this.bikeYaw, 0);
     }
 
     // Set character rig pose to RIDING_BIKE
@@ -287,10 +314,16 @@ export class MotorcycleController {
       this.engineGain.gain.setTargetAtTime(0, this.audioCtx.currentTime, 0.06);
     }
 
-    // Place parked static collider at the new resting spot of the motorcycle
+    // Re-enable parked collider at the new resting spot of the motorcycle
     if (bike.userData.colliderBody) {
+      if (typeof bike.userData.colliderBody.setEnabled === 'function') {
+        bike.userData.colliderBody.setEnabled(true);
+      }
+      if (typeof bike.userData.collider?.setEnabled === 'function') {
+        bike.userData.collider.setEnabled(true);
+      }
       bike.userData.colliderBody.setTranslation(
-        { x: bike.position.x, y: 0.65, z: bike.position.z },
+        { x: bike.position.x, y: bike.position.y + 0.65, z: bike.position.z },
         true
       );
     }
@@ -299,13 +332,13 @@ export class MotorcycleController {
     const leftOffsetX = -Math.cos(bike.rotation.y) * 0.85;
     const leftOffsetZ = Math.sin(bike.rotation.y) * 0.85;
     const dismountX = bike.position.x + leftOffsetX;
-    const dismountY = Math.max(0.04, bike.position.y);
+    const dismountY = Math.max(0.04, bike.position.y) + 1.12;
     const dismountZ = bike.position.z + leftOffsetZ;
 
     if (this.playerBody) {
-      this.playerBody.setTranslation({ x: dismountX, y: dismountY + 0.1, z: dismountZ }, true);
+      this.playerBody.setTranslation({ x: dismountX, y: dismountY, z: dismountZ }, true);
       if (this.playerBody.setNextKinematicTranslation) {
-        this.playerBody.setNextKinematicTranslation({ x: dismountX, y: dismountY + 0.1, z: dismountZ });
+        this.playerBody.setNextKinematicTranslation({ x: dismountX, y: dismountY, z: dismountZ });
       }
     }
 
@@ -422,15 +455,21 @@ export class MotorcycleController {
     bike.rotation.z = this.bankAngle;
 
     // 5. Keep Player Kinematic Body and Character Rig in sync
+    const saddleOffsetX = -Math.sin(this.bikeYaw) * 0.16;
+    const saddleOffsetZ = -Math.cos(this.bikeYaw) * 0.16;
+    const riderY = bike.position.y + 1.08;
+    const charX = bike.position.x + saddleOffsetX;
+    const charZ = bike.position.z + saddleOffsetZ;
+
     if (this.playerBody) {
       this.playerBody.setTranslation(
-        { x: bike.position.x, y: bike.position.y + 0.5, z: bike.position.z },
+        { x: bike.position.x, y: bike.position.y + 0.6, z: bike.position.z },
         true
       );
       if (this.playerBody.setNextKinematicTranslation) {
         this.playerBody.setNextKinematicTranslation({
           x: bike.position.x,
-          y: bike.position.y + 0.5,
+          y: bike.position.y + 0.6,
           z: bike.position.z,
         });
       }
@@ -438,15 +477,7 @@ export class MotorcycleController {
 
     // Position character rig firmly on the motorcycle saddle
     if (this.characterRig?.character) {
-      // In local coordinates of motorcycle, seat is at [0, 0.38, -0.16]
-      const saddleOffsetX = -Math.sin(this.bikeYaw) * 0.16;
-      const saddleOffsetZ = -Math.cos(this.bikeYaw) * 0.16;
-
-      this.characterRig.character.position.set(
-        bike.position.x + saddleOffsetX,
-        bike.position.y + 0.38,
-        bike.position.z + saddleOffsetZ
-      );
+      this.characterRig.character.position.set(charX, riderY, charZ);
       this.characterRig.character.rotation.y = this.bikeYaw;
       this.characterRig.character.rotation.z = this.bankAngle;
     }

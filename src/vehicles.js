@@ -289,6 +289,7 @@ export function buildSportsCar(parent, cx, cy, cz, options = {}) {
  */
 export function buildMotorcycle(parent, cx, cy, cz, options = {}) {
   const bike = new THREE.Group();
+  bike.userData.isDynamic = true;
   bike.position.set(cx, cy, cz);
   if (options.rotationY) bike.rotation.y = options.rotationY;
 
@@ -521,6 +522,7 @@ export function buildMotorcycle(parent, cx, cy, cz, options = {}) {
   // =========================================================================
   const kickstandGroup = new THREE.Group();
   kickstandGroup.name = 'kickstand';
+  kickstandGroup.userData.isDynamic = true;
   // Deployed steel kickstand leg touching ground on left side
   addCylinder(kickstandGroup, [-0.18, 0.16, -0.12], 0.016, 0.016, 0.34, materials.carChrome, {
     rotation: [0, 0, 0.48],
@@ -673,17 +675,19 @@ export function createOutdoorParkingLot(scene, world, RAPIER, staticBodies) {
   });
 
   let bike1Body = null;
+  let bike1Col = null;
   if (world && RAPIER) {
     bike1Body = world.createRigidBody(
-      RAPIER.RigidBodyDesc.fixed().setTranslation(13.5, 0.65, 14.1)
+      RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(13.5, 0.65, 14.1)
     );
-    world.createCollider(RAPIER.ColliderDesc.cuboid(1.15, 0.65, 0.40), bike1Body);
+    bike1Col = world.createCollider(RAPIER.ColliderDesc.cuboid(1.15, 0.65, 0.40), bike1Body);
     staticBodies.push(bike1Body);
   }
   bike1.userData.name = 'BMW S1000RR SuperSport';
   bike1.userData.id = 'motorcycle-supersport';
   bike1.userData.style = 'supersport';
   bike1.userData.colliderBody = bike1Body;
+  bike1.userData.collider = bike1Col;
 
   // =========================================================================
   // 7. VEHICLE 4: HYPERNAKED STREETFIGHTER MOTORCYCLE (CYBER CYAN & ORANGE)
@@ -699,17 +703,19 @@ export function createOutdoorParkingLot(scene, world, RAPIER, staticBodies) {
   });
 
   let bike2Body = null;
+  let bike2Col = null;
   if (world && RAPIER) {
     bike2Body = world.createRigidBody(
-      RAPIER.RigidBodyDesc.fixed().setTranslation(13.5, 0.65, 16.2)
+      RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(13.5, 0.65, 16.2)
     );
-    world.createCollider(RAPIER.ColliderDesc.cuboid(1.15, 0.65, 0.40), bike2Body);
+    bike2Col = world.createCollider(RAPIER.ColliderDesc.cuboid(1.15, 0.65, 0.40), bike2Body);
     staticBodies.push(bike2Body);
   }
   bike2.userData.name = 'Cyber Cyan HyperNaked';
   bike2.userData.id = 'motorcycle-streetfighter';
   bike2.userData.style = 'streetfighter';
   bike2.userData.colliderBody = bike2Body;
+  bike2.userData.collider = bike2Col;
 
   const motorcycles = [bike1, bike2];
   lotGroup.userData.motorcycles = motorcycles;

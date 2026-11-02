@@ -1939,6 +1939,7 @@ function updatePhysics(dt) {
     currentVelZ = 0;
     jumpVelocity = 0;
     moveAmount = 0;
+    world.step();
     return;
   }
   if (
