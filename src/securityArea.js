@@ -310,56 +310,58 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies, interacti
   securityGroup.add(rightGatePivot);
 
   // Left Gate Leaf: spans +X from 0 to 3.5 in local coordinates
-  const leftGateBatch = new BatchCollector();
-  leftGateBatch.addBox([1.75, 2.85, 0], [3.5, 0.12, 0.08], materials.estateGateDark);
-  leftGateBatch.addBox([1.75, 1.60, 0], [3.5, 0.10, 0.08], materials.estateGateDark);
-  leftGateBatch.addBox([1.75, 0.35, 0], [3.5, 0.14, 0.08], materials.estateGateDark);
-  leftGateBatch.addBox([0.05, 1.60, 0], [0.10, 2.62, 0.10], materials.estateGateDark);
-  leftGateBatch.addBox([3.45, 1.60, 0], [0.10, 2.62, 0.10], materials.estateGateDark);
-  leftGateBatch.addBox([1.75, 0.95, 0], [3.40, 1.10, 0.04], materials.estateGateDark);
-  // Gold horizontal trims
-  leftGateBatch.addBox([1.75, 2.85, 0], [3.46, 0.06, 0.09], materials.estateGateGold);
-  leftGateBatch.addBox([1.75, 1.60, 0], [3.46, 0.06, 0.09], materials.estateGateGold);
-  leftGateBatch.addBox([1.75, 0.55, 0], [3.46, 0.06, 0.09], materials.estateGateGold);
+  // Top, middle, bottom horizontal rails
+  addBox(leftGatePivot, [1.75, 2.85, 0], [3.5, 0.12, 0.08], materials.estateGateDark);
+  addBox(leftGatePivot, [1.75, 1.60, 0], [3.5, 0.10, 0.08], materials.estateGateDark);
+  addBox(leftGatePivot, [1.75, 0.35, 0], [3.5, 0.14, 0.08], materials.estateGateDark);
+  // Vertical stiles
+  addBox(leftGatePivot, [0.05, 1.60, 0], [0.10, 2.62, 0.10], materials.estateGateDark);
+  addBox(leftGatePivot, [3.45, 1.60, 0], [0.10, 2.62, 0.10], materials.estateGateDark);
+  // Lower kickplate privacy panel
+  addBox(leftGatePivot, [1.75, 0.95, 0], [3.40, 1.10, 0.04], materials.estateGateDark);
+  // Gold horizontal accent trims
+  addBox(leftGatePivot, [1.75, 2.85, 0], [3.46, 0.06, 0.09], materials.estateGateGold);
+  addBox(leftGatePivot, [1.75, 1.60, 0], [3.46, 0.06, 0.09], materials.estateGateGold);
+  addBox(leftGatePivot, [1.75, 0.55, 0], [3.46, 0.06, 0.09], materials.estateGateGold);
   // Vertical security pickets with spear finials
-  for (let lx = 0.22; lx <= 3.30; lx += 0.26) {
-    leftGateBatch.addCylinder([lx, 2.25, 0], 0.024, 0.024, 1.15, materials.estateGateDark);
-    leftGateBatch.addSphere([lx, 2.96, 0], [0.045, 0.075, 0.045], materials.estateGateGold);
+  for (let lx = 0.22; lx <= 3.30; lx += 0.28) {
+    addCylinder(leftGatePivot, [lx, 2.25, 0], 0.024, 0.024, 1.15, materials.estateGateDark);
+    addSphere(leftGatePivot, [lx, 2.96, 0], [0.045, 0.075, 0.045], materials.estateGateGold);
   }
   // Meeting latch & lock escutcheon
-  leftGateBatch.addBox([3.44, 1.60, 0], [0.08, 0.26, 0.12], materials.estateGateGold);
-  leftGateBatch.addBox([3.44, 1.55, 0.07], [0.06, 0.14, 0.04], materials.estateGateGold);
-  leftGateBatch.addBox([3.44, 1.55, -0.07], [0.06, 0.14, 0.04], materials.estateGateGold);
+  addBox(leftGatePivot, [3.44, 1.60, 0], [0.08, 0.26, 0.12], materials.estateGateGold);
+  addBox(leftGatePivot, [3.44, 1.55, 0.07], [0.06, 0.14, 0.04], materials.estateGateGold);
+  addBox(leftGatePivot, [3.44, 1.55, -0.07], [0.06, 0.14, 0.04], materials.estateGateGold);
   // Cast iron hinge brackets attaching to left pier
-  leftGateBatch.addBox([0.02, 0.60, 0], [0.14, 0.12, 0.14], materials.metalDark);
-  leftGateBatch.addBox([0.02, 2.60, 0], [0.14, 0.12, 0.14], materials.metalDark);
-  leftGateBatch.build(leftGatePivot, true);
+  addBox(leftGatePivot, [0.02, 0.60, 0], [0.14, 0.12, 0.14], materials.metalDark);
+  addBox(leftGatePivot, [0.02, 2.60, 0], [0.14, 0.12, 0.14], materials.metalDark);
 
   // Right Gate Leaf: spans -X from 0 to -3.5 in local coordinates
-  const rightGateBatch = new BatchCollector();
-  rightGateBatch.addBox([-1.75, 2.85, 0], [3.5, 0.12, 0.08], materials.estateGateDark);
-  rightGateBatch.addBox([-1.75, 1.60, 0], [3.5, 0.10, 0.08], materials.estateGateDark);
-  rightGateBatch.addBox([-1.75, 0.35, 0], [3.5, 0.14, 0.08], materials.estateGateDark);
-  rightGateBatch.addBox([-0.05, 1.60, 0], [0.10, 2.62, 0.10], materials.estateGateDark);
-  rightGateBatch.addBox([-3.45, 1.60, 0], [0.10, 2.62, 0.10], materials.estateGateDark);
-  rightGateBatch.addBox([-1.75, 0.95, 0], [3.40, 1.10, 0.04], materials.estateGateDark);
+  // Top, middle, bottom horizontal rails
+  addBox(rightGatePivot, [-1.75, 2.85, 0], [3.5, 0.12, 0.08], materials.estateGateDark);
+  addBox(rightGatePivot, [-1.75, 1.60, 0], [3.5, 0.10, 0.08], materials.estateGateDark);
+  addBox(rightGatePivot, [-1.75, 0.35, 0], [3.5, 0.14, 0.08], materials.estateGateDark);
+  // Vertical stiles
+  addBox(rightGatePivot, [-0.05, 1.60, 0], [0.10, 2.62, 0.10], materials.estateGateDark);
+  addBox(rightGatePivot, [-3.45, 1.60, 0], [0.10, 2.62, 0.10], materials.estateGateDark);
+  // Lower kickplate privacy panel
+  addBox(rightGatePivot, [-1.75, 0.95, 0], [3.40, 1.10, 0.04], materials.estateGateDark);
   // Gold horizontal trims
-  rightGateBatch.addBox([-1.75, 2.85, 0], [3.46, 0.06, 0.09], materials.estateGateGold);
-  rightGateBatch.addBox([-1.75, 1.60, 0], [3.46, 0.06, 0.09], materials.estateGateGold);
-  rightGateBatch.addBox([-1.75, 0.55, 0], [3.46, 0.06, 0.09], materials.estateGateGold);
+  addBox(rightGatePivot, [-1.75, 2.85, 0], [3.46, 0.06, 0.09], materials.estateGateGold);
+  addBox(rightGatePivot, [-1.75, 1.60, 0], [3.46, 0.06, 0.09], materials.estateGateGold);
+  addBox(rightGatePivot, [-1.75, 0.55, 0], [3.46, 0.06, 0.09], materials.estateGateGold);
   // Vertical security pickets with spear finials
-  for (let lx = -0.22; lx >= -3.30; lx -= 0.26) {
-    rightGateBatch.addCylinder([lx, 2.25, 0], 0.024, 0.024, 1.15, materials.estateGateDark);
-    rightGateBatch.addSphere([lx, 2.96, 0], [0.045, 0.075, 0.045], materials.estateGateGold);
+  for (let lx = -0.22; lx >= -3.30; lx -= 0.28) {
+    addCylinder(rightGatePivot, [lx, 2.25, 0], 0.024, 0.024, 1.15, materials.estateGateDark);
+    addSphere(rightGatePivot, [lx, 2.96, 0], [0.045, 0.075, 0.045], materials.estateGateGold);
   }
   // Meeting latch & lock escutcheon
-  rightGateBatch.addBox([-3.44, 1.60, 0], [0.08, 0.26, 0.12], materials.estateGateGold);
-  rightGateBatch.addBox([-3.44, 1.55, 0.07], [0.06, 0.14, 0.04], materials.estateGateGold);
-  rightGateBatch.addBox([-3.44, 1.55, -0.07], [0.06, 0.14, 0.04], materials.estateGateGold);
+  addBox(rightGatePivot, [-3.44, 1.60, 0], [0.08, 0.26, 0.12], materials.estateGateGold);
+  addBox(rightGatePivot, [-3.44, 1.55, 0.07], [0.06, 0.14, 0.04], materials.estateGateGold);
+  addBox(rightGatePivot, [-3.44, 1.55, -0.07], [0.06, 0.14, 0.04], materials.estateGateGold);
   // Cast iron hinge brackets attaching to right pier
-  rightGateBatch.addBox([-0.02, 0.60, 0], [0.14, 0.12, 0.14], materials.metalDark);
-  rightGateBatch.addBox([-0.02, 2.60, 0], [0.14, 0.12, 0.14], materials.metalDark);
-  rightGateBatch.build(rightGatePivot, true);
+  addBox(rightGatePivot, [-0.02, 0.60, 0], [0.14, 0.12, 0.14], materials.metalDark);
+  addBox(rightGatePivot, [-0.02, 2.60, 0], [0.14, 0.12, 0.14], materials.metalDark);
 
   // Rapier colliders for main gate leaves (active when closed)
   const gateColliders = [];
@@ -387,8 +389,8 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies, interacti
   let gatePendingCb = null;
 
   const setGateAngle = (a) => {
-    leftGatePivot.rotation.y = -a;
-    rightGatePivot.rotation.y = a;
+    leftGatePivot.rotation.y = a;
+    rightGatePivot.rotation.y = -a;
   };
 
   const finishGate = () => {
@@ -413,7 +415,7 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies, interacti
   const toggleGate = (cb) => {
     if (gateState === 'opening' || gateState === 'closing') return false;
     const opening = gateState === 'closed';
-    gateFrom = rightGatePivot.rotation.y;
+    gateFrom = leftGatePivot.rotation.y;
     gateTo = opening ? GATE_OPEN_ANGLE : 0;
     gateClock = 0;
     gateState = opening ? 'opening' : 'closing';
@@ -472,16 +474,14 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies, interacti
   barGroup.position.set(barPedX + 0.18, 0.95, barPedZ);
   securityGroup.add(barGroup);
 
-  const barBatch = new BatchCollector();
-  barBatch.addCylinder([0, 0, 0], 0.14, 0.14, 0.12, materials.metalDark, { rotation: [Math.PI * 0.5, 0, 0] });
+  addCylinder(barGroup, [0, 0, 0], 0.14, 0.14, 0.12, materials.metalDark, { rotation: [Math.PI * 0.5, 0, 0] });
   // Striped barrier arm (alternating bright orange and white safety segments)
   for (let i = 0; i < 9; i++) {
     const segX = i * 0.45 + 0.22;
-    barBatch.addBox([segX, 0, 0], [0.44, 0.14, 0.06], (i % 2 === 0) ? materials.barrierOrange : materials.barrierWhite);
+    addBox(barGroup, [segX, 0, 0], [0.44, 0.14, 0.06], (i % 2 === 0) ? materials.barrierOrange : materials.barrierWhite);
   }
   // Rubber impact tip
-  barBatch.addBox([4.2, 0, 0], [0.12, 0.15, 0.07], materials.carRubber);
-  barBatch.build(barGroup, true);
+  addBox(barGroup, [4.2, 0, 0], [0.12, 0.15, 0.07], materials.carRubber);
 
   // Rapier collider for boom barrier arm (active when closed)
   let barrierCollider = null;
@@ -573,6 +573,18 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies, interacti
     barGroup,
     barrierLedMesh,
   };
+
+  const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  if (urlParams?.get('gate') === 'open') {
+    setGateImmediate('open');
+  } else if (urlParams?.get('gate') === 'closed') {
+    setGateImmediate('closed');
+  }
+  if (urlParams?.get('barrier') === 'open') {
+    setBarrierImmediate('open');
+  } else if (urlParams?.get('barrier') === 'closed') {
+    setBarrierImmediate('closed');
+  }
 
   // Register interactive checkpoints in interactionPoints
   if (interactionPoints) {

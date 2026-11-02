@@ -2544,6 +2544,7 @@ async function init() {
     window.__toggleOverviewMode = toggleOverviewMode;
     window.__dispatchInteraction = dispatchInteraction;
     window.__interactionPoints = interactionPoints;
+    window.__scene = scene;
     window.__estateGate = securityZone?.gateControls;
     window.__boomBarrier = securityZone?.barrierControls;
     window.__findInteraction = findInteraction;
