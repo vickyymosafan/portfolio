@@ -34,6 +34,13 @@
           Mosafan<small>Full-Stack &amp; AI-Augmented Engineer</small></span></a>
       <div class="top-actions">
         <span id="quality-label" class="quality-label">AUTO · MEDIUM</span>
+        <button id="audio-button" class="icon-button" type="button" aria-label="Toggle background music"
+          title="Soundtrack [B]"><svg class="audio-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path class="audio-wave-1" d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path class="audio-wave-2" d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg></button>
         <button id="settings-button" class="icon-button" type="button" aria-label="Open graphics settings"
           title="Graphics settings"><svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z" />
@@ -100,7 +107,7 @@
         class="keycap">SPACE</span> jump <span class="note-divider"></span><span
         class="keycap">DRAG</span> look <span class="note-divider"></span><span
         class="keycap">SCROLL / + -</span> zoom <span class="note-divider"></span><span class="keycap">E</span> interact
-      <span class="note-divider"></span><span class="keycap">M</span> map</div>
+      <span class="note-divider"></span><span class="keycap">M</span> map <span class="note-divider"></span><span class="keycap">B</span> music</div>
     <div class="interaction-prompt" id="interaction-prompt" role="status" aria-live="polite"><span class="keycap"
         id="interact-key">E</span><span id="prompt-label">Explore this spot</span></div>
     <div class="touch-controls" id="touch-controls" aria-label="Touch movement controls">
@@ -141,6 +148,12 @@
       <label class="toggle-row" for="worldmap-setting-toggle"><span><strong>World Map Overview</strong><small>Aerial
             overview & zone fast-travel markers [M]</small></span><input id="worldmap-setting-toggle"
           type="checkbox" /></label>
+      <label class="toggle-row" for="bgm-setting-toggle"><span><strong>Soundtrack BGM</strong><small>Relaxing cartoon lofi ambient music [B]</small></span><input id="bgm-setting-toggle"
+          type="checkbox" checked /></label>
+      <div class="settings-slider-row">
+        <label for="bgm-volume-slider"><span><strong>Music Volume</strong> <small id="bgm-volume-label">35%</small></span></label>
+        <input id="bgm-volume-slider" type="range" min="0" max="100" value="35" class="settings-slider" />
+      </div>
       <div class="settings-controls-guide">
         <h3 class="settings-subtitle">Controls &amp; Navigation</h3>
         <div class="controls-grid">
@@ -151,6 +164,7 @@
           <div class="controls-row"><span>Zoom In / Out</span><span class="keycap">SCROLL / + -</span></div>
           <div class="controls-row"><span>Interact / Inspect</span><span class="keycap">E</span></div>
           <div class="controls-row"><span>World Map Overview</span><span class="keycap">M</span></div>
+          <div class="controls-row"><span>Toggle Music / Mute</span><span class="keycap">B</span></div>
         </div>
       </div>
     </section>

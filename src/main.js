@@ -25,6 +25,7 @@ import { BENCH } from './seatLayout.js';
 import { InputManager } from './systems/inputManager.js';
 import { CameraController } from './systems/cameraController.js';
 import { UIManager } from './ui/uiManager.js';
+import { AudioManager } from './audio/audioManager.js';
 import './style.css';
 
 const $ = (id) => document.getElementById(id);
@@ -69,8 +70,13 @@ const ui = {
   mapPill: $('map-status-pill'),
   mapCloseBtn: $('map-close-btn'),
   markersContainer: $('world-markers'),
+  audioBtn: $('audio-button'),
+  bgmToggle: $('bgm-setting-toggle'),
+  bgmSlider: $('bgm-volume-slider'),
+  bgmVolumeLabel: $('bgm-volume-label'),
 };
 
+let audioManager;
 let renderer;
 let camera;
 let scene;
@@ -201,6 +207,9 @@ const inputManager = new InputManager({
     if (!panelOpen && !settingsOpen) {
       toggleOverviewMode();
     }
+  },
+  onToggleAudio: () => {
+    if (audioManager) audioManager.toggleMute();
   },
   onSit: null,
   onInteract: () => {
@@ -963,6 +972,23 @@ function updateRoomLabel(room) {
   uiManager.updateRoom(room);
 }
 
+function updateAudioUI(state) {
+  if (ui.audioBtn) {
+    ui.audioBtn.classList.toggle('is-muted', state.isMuted);
+    ui.audioBtn.setAttribute('aria-label', state.isMuted ? 'Play background music' : 'Mute background music');
+    ui.audioBtn.setAttribute('title', state.isMuted ? 'Soundtrack: Muted (Click or press B)' : 'Soundtrack: Playing (Click or press B)');
+  }
+  if (ui.bgmToggle) {
+    ui.bgmToggle.checked = !state.isMuted;
+  }
+  if (ui.bgmSlider) {
+    ui.bgmSlider.value = Math.round(state.volume * 100);
+  }
+  if (ui.bgmVolumeLabel) {
+    ui.bgmVolumeLabel.textContent = `${Math.round(state.volume * 100)}%`;
+  }
+}
+
 function handleRoomInteraction(id) {
   startCinematic(id);
 }
@@ -1706,6 +1732,7 @@ function beginTour() {
     return;
   }
   if (!started) startExperience();
+  if (audioManager) audioManager.play();
   if (panelOpen) closeDetails();
   if (settingsOpen) closeSettings();
 
@@ -1769,6 +1796,7 @@ function startExperience() {
   if (renderer) ui.perf.classList.add('is-visible');
   $('pause-button').classList.add('is-visible');
   $('controls-note').hidden = mobile;
+  if (audioManager) audioManager.play();
   if (renderer) renderer.domElement.focus({ preventScroll: true });
   else document.querySelector('.room-link')?.focus({ preventScroll: true });
 }
@@ -2085,6 +2113,32 @@ function bindEvents() {
   $('panel-close').addEventListener('click', closeDetails);
   $('settings-button').addEventListener('click', openSettings);
   $('settings-close').addEventListener('click', closeSettings);
+  ui.audioBtn?.addEventListener('click', () => {
+    if (audioManager) audioManager.toggleMute();
+  });
+  ui.bgmToggle?.addEventListener('change', (event) => {
+    if (!audioManager) return;
+    if (event.currentTarget.checked && audioManager.isMuted) {
+      audioManager.toggleMute();
+    } else if (!event.currentTarget.checked && !audioManager.isMuted) {
+      audioManager.toggleMute();
+    }
+  });
+  ui.bgmSlider?.addEventListener('input', (event) => {
+    const vol = parseInt(event.currentTarget.value, 10) / 100;
+    if (audioManager) audioManager.setVolume(vol);
+  });
+
+  // Resume AudioContext on first user interaction for browser autoplay compliance
+  const unlockAudioContext = () => {
+    if (audioManager) audioManager.resumeContext();
+    window.removeEventListener('pointerdown', unlockAudioContext);
+    window.removeEventListener('keydown', unlockAudioContext);
+    window.removeEventListener('touchstart', unlockAudioContext);
+  };
+  window.addEventListener('pointerdown', unlockAudioContext, { passive: true });
+  window.addEventListener('keydown', unlockAudioContext, { passive: true });
+  window.addEventListener('touchstart', unlockAudioContext, { passive: true });
   $('adaptive-toggle').addEventListener('change', (event) => {
     adaptive = event.currentTarget.checked;
   });
@@ -2436,6 +2490,16 @@ async function init() {
     camera.lookAt(0, 2.0, 16.8);
     setRoom('yard');
     initWorldMarkers();
+
+    audioManager = new AudioManager({ camera, volume: 0.35 });
+    audioManager.init(camera);
+    audioManager.onStateChange = updateAudioUI;
+    updateAudioUI({
+      isPlaying: audioManager.isPlaying,
+      isMuted: audioManager.isMuted,
+      volume: audioManager.targetVolume,
+    });
+    window.__audioManager = audioManager;
 
     window.__THREE__ = THREE;
     window.__SCENE__ = scene;

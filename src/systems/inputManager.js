@@ -20,6 +20,7 @@ export class InputManager {
     this.callbacks = {
       onEscape: options.onEscape || null,
       onToggleMap: options.onToggleMap || null,
+      onToggleAudio: options.onToggleAudio || null,
       onSit: options.onSit || null,
       onInteract: options.onInteract || null,
       onJump: options.onJump || null,
@@ -74,6 +75,11 @@ export class InputManager {
 
     if (event.code === 'KeyM' && !event.repeat) {
       if (this.callbacks.onToggleMap) this.callbacks.onToggleMap();
+      return;
+    }
+
+    if (event.code === 'KeyB' && !event.repeat) {
+      if (this.callbacks.onToggleAudio) this.callbacks.onToggleAudio();
       return;
     }
 

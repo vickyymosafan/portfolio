@@ -735,5 +735,61 @@
   color: var(--ink-soft, #49695b);
 }
 
+/* Audio Button & Soundtrack Controls */
+#audio-button {
+  position: relative;
+  transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+}
+#audio-button.is-muted {
+  opacity: 0.65;
+  background: rgba(255, 248, 233, 0.6);
+}
+#audio-button.is-muted .audio-wave-1,
+#audio-button.is-muted .audio-wave-2 {
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+#audio-button:not(.is-muted) .audio-wave-1 {
+  animation: audio-wave-pulse 1.8s ease-in-out infinite;
+}
+#audio-button:not(.is-muted) .audio-wave-2 {
+  animation: audio-wave-pulse 1.8s ease-in-out infinite 0.28s;
+}
+@keyframes audio-wave-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+.settings-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  margin-top: 6px;
+  border-radius: 14px;
+  background: rgba(36, 72, 61, 0.04);
+  border: 1px solid rgba(36, 72, 61, 0.08);
+}
+.settings-slider-row label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--ink);
+}
+.settings-slider-row label small {
+  color: var(--coral);
+  font-weight: 800;
+  font-size: 11px;
+}
+.settings-slider {
+  width: 100%;
+  accent-color: var(--coral);
+  cursor: pointer;
+  height: 6px;
+  border-radius: 3px;
+}
+
 
 
