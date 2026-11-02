@@ -446,7 +446,7 @@ async function createScene() {
   await yieldToMain();
 
   createZenGarden(scene, world, RAPIER, staticBodies);
-  securityZone = createSecurityArea(scene, world, RAPIER, staticBodies);
+  securityZone = createSecurityArea(scene, world, RAPIER, staticBodies, interactionPoints);
   await yieldToMain();
 
   farmZone = createFarmArea(scene, world, RAPIER, staticBodies);
@@ -2349,6 +2349,7 @@ function animate(timestamp) {
 
   updateCharacterRig(characterRig, dt, elapsed, moveAmount, grounded);
   if (doorControls?.update) doorControls.update(dt);
+  if (securityZone?.updateGates) securityZone.updateGates(dt);
   if (drivewayZone?.update) drivewayZone.update(dt, elapsed);
   updateRoomFromPosition(timestamp);
   findInteraction();
@@ -2373,7 +2374,7 @@ function animate(timestamp) {
     renderer.shadowMap.enabled &&
     activePreset?.shadowUpdateInterval > 0 &&
     frameCounter % activePreset.shadowUpdateInterval === 0 &&
-    (moveAmount > 0.01 || doorControls?.isBusy())
+    (moveAmount > 0.01 || doorControls?.isBusy() || securityZone?.gateControls?.isBusy() || securityZone?.barrierControls?.isBusy())
   ) {
     renderer.shadowMap.needsUpdate = true;
   }
@@ -2543,6 +2544,8 @@ async function init() {
     window.__toggleOverviewMode = toggleOverviewMode;
     window.__dispatchInteraction = dispatchInteraction;
     window.__interactionPoints = interactionPoints;
+    window.__estateGate = securityZone?.gateControls;
+    window.__boomBarrier = securityZone?.barrierControls;
     window.__findInteraction = findInteraction;
     window.__setQualityPreset = (nextQ) => {
       quality = nextQ;
@@ -2633,6 +2636,16 @@ async function init() {
     }
     if (urlParams.get('garage') === 'open' && doorControls?.garage) {
       doorControls.garage.toggle();
+    }
+    if (urlParams.get('gate') === 'open' && securityZone?.gateControls) {
+      securityZone.gateControls.setImmediate('open');
+    } else if (urlParams.get('gate') === 'closed' && securityZone?.gateControls) {
+      securityZone.gateControls.setImmediate('closed');
+    }
+    if (urlParams.get('barrier') === 'open' && securityZone?.barrierControls) {
+      securityZone.barrierControls.setImmediate('open');
+    } else if (urlParams.get('barrier') === 'closed' && securityZone?.barrierControls) {
+      securityZone.barrierControls.setImmediate('closed');
     }
     const trafficLightParam = urlParams.get('trafficLight');
     if (trafficLightParam && window.__TRAFFIC_SYSTEM__) {

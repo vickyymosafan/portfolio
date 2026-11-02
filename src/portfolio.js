@@ -1,7 +1,7 @@
 export const portfolio = {
   name: 'M. Vicky Mosafan',
   role: 'Full-Stack Developer & Prompt Engineer | AI-Augmented Engineer',
-  location: 'Surabaya / Jember, East Java, Indonesia',
+  location: 'Jember, East Java, Indonesia',
   email: 'vickymosafan@gmail.com',
   github: 'https://github.com/vickyymosafan',
   githubHandle: 'vickyymosafan (M. Vicky Mosafan)',
@@ -184,7 +184,7 @@ export const portfolio = {
       title: 'M. Vicky Mosafan',
       subtitle: 'Full-Stack Developer & Prompt Engineer | AI-Augmented Engineer',
       quote: '“Engineering is not replaced by AI. It is amplified by it.”',
-      lead: 'I am a Full-Stack Developer and Prompt Engineer based in East Java, Indonesia (Surabaya / Jember). I leverage AI across the entire software development lifecycle (SDLC) to improve speed, architectural precision, quality, and decision-making—from planning and architecture to implementation and deployment.',
+      lead: 'I am a Full-Stack Developer and Prompt Engineer based in Jember, East Java, Indonesia. I leverage AI across the entire software development lifecycle (SDLC) to improve speed, architectural precision, quality, and decision-making—from planning and architecture to implementation and deployment.',
       body: 'Before writing a single line of implementation, I create structured PRDs, technical documentation, and system designs to ensure a strong foundation and prevent technical debt. During execution, I use AI to accelerate coding, analyze issues, write automated tests, enhance documentation, and streamline iteration.',
       profileLinks: [
         { label: 'LinkedIn · M Vicky Mosafan', href: 'https://www.linkedin.com/in/vickymosafan/' },
@@ -208,7 +208,7 @@ export const portfolio = {
           desc: 'Combining rigorous engineering practices with AI to deliver efficient, secure, and future-ready applications.',
         },
       ],
-      tags: ['AI-Augmented Engineering', 'Full-Stack Developer', 'Prompt Engineer', 'SOLID · DRY · KISS', 'Surabaya / Jember, ID'],
+      tags: ['AI-Augmented Engineering', 'Full-Stack Developer', 'Prompt Engineer', 'SOLID · DRY · KISS', 'Jember, ID'],
     },
 
     // 2. WORK EXPERIENCE
@@ -795,8 +795,8 @@ export const portfolio = {
       title: 'Connect with M. Vicky Mosafan',
       subtitle: 'Open for Full-Stack, AI Engineering & Freelance Collaboration',
       lead: 'Have an ambitious web platform, production AI/RAG application, or challenging full-stack engineering role? Connect directly via LinkedIn, GitHub, or Email.',
-      email: 'vickymosafan@gmail.com',
-      location: 'Surabaya / Jember, East Java, Indonesia',
+      email: 'mvickymosafan@gmail.com',
+      location: 'Jember, East Java, Indonesia',
       links: [
         {
           label: 'LinkedIn Profile · M Vicky Mosafan',
@@ -813,7 +813,7 @@ export const portfolio = {
         {
           label: 'Send Email',
           href: 'mailto:vickymosafan@gmail.com',
-          detail: 'vickymosafan@gmail.com',
+          detail: 'mvickymosafan@gmail.com',
           primary: false,
         },
       ],
