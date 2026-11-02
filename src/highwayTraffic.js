@@ -570,10 +570,10 @@ export function createHighwayTraffic(parent, world, RAPIER, staticBodies) {
 
   // Westbound Lane (North lane, z = 32.8, moving direction = -1 [from +X to -X])
   const wbSpecs = [
-    { type: 'car', model: 'sports', mat: trafficMats.coupeRed, startX: 26.0, speed: 13.0, reactionDelay: 0.25, stopOffset: 0.0 },
-    { type: 'bike', model: 'scooter', mat: trafficMats.scooterCyan, startX: 10.0, speed: 12.2, reactionDelay: 0.45, stopOffset: 0.3 },
-    { type: 'car', model: 'suv', mat: materials.carSuvWhite, startX: -10.0, speed: 11.5, reactionDelay: 0.55, stopOffset: -0.2 },
-    { type: 'car', model: 'taxi', mat: trafficMats.taxiYellow, startX: -30.0, speed: 10.8, reactionDelay: 0.65, stopOffset: 0.2 },
+    { type: 'car', model: 'taxi', mat: trafficMats.taxiYellow, startX: -24.0, speed: 11.2, reactionDelay: 0.25, stopOffset: 0.0 },
+    { type: 'car', model: 'suv', mat: materials.carSuvWhite, startX: 2.0, speed: 11.0, reactionDelay: 0.40, stopOffset: 0.0 },
+    { type: 'bike', model: 'scooter', mat: trafficMats.scooterCyan, startX: 26.0, speed: 10.8, reactionDelay: 0.35, stopOffset: 0.0 },
+    { type: 'car', model: 'sports', mat: trafficMats.coupeRed, startX: 48.0, speed: 11.4, reactionDelay: 0.30, stopOffset: 0.0 },
   ];
 
   for (const spec of wbSpecs) {
@@ -606,10 +606,10 @@ export function createHighwayTraffic(parent, world, RAPIER, staticBodies) {
 
   // Eastbound Lane (South lane, z = 38.2, moving direction = +1 [from -X to +X])
   const ebSpecs = [
-    { type: 'bike', model: 'retro', mat: trafficMats.scooterMint, startX: -26.0, speed: 11.2, reactionDelay: 0.30, stopOffset: 0.0 },
-    { type: 'car', model: 'sedan', mat: trafficMats.sedanBlue, startX: -10.0, speed: 12.5, reactionDelay: 0.50, stopOffset: 0.2 },
-    { type: 'bike', model: 'sport', mat: trafficMats.scooterOrange, startX: 10.0, speed: 13.2, reactionDelay: 0.35, stopOffset: -0.2 },
-    { type: 'car', model: 'sedan', mat: materials.carSuvBlack, startX: 28.0, speed: 11.8, reactionDelay: 0.60, stopOffset: 0.1 },
+    { type: 'bike', model: 'retro', mat: trafficMats.scooterMint, startX: 24.0, speed: 10.8, reactionDelay: 0.25, stopOffset: 0.0 },
+    { type: 'car', model: 'sedan', mat: trafficMats.sedanBlue, startX: -2.0, speed: 11.2, reactionDelay: 0.35, stopOffset: 0.0 },
+    { type: 'bike', model: 'sport', mat: trafficMats.scooterOrange, startX: -26.0, speed: 11.0, reactionDelay: 0.30, stopOffset: 0.0 },
+    { type: 'car', model: 'sedan', mat: materials.carSuvBlack, startX: -48.0, speed: 11.4, reactionDelay: 0.40, stopOffset: 0.0 },
   ];
 
   for (const spec of ebSpecs) {
@@ -735,8 +735,16 @@ export function createHighwayTraffic(parent, world, RAPIER, staticBodies) {
   // =========================================================================
   const ROAD_MIN_X = -54.0;
   const ROAD_MAX_X = 54.0;
-  const STOP_LINE_WB = 5.2;   // Westbound stop bar at x = 5.2
-  const STOP_LINE_EB = -5.2;  // Eastbound stop bar at x = -5.2
+  // White painted stop markings on asphalt are at x = 4.8 (WB) and x = -4.8 (EB)
+  // Crosswalk spans x in [-3.6, 3.6]. Front bumpers stop safely before the white stop line.
+  const STOP_LINE_WB = 5.6;   // Westbound front-bumper stop threshold (0.8m before line, 2m before crosswalk)
+  const STOP_LINE_EB = -5.6;  // Eastbound front-bumper stop threshold (0.8m before line, 2m before crosswalk)
+
+  function getSafeStopGap(followerType, leaderType) {
+    if (followerType === 'bike' && leaderType === 'bike') return 3.6;
+    if (followerType === 'bike' || leaderType === 'bike') return 4.2;
+    return 5.0; // Clean, premium 5.0m buffer between stopped cars (no bumper touching / clipping)
+  }
 
   function update(delta) {
     const dt = Math.min(0.06, delta);
@@ -776,86 +784,124 @@ export function createHighwayTraffic(parent, world, RAPIER, staticBodies) {
       // Sort front-to-back: vehicle furthest ahead in travel direction comes first
       laneVehicles.sort((a, b) => (b.x * dir) - (a.x * dir));
 
+      let stopLineAssigned = false;
+
       for (let i = 0; i < laneVehicles.length; i += 1) {
         const v = laneVehicles[i];
         v.clock += dt;
 
-        // 1. Distance to Stop Line
-        // Positive means approaching stop line; negative means already past the stop line
-        const distToStop = (stopLineX - v.x) * dir;
+        // Front bumper position and true clearance to stop line
+        const frontBumperX = v.x + dir * (v.length * 0.5);
+        const distToStop = (stopLineX - frontBumperX) * dir;
 
-        // Determine if this vehicle must stop for traffic light
+        // The front-most vehicle that has not crossed the stop line acts as primary stopper
+        let isPrimaryStopper = false;
+        if (!stopLineAssigned && distToStop > -0.8) {
+          isPrimaryStopper = true;
+          stopLineAssigned = true;
+        }
+
+        // Determine if signal requires stopping
         let mustStopForSignal = false;
-        if (laneSignal === 'RED') {
-          // If approaching stop line within 24m and hasn't crossed past yet
-          if (distToStop > -0.5 && distToStop < 24.0) {
-            mustStopForSignal = true;
-          }
-        } else if (laneSignal === 'YELLOW') {
-          // Yellow light warning: stop if comfortable distance (> 6.5m)
-          if (distToStop > 6.5 && distToStop < 22.0) {
-            mustStopForSignal = true;
+        if (isPrimaryStopper) {
+          if (laneSignal === 'RED') {
+            if (distToStop > -0.8 && distToStop < 35.0) {
+              mustStopForSignal = true;
+            }
+          } else if (laneSignal === 'YELLOW') {
+            if (distToStop > 7.0 && distToStop < 28.0) {
+              mustStopForSignal = true;
+            }
           }
         }
 
-        // 2. Queueing & Distance to vehicle ahead
-        let distToLeader = 999.0;
+        // Leader vehicle ahead in same lane
+        const leader = i > 0 ? laneVehicles[i - 1] : null;
+        let bumperGap = 999.0;
         let leaderSpeed = v.cruisingSpeed;
-        if (i > 0) {
-          const leader = laneVehicles[i - 1];
-          distToLeader = ((leader.x - v.x) * dir) - (leader.length * 0.5 + v.length * 0.5);
+        let minStopGap = 5.0;
+
+        if (leader) {
+          minStopGap = getSafeStopGap(v.type, leader.type);
+          const leaderRearX = leader.x - dir * (leader.length * 0.5);
+          bumperGap = (leaderRearX - frontBumperX) * dir;
           leaderSpeed = leader.speed;
         }
 
-        // 3. Acceleration / Deceleration Logic with Dynamic Non-Deadlocking Following
         let targetSpeed = v.cruisingSpeed;
 
-        // A. Red / Yellow Stop Line Braking
-        if (mustStopForSignal && distToStop > -0.5 && distToStop <= 18.0) {
-          const targetStopDist = 0.8 + (v.stopOffset || 0);
-          if (distToStop <= targetStopDist) {
+        // 1. Deceleration for Red / Yellow Traffic Light (Primary Stopper)
+        if (mustStopForSignal) {
+          if (distToStop <= 0.05) {
             targetSpeed = 0;
-          } else {
-            const decelTarget = Math.max(0, (distToStop - targetStopDist) * 1.6);
+          } else if (distToStop < 28.0) {
+            // Smooth kinematic deceleration curve (v = sqrt(2 * a * d))
+            const decelTarget = Math.sqrt(2 * 3.2 * distToStop);
             targetSpeed = Math.min(targetSpeed, decelTarget);
           }
         }
 
-        // B. Leader following & queueing: approach smoothly without deadlocking
-        const minBuffer = v.type === 'bike' ? 1.8 : 2.5;
-        if (distToLeader < 20.0) {
-          if (distToLeader <= minBuffer) {
-            // Reached vehicle bumper: match leader's speed or come to a full stop
-            targetSpeed = Math.min(targetSpeed, Math.max(0, leaderSpeed));
+        // 2. Queueing & Following Distance (Intelligent Driver Model with generous headway)
+        if (leader && bumperGap < 35.0) {
+          // Dynamic time headway: 1.35s gap while driving, compressing down to minStopGap when stopped
+          const desiredGap = minStopGap + Math.max(0, v.speed) * 1.35;
+          const excessGap = bumperGap - desiredGap;
+
+          if (excessGap <= 0) {
+            // Inside safety zone: match leader speed or decelerate smoothly without touching
+            const urgentTarget = Math.max(0, leaderSpeed + excessGap * 2.0);
+            targetSpeed = Math.min(targetSpeed, urgentTarget);
           } else {
-            // Decoupled approach: vehicles drive forward to close queue gap smoothly
-            const approachSpeed = (distToLeader - minBuffer) * 1.8;
-            const maxSafeSpeed = Math.max(0, leaderSpeed) + approachSpeed;
-            targetSpeed = Math.min(targetSpeed, maxSafeSpeed);
+            // Kinematic approach towards desiredGap
+            const approachTarget = Math.max(0, leaderSpeed) + Math.sqrt(2 * 2.8 * excessGap);
+            targetSpeed = Math.min(targetSpeed, approachTarget);
           }
         }
 
-        // C. Subtle reaction wave on initial green light
-        if (laneSignal === 'GREEN' && greenElapsed < 0.25 && distToStop > -1.0 && distToStop < 16.0 && v.speed < 0.2) {
+        // 3. Subtle reaction wave on initial green light
+        if (laneSignal === 'GREEN' && greenElapsed < 0.35 && distToStop > -1.0 && distToStop < 16.0 && v.speed < 0.2) {
           targetSpeed = 0;
         }
 
-        // Smooth acceleration / braking
+        // 4. Smooth Acceleration / Braking
         if (v.speed < targetSpeed) {
-          v.speed = Math.min(targetSpeed, v.speed + 6.0 * dt);
+          v.speed = Math.min(targetSpeed, v.speed + 5.5 * dt);
           v.isBraking = false;
         } else if (v.speed > targetSpeed) {
-          v.speed = Math.max(targetSpeed, v.speed - 9.0 * dt);
+          v.speed = Math.max(targetSpeed, v.speed - 8.5 * dt);
           v.isBraking = (v.speed - targetSpeed) > 0.8;
         } else {
           v.isBraking = false;
         }
 
-        // 4. Update Position
+        // 5. Update Position
         v.x += v.speed * dt * dir;
+
+        // 6. Absolute Hard Physics Constraints (Guaranteed Zero Clipping & Zero Overlap)
+        // A. Prevent front bumper from overstepping the red light stop line
+        if (mustStopForSignal) {
+          const currentFrontX = v.x + dir * (v.length * 0.5);
+          const overstep = (currentFrontX - stopLineX) * dir;
+          if (overstep > 0) {
+            v.x = stopLineX - dir * (v.length * 0.5);
+            v.speed = 0;
+          }
+        }
+
+        // B. Enforce absolute bumper spacing: follower CANNOT penetrate minStopGap
+        if (leader) {
+          const leaderRearX = leader.x - dir * (leader.length * 0.5);
+          const currentFrontX = v.x + dir * (v.length * 0.5);
+          const currentGap = (leaderRearX - currentFrontX) * dir;
+          if (currentGap < minStopGap) {
+            v.x = leaderRearX - dir * (v.length * 0.5 + minStopGap);
+            v.speed = Math.min(v.speed, Math.max(0, leader.speed));
+          }
+        }
+
         v.root.position.x = v.x;
 
-        // 5. Wrap around world boundaries
+        // 7. World boundaries wrap-around
         if (dir === -1 && v.x < ROAD_MIN_X) {
           v.x = ROAD_MAX_X;
           v.root.position.x = v.x;
