@@ -302,10 +302,14 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies, interacti
   // Dual-leaf swinging wrought iron estate gate with Rapier colliders
   // =========================================================================
   const leftGatePivot = new THREE.Group();
+  leftGatePivot.name = 'estateGateLeftPivot';
+  leftGatePivot.userData.isDynamic = true;
   leftGatePivot.position.set(-7.0, 0, 24.5);
   securityGroup.add(leftGatePivot);
 
   const rightGatePivot = new THREE.Group();
+  rightGatePivot.name = 'estateGateRightPivot';
+  rightGatePivot.userData.isDynamic = true;
   rightGatePivot.position.set(0.0, 0, 24.5);
   securityGroup.add(rightGatePivot);
 
@@ -451,127 +455,16 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies, interacti
   // Driveway paved stone apron crossing from street through gate (x: [-6.8, -0.2], z: [24.0, 29.5])
   batch.addBox([-3.5, 0.11, 26.75], [6.6, 0.22, 5.5], materials.drivewayStone);
 
-  // =========================================================================
-  // 9. Automated Security Boom Barrier (Palang Pintu Otomatis)
-  // =========================================================================
-  // Control pedestal near the security booth (x = -6.4, z = 24.8)
-  const barPedX = -6.4;
-  const barPedZ = 24.8;
-  batch.addBox([barPedX, 0.6, barPedZ], [0.44, 1.2, 0.44], materials.estateGateDark);
-  batch.addBox([barPedX, 1.15, barPedZ], [0.48, 0.12, 0.48], materials.metalDark);
-
-  // Status LED beacon (Red = Halt/Closed, Yellow = Transitioning, Green = Access Granted)
-  const barrierLedGeo = new THREE.SphereGeometry(0.08, 12, 8);
-  const barrierLedMatRed = new THREE.MeshBasicMaterial({ color: 0xff2828 });
-  const barrierLedMatGreen = new THREE.MeshBasicMaterial({ color: 0x10e060 });
-  const barrierLedMatYellow = new THREE.MeshBasicMaterial({ color: 0xffb800 });
-  const barrierLedMesh = new THREE.Mesh(barrierLedGeo, barrierLedMatRed);
-  barrierLedMesh.position.set(barPedX, 1.25, barPedZ);
-  securityGroup.add(barrierLedMesh);
-
-  // Rotating barrier arm
-  const barGroup = new THREE.Group();
-  barGroup.position.set(barPedX + 0.18, 0.95, barPedZ);
-  securityGroup.add(barGroup);
-
-  addCylinder(barGroup, [0, 0, 0], 0.14, 0.14, 0.12, materials.metalDark, { rotation: [Math.PI * 0.5, 0, 0] });
-  // Striped barrier arm (alternating bright orange and white safety segments)
-  for (let i = 0; i < 9; i++) {
-    const segX = i * 0.45 + 0.22;
-    addBox(barGroup, [segX, 0, 0], [0.44, 0.14, 0.06], (i % 2 === 0) ? materials.barrierOrange : materials.barrierWhite);
-  }
-  // Rubber impact tip
-  addBox(barGroup, [4.2, 0, 0], [0.12, 0.15, 0.07], materials.carRubber);
-
-  // Rapier collider for boom barrier arm (active when closed)
-  let barrierCollider = null;
-  if (world && RAPIER) {
-    const barrierBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(-4.1, 0.95, 24.8));
-    barrierCollider = world.createCollider(RAPIER.ColliderDesc.cuboid(2.15, 0.35, 0.15), barrierBody);
-    staticBodies.push(barrierBody);
-  }
-
-  // Barrier Animation Controller
-  const BARRIER_OPEN_ANGLE = Math.PI * 0.44; // ~79.2 degrees
-  const BARRIER_DURATION = 0.85;
-
-  let barrierState = 'closed';
-  let barrierFrom = 0;
-  let barrierTo = 0;
-  let barrierClock = 0;
-  let barrierPendingCb = null;
-
-  const setBarrierAngle = (a) => {
-    barGroup.rotation.z = a;
-  };
-
-  const updateBarrierLed = () => {
-    if (barrierState === 'open') {
-      barrierLedMesh.material = barrierLedMatGreen;
-    } else if (barrierState === 'closed') {
-      barrierLedMesh.material = barrierLedMatRed;
-    } else {
-      barrierLedMesh.material = barrierLedMatYellow;
-    }
-  };
-
-  const finishBarrier = () => {
-    setBarrierAngle(barrierTo);
-    barrierState = barrierTo > 0 ? 'open' : 'closed';
-    updateBarrierLed();
-    if (barrierCollider) {
-      barrierCollider.setEnabled(barrierState === 'closed');
-    }
-    const cb = barrierPendingCb;
-    barrierPendingCb = null;
-    if (cb) cb(barrierState === 'open');
-  };
-
-  const updateBarrier = (dt) => {
-    if (barrierState !== 'opening' && barrierState !== 'closing') return;
-    barrierClock += dt;
-    const t = Math.min(1, barrierClock / BARRIER_DURATION);
-    setBarrierAngle(barrierFrom + (barrierTo - barrierFrom) * easeInOut(t));
-    if (t >= 1) finishBarrier();
-  };
-
-  const toggleBarrier = (cb) => {
-    if (barrierState === 'opening' || barrierState === 'closing') return false;
-    const opening = barrierState === 'closed';
-    barrierFrom = barGroup.rotation.z;
-    barrierTo = opening ? BARRIER_OPEN_ANGLE : 0;
-    barrierClock = 0;
-    barrierState = opening ? 'opening' : 'closing';
-    updateBarrierLed();
-    barrierPendingCb = cb || null;
-    if (opening && barrierCollider) {
-      barrierCollider.setEnabled(false);
-    }
-    return true;
-  };
-
-  const setBarrierImmediate = (targetState) => {
-    const isOp = targetState === 'open';
-    barrierTo = isOp ? BARRIER_OPEN_ANGLE : 0;
-    barrierState = isOp ? 'open' : 'closed';
-    setBarrierAngle(barrierTo);
-    updateBarrierLed();
-    if (barrierCollider) {
-      barrierCollider.setEnabled(!isOp);
-    }
-  };
-
+  // Stub for barrierControls (boom barrier removed in favor of grand estate gate)
   const barrierControls = {
-    isOpen: () => barrierState === 'open',
-    isBusy: () => barrierState === 'opening' || barrierState === 'closing',
-    getState: () => barrierState,
-    toggle: toggleBarrier,
-    open: (cb) => (barrierState === 'closed' ? toggleBarrier(cb) : false),
-    close: (cb) => (barrierState === 'open' ? toggleBarrier(cb) : false),
-    setImmediate: setBarrierImmediate,
-    update: updateBarrier,
-    barGroup,
-    barrierLedMesh,
+    isOpen: () => false,
+    isBusy: () => false,
+    getState: () => 'none',
+    toggle: () => false,
+    open: () => false,
+    close: () => false,
+    setImmediate: () => {},
+    update: () => {},
   };
 
   const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
@@ -579,11 +472,6 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies, interacti
     setGateImmediate('open');
   } else if (urlParams?.get('gate') === 'closed') {
     setGateImmediate('closed');
-  }
-  if (urlParams?.get('barrier') === 'open') {
-    setBarrierImmediate('open');
-  } else if (urlParams?.get('barrier') === 'closed') {
-    setBarrierImmediate('closed');
   }
 
   // Register interactive checkpoints in interactionPoints
@@ -602,30 +490,6 @@ export function createSecurityArea(scene, world, RAPIER, staticBodies, interacti
         return gateState === 'open' ? 'Tutup Gerbang [E]' : 'Buka Gerbang [E]';
       },
     });
-
-    interactionPoints.push({
-      id: 'boom-barrier',
-      type: 'door',
-      title: 'Entrance Boom Barrier',
-      position: new THREE.Vector3(-5.8, 1.0, 24.8),
-      radius: 3.0,
-      controls: barrierControls,
-      action: () => toggleBarrier(),
-      getLabel: () => {
-        if (barrierState === 'opening') return 'Membuka portal...';
-        if (barrierState === 'closing') return 'Menutup portal...';
-        return barrierState === 'open' ? 'Tutup Portal [E]' : 'Buka Portal [E]';
-      },
-    });
-  }
-
-  // Modern stainless security bollards flanking the entrance lane
-  const bollardXs = [-6.7, -0.4];
-  for (const bx of bollardXs) {
-    batch.addCylinder([bx, 0.45, 25.8], 0.12, 0.12, 0.9, materials.chrome);
-    batch.addSphere([bx, 0.9, 25.8], [0.12, 0.06, 0.12], materials.chrome);
-    // Amber reflector ring
-    batch.addCylinder([bx, 0.72, 25.8], 0.125, 0.125, 0.08, materials.flowerYellow, { shadow: false });
   }
 
   // =========================================================================
