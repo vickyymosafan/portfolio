@@ -41,7 +41,8 @@ export function createDriveway(scene, world, RAPIER, staticBodies) {
   batch.addBox([26.2, 0.08, 13.5], [0.35, 0.16, 17.0], materials.stoneWarm);
 
   // Luxury Outdoor Resident & Guest Parking Court: 2 Sports Cars + 2 Motorcycles
-  createOutdoorParkingLot(scene, world, RAPIER, staticBodies);
+  const parkingLot = createOutdoorParkingLot(scene, world, RAPIER, staticBodies);
+  driveGroup.userData.motorcycles = parkingLot?.motorcycles || [];
 
   // 3. Landscaping Islands with Ornamental Cypress Trees & Lavender
   // Balanced setback from curbs (west curb x = 10.8, east curb x = 26.2, fountain roundabout radius 7.25m)

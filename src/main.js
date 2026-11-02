@@ -26,6 +26,7 @@ import { InputManager } from './systems/inputManager.js';
 import { CameraController } from './systems/cameraController.js';
 import { UIManager } from './ui/uiManager.js';
 import { AudioManager } from './audio/audioManager.js';
+import { MotorcycleController } from './motorcycleController.js';
 import './style.css';
 
 const $ = (id) => document.getElementById(id);
@@ -91,6 +92,7 @@ let doorControls;
 let cinematicDirector;
 let worldInteractions;
 let drivewayZone;
+let motorcycleController;
 let securityZone;
 let farmZone;
 let riceZone;
@@ -181,6 +183,11 @@ let lastRoomVisited = '';
 
 const inputManager = new InputManager({
   onEscape: () => {
+    if (motorcycleController && motorcycleController.isRiding) {
+      motorcycleController.dismount();
+      findInteraction(true);
+      return;
+    }
     if (cinematicDirector && cinematicDirector.isActive()) {
       cinematicDirector.exitScene();
       return;
@@ -1235,6 +1242,7 @@ function setPromptUI(visible, key = '', label = '', touch = 'Interact') {
  */
 function canInteractWithRoom(roomItem, px, py, pz, doorControls) {
   if (!roomItem || roomItem.type === 'door') return false;
+  if (roomItem.type === 'motorcycle' || roomItem.type === 'vehicle') return true;
   const id = roomItem.id;
   const isUpper = py >= 3.0;
 
@@ -1321,7 +1329,29 @@ function findInteraction(force = false) {
     }
   }
 
-  // 2. We are in normal locomotion: evaluate available targets (Door & Room Exhibits only, sitting disabled)
+  // 2. We are in normal locomotion: evaluate available targets
+  // Check if player is near or riding an interactive motorcycle
+  let motorcycleCandidate = null;
+  if (motorcycleController) {
+    if (motorcycleController.isRiding) {
+      const dismountTarget = {
+        type: 'motorcycle',
+        action: () => {
+          motorcycleController.dismount();
+          findInteraction(true);
+        },
+      };
+      currentInteraction = dismountTarget;
+      setPromptUI(true, 'E', 'Turun Sepeda Motor [E]', 'Turun');
+      return;
+    } else {
+      const nearestBike = motorcycleController.getNearestMotorcycle(physX, physY, physZ, 2.8);
+      if (nearestBike) {
+        motorcycleCandidate = nearestBike;
+      }
+    }
+  }
+
   // Door interaction candidate (E) - front entrance, rear terrace, or second floor balcony glass doors
   let doorCandidate = null;
   let bestDoorDist = Infinity;
@@ -1354,7 +1384,22 @@ function findInteraction(force = false) {
   // 1. Door (E) takes top priority when in doorway clearance or when outside facing the entrance
   // 2. Room Exhibit (E) - strictly requires character to be inside the room
   let chosen = null;
-  if (doorCandidate && (physZ > 3.8 || !bestRoom || doorCandidate.dist < 1.6)) {
+  if (motorcycleCandidate) {
+    const bike = motorcycleCandidate;
+    chosen = {
+      key: 'E',
+      label: `Kendarai ${bike.userData?.name || 'Sepeda Motor'} [E]`,
+      touch: 'Kendarai',
+      target: {
+        type: 'motorcycle',
+        action: () => {
+          motorcycleController.mount(bike);
+          findInteraction(true);
+        },
+      },
+    };
+    currentInteraction = chosen.target;
+  } else if (doorCandidate && (physZ > 3.8 || !bestRoom || doorCandidate.dist < 1.6)) {
     const pt = doorCandidate.point;
     const isDoorOpen = pt.controls?.isOpen?.() ?? false;
     chosen = {
@@ -1416,12 +1461,17 @@ function dispatchInteraction(code) {
   if (code === 'KeyC') {
     return reject('sit_disabled');
   } else if (code === 'KeyE') {
-    // KeyE: ONLY doors and room exhibits. NEVER triggers sitting!
+    if (motorcycleController && motorcycleController.isRiding) {
+      motorcycleController.dismount();
+      findInteraction(true);
+      return true;
+    }
+    // KeyE: ONLY doors, room exhibits, and vehicles. NEVER triggers sitting!
     if (w.mode !== InteractionMode.NONE) return reject('other_interaction_active');
 
-    // 1. If findInteraction() already selected an active door or room exhibit for KeyE, execute it directly!
+    // 1. If findInteraction() already selected an active target for KeyE, execute it directly!
     let target = null;
-    if (currentInteraction && (currentInteraction.type === 'door' || currentInteraction.type === 'room' || typeof currentInteraction.action === 'function')) {
+    if (currentInteraction && (currentInteraction.type === 'door' || currentInteraction.type === 'room' || currentInteraction.type === 'motorcycle' || typeof currentInteraction.action === 'function')) {
       target = currentInteraction;
     }
 
@@ -1886,6 +1936,17 @@ function getInputVector(dt) {
 }
 
 function updatePhysics(dt) {
+  if (motorcycleController && motorcycleController.isRiding) {
+    motorcycleController.update(dt);
+    physX = motorcycleController.position.x;
+    physY = motorcycleController.position.y;
+    physZ = motorcycleController.position.z;
+    currentVelX = 0;
+    currentVelZ = 0;
+    jumpVelocity = 0;
+    moveAmount = 0;
+    return;
+  }
   if (
     worldInteractions &&
     (worldInteractions.isTransitioning() ||
@@ -1961,6 +2022,10 @@ function updatePhysics(dt) {
 }
 
 function updateCamera(dt, timestamp) {
+  if (motorcycleController && motorcycleController.isRiding) {
+    motorcycleController.updateCamera(dt, camera);
+    return;
+  }
   if (cinematicDirector && cinematicDirector.isActive()) {
     cinematicDirector.update(dt);
     return;
@@ -2488,6 +2553,22 @@ async function init() {
     camera.lookAt(0, 2.0, 16.8);
     setRoom('yard');
     initWorldMarkers();
+
+    motorcycleController = new MotorcycleController({
+      scene,
+      world,
+      RAPIER,
+      characterRig,
+      characterController,
+      playerCollider,
+      playerBody,
+      camera,
+      keys,
+    });
+    if (drivewayZone?.userData?.motorcycles) {
+      motorcycleController.registerMotorcycles(drivewayZone.userData.motorcycles);
+    }
+    window.__motorcycleController = motorcycleController;
 
     audioManager = new AudioManager({ camera, volume: 0.35 });
     audioManager.init(camera);

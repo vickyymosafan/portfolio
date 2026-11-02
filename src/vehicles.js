@@ -514,18 +514,48 @@ export function buildMotorcycle(parent, cx, cy, cz, options = {}) {
     }
   }
 
+  mergeSubtreeMeshes(bike, false);
+
   // =========================================================================
-  // 6. PARKED STANCE: SIDE KICKSTAND
+  // 6. PARKED STANCE: RETRACTABLE SIDE KICKSTAND & HEADLIGHT
   // =========================================================================
+  const kickstandGroup = new THREE.Group();
+  kickstandGroup.name = 'kickstand';
   // Deployed steel kickstand leg touching ground on left side
-  addCylinder(bike, [-0.18, 0.16, -0.12], 0.016, 0.016, 0.34, materials.carChrome, {
+  addCylinder(kickstandGroup, [-0.18, 0.16, -0.12], 0.016, 0.016, 0.34, materials.carChrome, {
     rotation: [0, 0, 0.48],
     segments: 8,
   });
   // Kickstand foot pad
-  addBox(bike, [-0.26, 0.01, -0.12], [0.06, 0.015, 0.06], materials.metalDark);
+  addBox(kickstandGroup, [-0.26, 0.01, -0.12], [0.06, 0.015, 0.06], materials.metalDark);
+  mergeSubtreeMeshes(kickstandGroup, false);
+  bike.add(kickstandGroup);
+  bike.userData.kickstandGroup = kickstandGroup;
 
-  mergeSubtreeMeshes(bike, false);
+  // Forward LED Projector Headlight
+  const headlightGroup = new THREE.Group();
+  headlightGroup.name = 'headlightGroup';
+  headlightGroup.position.set(0, 0.74, 0.78);
+  const spot = new THREE.SpotLight(0xe6f7ff, 0, 24, Math.PI * 0.28, 0.45, 1.2);
+  spot.position.set(0, 0, 0);
+  spot.target.position.set(0, -0.4, 10);
+  headlightGroup.add(spot);
+  headlightGroup.add(spot.target);
+
+  const glow = new THREE.PointLight(0xaadeff, 0, 5, 2.0);
+  glow.position.set(0, 0, 0.05);
+  headlightGroup.add(glow);
+
+  bike.add(headlightGroup);
+  bike.userData.headlightGroup = headlightGroup;
+  bike.userData.headlightSpot = spot;
+  bike.userData.headlightGlow = glow;
+
+  bike.userData.isMotorcycle = true;
+  bike.userData.parkedLeanAngle = leanZ;
+  bike.userData.initialPos = { x: cx, y: cy, z: cz };
+  bike.userData.initialRotY = options.rotationY || 0;
+
   return bike;
 }
 
@@ -635,26 +665,31 @@ export function createOutdoorParkingLot(scene, world, RAPIER, staticBodies) {
   // 6. VEHICLE 3: SUPERSPORT 1000cc MOTORCYCLE (BMW S1000RR / TRICOLOR)
   // Parked in Motorcycle Bay 1 (center x = 13.5, z = 14.1, facing east)
   // =========================================================================
-  buildMotorcycle(scene, 13.5, 0.04, 14.1, {
+  const bike1 = buildMotorcycle(scene, 13.5, 0.04, 14.1, {
     style: 'supersport',
     bodyPaintMat: materials.bikePaintTricolor,
     rotationY: Math.PI * 0.5,
     leanAngle: -0.10,
   });
 
+  let bike1Body = null;
   if (world && RAPIER) {
-    const bike1Body = world.createRigidBody(
+    bike1Body = world.createRigidBody(
       RAPIER.RigidBodyDesc.fixed().setTranslation(13.5, 0.65, 14.1)
     );
     world.createCollider(RAPIER.ColliderDesc.cuboid(1.15, 0.65, 0.40), bike1Body);
     staticBodies.push(bike1Body);
   }
+  bike1.userData.name = 'BMW S1000RR SuperSport';
+  bike1.userData.id = 'motorcycle-supersport';
+  bike1.userData.style = 'supersport';
+  bike1.userData.colliderBody = bike1Body;
 
   // =========================================================================
   // 7. VEHICLE 4: HYPERNAKED STREETFIGHTER MOTORCYCLE (CYBER CYAN & ORANGE)
   // Parked in Motorcycle Bay 2 (center x = 13.5, z = 16.2, facing east)
   // =========================================================================
-  buildMotorcycle(scene, 13.5, 0.04, 16.2, {
+  const bike2 = buildMotorcycle(scene, 13.5, 0.04, 16.2, {
     style: 'streetfighter',
     bodyPaintMat: materials.bikePaintCyan,
     frameMat: materials.bikeTrellisOrange,
@@ -663,12 +698,25 @@ export function createOutdoorParkingLot(scene, world, RAPIER, staticBodies) {
     leanAngle: -0.10,
   });
 
+  let bike2Body = null;
   if (world && RAPIER) {
-    const bike2Body = world.createRigidBody(
+    bike2Body = world.createRigidBody(
       RAPIER.RigidBodyDesc.fixed().setTranslation(13.5, 0.65, 16.2)
     );
     world.createCollider(RAPIER.ColliderDesc.cuboid(1.15, 0.65, 0.40), bike2Body);
     staticBodies.push(bike2Body);
   }
+  bike2.userData.name = 'Cyber Cyan HyperNaked';
+  bike2.userData.id = 'motorcycle-streetfighter';
+  bike2.userData.style = 'streetfighter';
+  bike2.userData.colliderBody = bike2Body;
+
+  const motorcycles = [bike1, bike2];
+  lotGroup.userData.motorcycles = motorcycles;
+
+  return {
+    group: lotGroup,
+    motorcycles,
+  };
 }
 

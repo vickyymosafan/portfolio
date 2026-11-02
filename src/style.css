@@ -797,3 +797,130 @@
 
 
 
+
+/* =========================================================================
+   Motorcycle Driving HUD (Speedometer & Controls)
+   ========================================================================= */
+.motorcycle-hud {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 900;
+  pointer-events: auto;
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+.motorcycle-hud.is-hidden {
+  opacity: 0;
+  transform: translate(-50%, 20px) scale(0.96);
+  pointer-events: none;
+}
+.motorcycle-hud-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 20px;
+  background: rgba(18, 30, 26, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  color: #fff;
+  min-width: 290px;
+  user-select: none;
+}
+.motorcycle-hud-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.motorcycle-hud-icon {
+  font-size: 14px;
+}
+.motorcycle-hud-name {
+  color: #facc15;
+}
+.motorcycle-hud-gear {
+  background: rgba(250, 204, 21, 0.18);
+  border: 1px solid #facc15;
+  color: #fef08a;
+  padding: 1px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+}
+.motorcycle-hud-speedometer {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin: 2px 0;
+}
+.motorcycle-speed-number {
+  font-size: 38px;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+}
+.motorcycle-speed-unit {
+  font-size: 12px;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.08em;
+}
+.motorcycle-hud-guide {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+.motorcycle-hud-guide .keycap {
+  display: inline-block;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 10px;
+  color: #f8fafc;
+}
+.motorcycle-dismount-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(239, 68, 68, 0.22);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #fca5a5;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.motorcycle-dismount-btn:hover {
+  background: rgba(239, 68, 68, 0.4);
+  color: #fff;
+}
+@media (max-width: 768px) {
+  .motorcycle-hud {
+    bottom: 84px;
+  }
+  .motorcycle-hud-content {
+    min-width: 240px;
+    padding: 8px 14px;
+  }
+  .motorcycle-speed-number {
+    font-size: 28px;
+  }
+}

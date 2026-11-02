@@ -653,6 +653,32 @@ export function updateCharacterRig(rig, dt, elapsed, moveAmount, grounded) {
       rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, -0.52, aw);
       rightForearm.rotation.x = THREE.MathUtils.lerp(rightForearm.rotation.x, 0.38, aw);
       headGroup.rotation.y = THREE.MathUtils.lerp(headGroup.rotation.y, 0.15, aw);
+    } else if (state.actionState === 'RIDING_BIKE') {
+      // Pelvis positioned naturally on motorcycle saddle
+      pelvisGroup.position.y = THREE.MathUtils.lerp(pelvisGroup.position.y, -0.36, aw);
+      // Torso leaned forward toward handlebars
+      torsoGroup.rotation.x = THREE.MathUtils.lerp(torsoGroup.rotation.x, -0.22, aw);
+
+      // Arms reached forward gripping handlebars
+      leftArm.rotation.x = THREE.MathUtils.lerp(leftArm.rotation.x, -0.85, aw);
+      rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, -0.85, aw);
+      leftArm.rotation.z = THREE.MathUtils.lerp(leftArm.rotation.z, -0.22, aw);
+      rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, 0.22, aw);
+      leftForearm.rotation.x = THREE.MathUtils.lerp(leftForearm.rotation.x, 0.46, aw);
+      rightForearm.rotation.x = THREE.MathUtils.lerp(rightForearm.rotation.x, 0.46, aw);
+
+      // Legs bent backward onto motorcycle footpegs
+      leftLeg.rotation.x = THREE.MathUtils.lerp(leftLeg.rotation.x, -0.75, aw);
+      rightLeg.rotation.x = THREE.MathUtils.lerp(rightLeg.rotation.x, -0.75, aw);
+      leftLeg.rotation.z = THREE.MathUtils.lerp(leftLeg.rotation.z, 0.14, aw);
+      rightLeg.rotation.z = THREE.MathUtils.lerp(rightLeg.rotation.z, -0.14, aw);
+      leftLowerLeg.rotation.x = THREE.MathUtils.lerp(leftLowerLeg.rotation.x, 1.40, aw);
+      rightLowerLeg.rotation.x = THREE.MathUtils.lerp(rightLowerLeg.rotation.x, 1.40, aw);
+      leftShoe.rotation.x = THREE.MathUtils.lerp(leftShoe.rotation.x, -0.28, aw);
+      rightShoe.rotation.x = THREE.MathUtils.lerp(rightShoe.rotation.x, -0.28, aw);
+
+      // Head tilted up to look ahead down the road
+      headGroup.rotation.x = THREE.MathUtils.lerp(headGroup.rotation.x, 0.20, aw);
     }
   } else if (state.targetActionWeight === 0) {
     pelvisGroup.position.y = THREE.MathUtils.damp(pelvisGroup.position.y, 0, 10.0, dt);
