@@ -123,10 +123,15 @@ export function addSphere(parent, position, size, surface, options = {}) {
 
 export function addCylinder(parent, position, radiusTop, radiusBottom, height, surface, options = {}) {
   const avgRadius = (radiusTop + radiusBottom) * 0.5;
-  const geo = getSharedCylinder(options.segments ?? 6, avgRadius, options.smooth || (options.segments && options.segments > 8));
+  const isTruncated = Math.abs(radiusTop - radiusBottom) > 0.001;
+  const geo = isTruncated
+    ? new THREE.CylinderGeometry(radiusTop, radiusBottom, height, options.segments ?? 6)
+    : getSharedCylinder(options.segments ?? 6, avgRadius, options.smooth || (options.segments && options.segments > 8));
   const mesh = new THREE.Mesh(geo, surface);
   mesh.position.set(...position);
-  mesh.scale.set(avgRadius, height, avgRadius);
+  if (!isTruncated) {
+    mesh.scale.set(avgRadius, height, avgRadius);
+  }
   const vol = Math.PI * avgRadius * avgRadius * height;
   mesh.castShadow = options.shadow !== undefined ? options.shadow : (vol > 0.25);
   mesh.receiveShadow = options.receive ?? true;
@@ -181,8 +186,15 @@ export class BatchCollector {
 
   addCylinder(position, radiusTop, radiusBottom, height, material, options = {}) {
     const avgRadius = (radiusTop + radiusBottom) * 0.5;
-    const baseGeo = getSharedCylinder(options.segments ?? 6, avgRadius, options.smooth || (options.segments && options.segments > 8));
-    const geo = baseGeo.clone();
+    const isTruncated = Math.abs(radiusTop - radiusBottom) > 0.001;
+    let geo;
+    if (isTruncated) {
+      geo = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, options.segments ?? 6);
+    } else {
+      const baseGeo = getSharedCylinder(options.segments ?? 6, avgRadius, options.smooth || (options.segments && options.segments > 8));
+      geo = baseGeo.clone();
+      geo.scale(avgRadius, height, avgRadius);
+    }
     _tempVecPos.set(...position);
     if (options.rotation) {
       _tempEuler.set(...options.rotation);
@@ -190,8 +202,7 @@ export class BatchCollector {
     } else {
       _tempQuat.identity();
     }
-    _tempVecScale.set(avgRadius, height, avgRadius);
-    _tempMat4.compose(_tempVecPos, _tempQuat, _tempVecScale);
+    _tempMat4.compose(_tempVecPos, _tempQuat, _tempVecScale.set(1, 1, 1));
     geo.applyMatrix4(_tempMat4);
     this._push(material, geo);
   }

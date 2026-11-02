@@ -138,64 +138,78 @@ export function createZenGarden(scene, world, RAPIER, staticBodies) {
   const gazeboX = 34.0;
   const gazeboZ = -1.5;
   const gazeboRadius = 3.2;
+  const colRadius = 2.75;
 
   // Hexagonal stone foundation podium
   batch.addCylinder([gazeboX, 0.18, gazeboZ], gazeboRadius, gazeboRadius + 0.2, 0.36, materials.stoneWarm, { segments: 6 });
 
-  // 6 Robust Cedar Wood Columns & Properly Aligned Wrap-Around Benches
+  // 6 Robust Cedar Wood Columns, Header Ring Beams, & Wrap-Around Benches
   for (let i = 0; i < 6; i += 1) {
     const angle = (i / 6) * Math.PI * 2;
-    const px = gazeboX + Math.cos(angle) * (gazeboRadius - 0.35);
-    const pz = gazeboZ + Math.sin(angle) * (gazeboRadius - 0.35);
-    batch.addBox([px, 1.85, pz], [0.22, 3.2, 0.22], materials.woodDark);
+    const nextAngle = ((i + 1) / 6) * Math.PI * 2;
+    const px = gazeboX + Math.cos(angle) * colRadius;
+    const pz = gazeboZ + Math.sin(angle) * colRadius;
 
-    // Perimeter wooden seating bench between columns (leave side 3 open for entrance)
+    // Solid column supporting the roof eaves from podium y = 0.36 to eave y = 2.80
+    batch.addBox([px, 1.58, pz], [0.22, 2.44, 0.22], materials.woodDark);
+
+    // Connecting horizontal header ring beam between column tops
+    const x1 = px;
+    const z1 = pz;
+    const x2 = gazeboX + Math.cos(nextAngle) * colRadius;
+    const z2 = gazeboZ + Math.sin(nextAngle) * colRadius;
+    const mx = (x1 + x2) * 0.5;
+    const mz = (z1 + z2) * 0.5;
+    const dx = x2 - x1;
+    const dz = z2 - z1;
+    const bLen = Math.hypot(dx, dz);
+    const edgeAngle = Math.atan2(-dz, dx);
+
+    // Header lintel beam resting flush across column tops
+    batch.addBox([mx, 2.72, mz], [bLen + 0.22, 0.16, 0.18], materials.woodDark, {
+      rotation: [0, edgeAngle, 0],
+    });
+
+    // Perimeter wooden seating bench between columns (leave side 3 open for entrance from path)
     if (i !== 3) {
-      const nextAngle = ((i + 1) / 6) * Math.PI * 2;
-      const x1 = Math.cos(angle) * (gazeboRadius - 0.4);
-      const z1 = Math.sin(angle) * (gazeboRadius - 0.4);
-      const x2 = Math.cos(nextAngle) * (gazeboRadius - 0.4);
-      const z2 = Math.sin(nextAngle) * (gazeboRadius - 0.4);
-
-      const mx = gazeboX + (x1 + x2) * 0.5;
-      const mz = gazeboZ + (z1 + z2) * 0.5;
-      const dx = x2 - x1;
-      const dz = z2 - z1;
-      const bLen = Math.hypot(dx, dz);
-      // Tangent angle so box length aligns perfectly along edge
-      const edgeAngle = Math.atan2(-dz, dx);
-
       // Bench seat plank
-      batch.addBox([mx, 0.55, mz], [bLen - 0.25, 0.08, 0.42], materials.woodWarm, {
+      batch.addBox([mx, 0.68, mz], [bLen - 0.22, 0.08, 0.38], materials.woodWarm, {
         rotation: [0, edgeAngle, 0],
       });
       // Bench backrest
-      batch.addBox([mx, 0.95, mz], [bLen - 0.25, 0.42, 0.08], materials.woodDark, {
+      batch.addBox([mx, 1.05, mz], [bLen - 0.22, 0.38, 0.08], materials.woodDark, {
         rotation: [0, edgeAngle, 0],
       });
     }
   }
 
-  // Flared Pagoda Hip Roof (Dark charred cedar shingles with brass finial)
-  batch.addCylinder([gazeboX, 3.7, gazeboZ], 0.6, gazeboRadius + 0.6, 0.7, materials.gazeboRoof, { segments: 6 });
-  batch.addCylinder([gazeboX, 4.3, gazeboZ], 0.15, 1.4, 0.6, materials.gazeboRoof, { segments: 6 });
-  batch.addSphere([gazeboX, 4.75, gazeboZ], [0.18, 0.28, 0.18], materials.brass, { shadow: false });
+  // Flared Pagoda Hip Roof (Dark charred cedar shingles resting flush on pillars with brass finial)
+  // Lower Tier: rests directly onto columns at y = 2.80, overhangs to radius 3.65m
+  batch.addCylinder([gazeboX, 3.225, gazeboZ], 1.25, 3.65, 0.85, materials.gazeboRoof, { segments: 6 });
+  // Upper Tier: secondary tiered pagoda clerestory
+  batch.addCylinder([gazeboX, 3.975, gazeboZ], 0.20, 1.45, 0.65, materials.gazeboRoof, { segments: 6 });
+  // Brass Hoju jewel finial peak
+  batch.addSphere([gazeboX, 4.45, gazeboZ], [0.18, 0.28, 0.18], materials.brass, { shadow: false });
 
-  // Hanging corner brass wind chimes (furin)
+  // Hanging corner brass wind chimes (furin) anchored directly to the 6 roof eave tips
   for (let i = 0; i < 6; i += 1) {
     const angle = (i / 6) * Math.PI * 2;
-    const cx = gazeboX + Math.cos(angle) * (gazeboRadius + 0.5);
-    const cz = gazeboZ + Math.sin(angle) * (gazeboRadius + 0.5);
-    batch.addCylinder([cx, 3.3, cz], 0.01, 0.01, 0.35, materials.brass);
-    batch.addCylinder([cx, 3.1, cz], 0.04, 0.04, 0.08, materials.brass, { segments: 8 });
+    const cx = gazeboX + Math.cos(angle) * 3.55;
+    const cz = gazeboZ + Math.sin(angle) * 3.55;
+    // Suspension cord anchored into bottom of eave
+    batch.addCylinder([cx, 2.62, cz], 0.01, 0.01, 0.36, materials.brass);
+    // Bronze bell
+    batch.addCylinder([cx, 2.42, cz], 0.05, 0.06, 0.08, materials.brass, { segments: 8 });
+    // Decorative wind paper strip
+    batch.addBox([cx, 2.30, cz], [0.01, 0.16, 0.06], materials.cream);
   }
 
   // Central low tea table with ceramic teapot & teacups
-  batch.addCylinder([gazeboX, 0.46, gazeboZ], 0.65, 0.65, 0.08, materials.woodDark, { segments: 16 });
-  batch.addCylinder([gazeboX, 0.25, gazeboZ], 0.12, 0.12, 0.42, materials.woodDark);
-  batch.addSphere([gazeboX, 0.58, gazeboZ], [0.14, 0.12, 0.14], materials.metalDark); // cast iron teapot
-  batch.addCylinder([gazeboX + 0.3, 0.54, gazeboZ], 0.06, 0.05, 0.08, materials.cream, { segments: 12 }); // teacup
-  batch.addCylinder([gazeboX - 0.25, 0.54, gazeboZ + 0.2], 0.06, 0.05, 0.08, materials.cream, { segments: 12 });
+  batch.addCylinder([gazeboX, 0.68, gazeboZ], 0.65, 0.65, 0.08, materials.woodDark, { segments: 16 });
+  batch.addCylinder([gazeboX, 0.50, gazeboZ], 0.14, 0.14, 0.28, materials.woodDark);
+  batch.addSphere([gazeboX, 0.78, gazeboZ], [0.14, 0.12, 0.14], materials.metalDark); // cast iron teapot
+  batch.addCylinder([gazeboX + 0.3, 0.76, gazeboZ], 0.06, 0.05, 0.08, materials.cream, { segments: 12 }); // teacup
+  batch.addCylinder([gazeboX - 0.25, 0.76, gazeboZ + 0.2], 0.06, 0.05, 0.08, materials.cream, { segments: 12 });
 
   // Gazebo Physics Collider
   const gazeboBody = world.createRigidBody(
