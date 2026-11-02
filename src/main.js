@@ -521,8 +521,6 @@ async function createScene() {
     [41.0, -6.5, 0.95, 132],
     [-35.0, -15.5, 0.9, 143],
     [41.0, -15.5, 0.9, 154],
-    [-6.5, -22.5, 1.05, 165],
-    [6.5, -22.5, 1.05, 176],
   ];
   for (const [bx, bz, bs, seed] of bushCoords) {
     const bush = createCartoonBush(bx, bz, bs, seed);

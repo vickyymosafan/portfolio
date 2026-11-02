@@ -603,25 +603,33 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   addBox(building, [-1.75, 5.06, -2.2], [7.5, 0.28, 12.0], materials.bathroomTile, { shadow: false, receive: true });
   addColliderBox([-1.75, 5.06, -2.2], [3.75, 0.14, 6.0]);
 
-  // Rear upper landing floor slab (connecting top of stairs to bathroom, bedroom, & library, x: [2.0, 5.5], z: [-5.6, -8.2])
-  addBox(building, [3.75, 5.06, -6.9], [3.5, 0.28, 2.6], materials.bathroomTile, { shadow: false, receive: true });
-  addColliderBox([3.75, 5.06, -6.9], [1.75, 0.14, 1.3]);
+  // Rear upper landing floor slab (connecting top of stairs to bathroom, bedroom, & library, x: [2.0, 5.5], z: [-5.83, -8.2])
+  // Perfectly aligned with top stair step (z = -5.83), eliminating any ceiling/floor intrusion or railing clipping
+  addBox(building, [3.75, 5.06, -7.015], [3.5, 0.28, 2.37], materials.bathroomTile, { shadow: false, receive: true });
+  addColliderBox([3.75, 5.06, -7.015], [1.75, 0.14, 1.185]);
 
   // Front upper overlook floor slab (x: [2.0, 5.5], z: [0.8, 3.8])
   addBox(building, [3.75, 5.06, 2.3], [3.5, 0.28, 3.0], materials.bathroomTile, { shadow: false, receive: true });
   addColliderBox([3.75, 5.06, 2.3], [1.75, 0.14, 1.5]);
 
-  // Modern safety glass balustrades framing the stairwell opening on Lantai 2 (open well at x: [2.0, 5.5], z: [-5.6, 0.8])
+  // Modern safety glass balustrades framing the stairwell opening on Lantai 2 (open well at x: [2.0, 5.5], z: [-5.83, 0.8])
   // Architectural Code: 1.05m height safety balustrade with ergonomic handrail & brass spigots
   // Base shoe curb channels
-  archBatch.addBox([2.05, 5.26, -2.4], [0.10, 0.10, 6.4], materials.windowFrame);
+  archBatch.addBox([2.05, 5.26, -2.515], [0.10, 0.10, 6.63], materials.windowFrame);
   archBatch.addBox([3.75, 5.26, 0.8], [3.3, 0.10, 0.10], materials.windowFrame);
 
-  // Inner side glass panel along x = 2.05
-  addBox(building, [2.05, 5.75, -2.4], [0.04, 0.88, 6.4], materials.glass, { shadow: false });
-  archBatch.addBox([2.05, 6.25, -2.4], [0.12, 0.08, 6.4], materials.woodDark);
-  archBatch.addBox([2.05, 6.20, -2.4], [0.14, 0.02, 6.4], materials.brass);
-  addColliderBox([2.05, 5.75, -2.4], [0.08, 0.55, 3.2]);
+  // Inner side glass panel along x = 2.05 (z: [0.8, -5.83])
+  addBox(building, [2.05, 5.75, -2.515], [0.04, 0.88, 6.63], materials.glass, { shadow: false });
+  archBatch.addBox([2.05, 6.25, -2.515], [0.12, 0.08, 6.63], materials.woodDark);
+  archBatch.addBox([2.05, 6.20, -2.515], [0.14, 0.02, 6.63], materials.brass);
+  addColliderBox([2.05, 5.75, -2.515], [0.08, 0.55, 3.315]);
+
+  // Landing edge safety balustrade along z = -5.83 guarding the void between x = 2.05 and stair newel post x = 3.20
+  archBatch.addBox([2.625, 5.26, -5.83], [1.15, 0.10, 0.10], materials.windowFrame);
+  addBox(building, [2.625, 5.75, -5.83], [1.15, 0.88, 0.04], materials.glass, { shadow: false });
+  archBatch.addBox([2.625, 6.25, -5.83], [1.15, 0.08, 0.12], materials.woodDark);
+  archBatch.addBox([2.625, 6.20, -5.83], [1.15, 0.02, 0.14], materials.brass);
+  addColliderBox([2.625, 5.75, -5.83], [0.575, 0.55, 0.08]);
 
   // Front glass panel along z = 0.8 (x: [2.1, 5.4])
   addBox(building, [3.75, 5.75, 0.8], [3.3, 0.88, 0.04], materials.glass, { shadow: false });
@@ -630,7 +638,7 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   addColliderBox([3.75, 5.75, 0.8], [1.65, 0.55, 0.08]);
 
   // Corner and terminal newel posts for stairwell void
-  for (const [vx, vz] of [[2.05, 0.8], [2.05, -5.6], [5.4, 0.8]]) {
+  for (const [vx, vz] of [[2.05, 0.8], [2.05, -5.83], [5.4, 0.8]]) {
     archBatch.addBox([vx, 5.75, vz], [0.16, 1.05, 0.16], materials.woodDark);
     archBatch.addBox([vx, 5.26, vz], [0.18, 0.10, 0.18], materials.brass);
     archBatch.addBox([vx, 6.30, vz], [0.18, 0.08, 0.18], materials.brass);
@@ -705,10 +713,10 @@ export function createArchitecture(scene, world, RAPIER, staticBodies, cameraBlo
   cameraBlockers.push(partLibS);
   addColliderBox([5.5, 7.8, 2.3], [0.225, 2.6, 1.5]);
 
-  // Mid section along stairwell ascent (z: [-5.6, 0.8], depth 6.4m - solid structural backdrop)
-  const partLibMid = addBox(building, [5.5, 7.8, -2.4], [0.45, 5.2, 6.4], materials.wall, { shadow: true });
+  // Mid section along stairwell ascent (z: [-5.83, 0.8], depth 6.63m - solid structural backdrop)
+  const partLibMid = addBox(building, [5.5, 7.8, -2.515], [0.45, 5.2, 6.63], materials.wall, { shadow: true });
   cameraBlockers.push(partLibMid);
-  addColliderBox([5.5, 7.8, -2.4], [0.225, 2.6, 3.2]);
+  addColliderBox([5.5, 7.8, -2.515], [0.225, 2.6, 3.315]);
 
   // Arched walkthrough portal connecting Upper Landing to Library (z: [-5.8, -7.8])
   archBatch.addBox([5.5, 9.3, -6.8], [0.48, 2.2, 2.0], materials.wall);
