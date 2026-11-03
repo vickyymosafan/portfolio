@@ -1064,16 +1064,6 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
       addBox(volWall, [sx, 2.35, 0.02], [2.24, 1.48, 0.04], materials.brass);
     }
 
-    // 2. Guest Speaker Lectern / Podium ("Guru Tamu SMK Muhammadiyah 5 Kepanjen")
-    const lectern = new THREE.Group();
-    lectern.position.set(x + 1.65, y + 0.24, z - 4.15);
-    lectern.rotation.y = -0.25;
-    parent.add(lectern);
-    addBox(lectern, [0, 0.58, 0], [0.78, 1.16, 0.56], materials.woodDark);
-    addBox(lectern, [0, 1.18, 0.04], [0.88, 0.08, 0.68], materials.woodWarm, { rotation: [0.22, 0, 0] });
-    addBox(lectern, [0, 0.78, 0.29], [0.52, 0.42, 0.03], materials.gold);
-    addCylinder(lectern, [0.18, 1.32, -0.05], 0.015, 0.015, 0.28, materials.chrome, { rotation: [0.3, 0, 0] });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x + 1.65, y + 0.85, z - 4.15], [0.55, 0.85, 0.5]);
 
     // 3. "RTIK Goes to School" Collaborative Student Coding Workshop Tables (Cleared from right staircase)
     for (const tx of [-1.35, 0.85]) {
