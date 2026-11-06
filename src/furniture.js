@@ -1106,12 +1106,12 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
         addCylinder(wTable, [stx, 0.48, 0.75], 0.22, 0.22, 0.08, stx < 0 ? materials.emerald : materials.coral, { segments: 12 });
         addCylinder(wTable, [stx, 0.24, 0.75], 0.04, 0.06, 0.46, materials.metalDark);
       }
-      addFurnitureCollider(world, RAPIER, staticBodies, [x + tx, y + 0.55, z - 1.2], [0.98, 0.55, 0.85]);
+      addFurnitureCollider(world, RAPIER, staticBodies, [x + tx, y + 0.55, z - 1.2], [0.92, 0.55, 0.58]);
     }
 
     // 4. HIMAFORSI MediaTech Cinema Camera Rig, Softbox Key Light & Editing Station (West Wing)
     const camRig = new THREE.Group();
-    camRig.position.set(x - 2.85, y, z - 2.1);
+    camRig.position.set(x - 3.65, y, z - 2.1);
     camRig.rotation.y = 0.45;
     parent.add(camRig);
     // Tripod legs & center column
@@ -1124,13 +1124,14 @@ function buildRoomFurniture(parent, room, world, RAPIER, staticBodies) {
 
     // Studio LED Softbox Key Light next to Camera Rig
     const softbox = new THREE.Group();
-    softbox.position.set(x - 3.65, y, z - 3.3);
+    softbox.position.set(x - 4.45, y, z - 3.3);
     softbox.rotation.y = 0.55;
     parent.add(softbox);
     addCylinder(softbox, [0, 0.85, 0], 0.03, 0.24, 1.7, materials.metalDark, { segments: 8 });
     addBox(softbox, [0, 1.78, 0.05], [0.75, 0.55, 0.18], materials.ink, { rotation: [0.15, 0, 0] });
     addBox(softbox, [0, 1.78, 0.15], [0.68, 0.48, 0.02], materials.glow, { rotation: [0.15, 0, 0], shadow: false });
-    addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.2, y + 0.9, z - 2.6], [0.85, 0.9, 1.0]);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 3.65, y + 0.8, z - 2.1], [0.25, 0.8, 0.25]);
+    addFurnitureCollider(world, RAPIER, staticBodies, [x - 4.45, y + 0.9, z - 3.3], [0.25, 0.9, 0.25]);
   } else if (id === 'experience') {
     // =========================================================================
     // 02 · WORK EXPERIENCE — CORPORATE CAREER TIMELINE HALL & FINTECH COMMAND CENTER

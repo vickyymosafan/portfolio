@@ -147,6 +147,10 @@ let tourWaypoints = [];
 let tourWaypointIndex = 0;
 let tourWaitTimer = 0;
 let tourWaitingAtStop = false;
+let tourDoorWaitTimer = 0;
+let tourDoorWaitKey = null;
+let tourDesiredVelX = 0;
+let tourDesiredVelZ = 0;
 let tourClock = 0;
 let grounded = false;
 let jumpVelocity = 0;
@@ -1529,7 +1533,7 @@ const tourStops = [
     name: 'Front Yard & Garden Gate',
     subtitle: 'WELCOME TO VICKY’S DEVELOPER ESTATE',
     intro: 'Welcome to M. Vicky Mosafan’s 3D interactive portfolio! Follow the guided tour in the exact sequence of my LinkedIn & GitHub profile.',
-    position: [0, 1.12, 16.8],
+    position: [0.0, 1.12, 16.8],
     archX: 0,
     facing: Math.PI,
     cameraYaw: 0,
@@ -1541,10 +1545,10 @@ const tourStops = [
     name: '01 · About Me (Garden Pavilion)',
     subtitle: 'AI ENGINEER · FULL-STACK DEVELOPER · SYSTEM ARCHITECT',
     intro: 'Full-Stack Web Developer & AI Engineer with GPA 3.75/4.00 and 1,046+ GitHub contributions in the last year.',
-    position: [-7.5, 1.12, 10.5],
+    position: [-6.8, 1.12, 10.5],
     archX: 0,
     facing: -Math.PI * 0.5,
-    cameraYaw: -Math.PI * 0.5,
+    cameraYaw: Math.PI * 0.5,
     cameraPitch: 0.16,
   },
   {
@@ -1553,11 +1557,11 @@ const tourStops = [
     name: '02 · Work Experience (Library Nook)',
     subtitle: 'DESTINO COPYTRADE · MQL5 · POSYandu · ANTOSA · MANDIRI',
     intro: '5 verified LinkedIn roles across FinTech copytrading, MQL5 algorithmic trading, clinical health SaaS, and mobile banking.',
-    position: [10.0, 6.32, -1.5],
+    position: [10.75, 6.32, -2.8],
     archX: 5.5,
-    facing: -0.25,
-    cameraYaw: -0.1,
-    cameraPitch: 0.22,
+    facing: Math.PI,
+    cameraYaw: 0.0,
+    cameraPitch: 0.2,
   },
   {
     id: 'bedroom',
@@ -1565,11 +1569,11 @@ const tourStops = [
     name: '03 · Education (Master Suite)',
     subtitle: 'UNIVERSITAS MUHAMMADIYAH JEMBER · GPA 3.75 / 4.00',
     intro: 'Bachelor of Computer Science (Informatics Engineering, 2023–2027) and MAN 2 Banyuwangi Science Track.',
-    position: [-10.0, 6.32, -1.5],
+    position: [-10.8, 6.32, -1.6],
     archX: -5.5,
-    facing: 0.25,
-    cameraYaw: 0.1,
-    cameraPitch: 0.22,
+    facing: Math.PI,
+    cameraYaw: 0.0,
+    cameraPitch: 0.2,
   },
   {
     id: 'bathroom',
@@ -1577,11 +1581,11 @@ const tourStops = [
     name: '04 · Volunteering (Wellness Sanctuary)',
     subtitle: 'ELDERLY HEALTH DIGITIZATION & STUDENT MENTORSHIP',
     intro: 'Community volunteering for Posyandu lansia clinical digitization and open-source web/AI workshops.',
-    position: [0.0, 6.32, -1.5],
+    position: [-0.25, 6.32, -1.2],
     archX: 0,
-    facing: 0.0,
+    facing: Math.PI,
     cameraYaw: 0.0,
-    cameraPitch: 0.22,
+    cameraPitch: 0.2,
   },
   {
     id: 'garage',
@@ -1589,10 +1593,10 @@ const tourStops = [
     name: '05 · Licenses & Certifications (BMW Garage)',
     subtitle: 'MANDIRI · ALIBABA CLOUD · CODEPOLITAN · DICODING',
     intro: '7 verified industry credentials across mobile banking, cloud architecture, full-stack engineering, and applied AI.',
-    position: [20.5, 1.12, 2.0],
+    position: [18.3, 1.12, -0.8],
     archX: 16.0,
-    facing: -0.35,
-    cameraYaw: -0.2,
+    facing: Math.PI,
+    cameraYaw: -0.18,
     cameraPitch: 0.2,
   },
   {
@@ -1601,11 +1605,11 @@ const tourStops = [
     name: '06 · Projects (Project Gallery)',
     subtitle: 'BUILDFLOW ERP · MCP SERVERS · BEYOND-RAG · POSYANDU · DESTINO CT',
     intro: '11 production case studies with live demos and open-source repositories.',
-    position: [-10.0, 1.12, -1.5],
+    position: [-11.0, 1.12, -3.2],
     archX: -5.5,
-    facing: 0.25,
-    cameraYaw: 0.1,
-    cameraPitch: 0.22,
+    facing: Math.PI,
+    cameraYaw: 0.0,
+    cameraPitch: 0.2,
   },
   {
     id: 'skills',
@@ -1613,11 +1617,11 @@ const tourStops = [
     name: '07 · Architectural Domain & Core Technologies & Tooling',
     subtitle: 'LANGUAGES · FRONTEND · BACKEND · DB · AI TOOLING · DEVOPS',
     intro: 'Full matrix of languages, React 19 / Next.js 15, Node.js / NestJS / Laravel, PostgreSQL / Supabase Vector, and AI Augmented Tooling.',
-    position: [10.0, 1.12, -1.5],
+    position: [10.75, 1.12, 1.2],
     archX: 5.5,
-    facing: -0.25,
-    cameraYaw: -0.1,
-    cameraPitch: 0.22,
+    facing: Math.PI,
+    cameraYaw: 0.0,
+    cameraPitch: 0.2,
   },
   {
     id: 'process',
@@ -1627,9 +1631,9 @@ const tourStops = [
     intro: '1,046 contributions in the last year on github.com/vickyymosafan powered by a 6-stage deterministic engineering workflow.',
     position: [20.5, 6.32, -1.5],
     archX: 16.0,
-    facing: -0.25,
-    cameraYaw: -0.1,
-    cameraPitch: 0.22,
+    facing: Math.PI,
+    cameraYaw: 0.0,
+    cameraPitch: 0.2,
   },
   {
     id: 'contact',
@@ -1637,138 +1641,314 @@ const tourStops = [
     name: '09 · Contact & Links (Garden Terrace)',
     subtitle: 'LINKEDIN · GITHUB · EMAIL · INSTAGRAM',
     intro: 'Connect directly via linkedin.com/in/vickymosafan or github.com/vickyymosafan.',
-    position: [0.0, 1.12, -22.5],
+    position: [0.0, 1.12, -13.2],
     archX: 0,
     facing: Math.PI,
     cameraYaw: 0.0,
-    cameraPitch: 0.22,
+    cameraPitch: 0.2,
   },
 ];
 
+function getWaypointCoords(wp) {
+  if (!wp) return [0, 1.12, 0];
+  return Array.isArray(wp) ? wp : wp.pos;
+}
+
+/**
+ * Computes a 100% obstacle-free, door-aware navigation route from (startX, physY, startZ)
+ * to targetStop. Respects every architectural wall, porch railing, column, stairwell balustrade,
+ * and room furniture collider, and automatically opens & closes doors when crossing thresholds.
+ */
 function planTourWaypoints(startX, startZ, targetStop) {
-  const points = [];
+  const rawPoints = [];
   const targetX = targetStop.position[0];
   const targetY = targetStop.position[1] !== undefined ? targetStop.position[1] : 1.12;
   const targetZ = targetStop.position[2];
-  const targetArchX = targetStop.archX;
+  const stopId = targetStop.id;
 
   const startIsUpper = physY > 3.0;
   const targetIsUpper = targetY > 3.0;
 
-  const isOutdoor = startZ > 4.2 || startZ < -18.0;
-  const targetIsOutdoor = targetZ > 4.2 || targetZ < -18.0;
+  const startZone = startIsUpper
+    ? 'upper'
+    : startZ > 3.85
+      ? 'front_yard'
+      : startZ < -8.2
+        ? 'rear_terrace'
+        : 'ground_indoor';
 
-  // Handle cross-floor traversal between Ground Floor and Second Floor
-  if (!startIsUpper && targetIsUpper) {
-    // Ground to Upper: Navigate to foot of side staircase (x = 4.05, z = 1.0), ascend to landing (x = 4.05, z = -6.0)
-    if (isOutdoor) {
-      points.push([0, 1.12, 3.8]);
-    }
-    points.push([4.05, 1.12, 1.0]); // Foot of grand architectural side staircase
-    points.push([4.05, 6.32, -6.0]); // Top mezzanine landing
-    if (targetX > 4.5) {
-      // East side (Library / Studio)
-      points.push([5.5, 6.32, -6.8]);
-      if (targetArchX === 16.0) points.push([16.0, 6.32, -2.7]);
-    } else {
-      // West side (Bathroom / Bedroom)
-      points.push([2.0, 6.32, -6.5]);
-      if (targetArchX === -5.5) points.push([-5.5, 6.32, -2.7]);
-    }
-    points.push([targetX, targetY, targetZ]);
-    return points;
-  }
+  const targetZone = targetIsUpper
+    ? 'upper'
+    : targetZ > 3.85 || stopId === 'yard' || stopId === 'about'
+      ? 'front_yard'
+      : targetZ < -8.2 || stopId === 'contact'
+        ? 'rear_terrace'
+        : 'ground_indoor';
 
-  if (startIsUpper && !targetIsUpper) {
-    // Upper to Ground: Walk along landing, descend staircase to ground
-    if (startX > 4.5) {
-      points.push([5.5, 6.32, -6.8]);
+  // Helper: Route within Upper Floor from current upper position (ux, uz) to upper landing [4.05, 6.32, -6.6]
+  const appendUpperExitToLanding = (ux, uz) => {
+    if (ux > 15.8) {
+      // Exiting Creative Studio (process) -> Library -> Upper Landing
+      rawPoints.push([17.5, 6.32, -1.6]);
+      rawPoints.push([16.0, 6.32, -2.7]);
+      rawPoints.push([14.5, 6.32, -2.7]);
+      rawPoints.push([14.5, 6.32, -6.2]);
+      rawPoints.push([5.5, 6.32, -6.8]);
+      rawPoints.push([4.05, 6.32, -6.6]);
+    } else if (ux > 4.8) {
+      // Exiting Library Nook (experience) -> Upper Landing
+      rawPoints.push([10.75, 6.32, -6.2]);
+      rawPoints.push([5.5, 6.32, -6.8]);
+      rawPoints.push([4.05, 6.32, -6.6]);
+    } else if (ux < -5.2) {
+      // Exiting Master Bedroom (bedroom) -> Volunteering -> Upper Landing
+      rawPoints.push([-7.5, 6.32, -1.5]);
+      rawPoints.push([-5.5, 6.32, -1.5]);
+      rawPoints.push([-2.8, 6.32, -1.2]);
+      rawPoints.push([-2.8, 6.32, -4.6]);
+      rawPoints.push([1.2, 6.32, -4.6]);
+      rawPoints.push([1.2, 6.32, -6.5]);
+      rawPoints.push([4.05, 6.32, -6.6]);
     } else {
-      points.push([2.0, 6.32, -6.5]);
-    }
-    points.push([4.05, 6.32, -6.0]); // Top of staircase
-    points.push([4.05, 1.12, 1.0]); // Foot of staircase on ground floor
-    if (targetIsOutdoor) {
-      if (targetZ > 4.2) {
-        points.push([0, 1.12, 3.8]);
-        points.push([0, 1.12, 6.2]);
-      } else {
-        points.push([0, 1.12, -18.5]);
+      // Exiting Volunteering (bathroom) -> Upper Landing (via open corridor x = -2.8, z = -4.6)
+      if (uz > -4.0) {
+        rawPoints.push([-2.8, 6.32, -1.2]);
+        rawPoints.push([-2.8, 6.32, -4.6]);
       }
+      rawPoints.push([1.2, 6.32, -4.6]);
+      rawPoints.push([1.2, 6.32, -6.5]);
+      rawPoints.push([4.05, 6.32, -6.6]);
+    }
+  };
+
+  // Helper: Route from Upper Landing [4.05, 6.32, -6.6] into a specific Upper Floor stop
+  const appendUpperLandingToStop = () => {
+    if (stopId === 'experience') {
+      rawPoints.push([5.5, 6.32, -6.8]);
+      rawPoints.push([10.75, 6.32, -6.2]);
+      rawPoints.push([targetX, targetY, targetZ]);
+    } else if (stopId === 'process') {
+      rawPoints.push([5.5, 6.32, -6.8]);
+      rawPoints.push([10.75, 6.32, -6.2]);
+      rawPoints.push([14.5, 6.32, -6.2]);
+      rawPoints.push([14.5, 6.32, -2.7]);
+      rawPoints.push([16.0, 6.32, -2.7]);
+      rawPoints.push([17.5, 6.32, -1.6]);
+      rawPoints.push([targetX, targetY, targetZ]);
+    } else if (stopId === 'bedroom') {
+      rawPoints.push([1.2, 6.32, -6.5]);
+      rawPoints.push([1.2, 6.32, -4.6]);
+      rawPoints.push([-2.8, 6.32, -4.6]);
+      rawPoints.push([-2.8, 6.32, -1.5]);
+      rawPoints.push([-5.5, 6.32, -1.5]);
+      rawPoints.push([-7.5, 6.32, -1.5]);
+      rawPoints.push([targetX, targetY, targetZ]);
+    } else if (stopId === 'bathroom') {
+      rawPoints.push([1.2, 6.32, -6.5]);
+      rawPoints.push([1.2, 6.32, -4.6]);
+      rawPoints.push([-2.8, 6.32, -4.6]);
+      rawPoints.push([-2.8, 6.32, -1.2]);
+      rawPoints.push([targetX, targetY, targetZ]);
     } else {
-      points.push([0, 1.12, targetZ]);
-      if (Math.abs(targetArchX) > 0.5) {
-        const enterArchZ = targetArchX === 5.5 ? 2.0 : targetZ;
-        points.push([targetArchX, 1.12, enterArchZ]);
+      rawPoints.push([targetX, targetY, targetZ]);
+    }
+  };
+
+  // Helper: Route from Ground Floor Indoor position (gx, gz) to Central Foyer Hub [0.0, 1.12, 1.5]
+  const appendGroundIndoorExitToFoyer = (gx, gz) => {
+    if (gx > 15.8) {
+      // Exiting Garage -> Office -> Foyer
+      rawPoints.push([18.2, 1.12, -2.0]);
+      rawPoints.push([16.0, 1.12, -2.0]);
+      rawPoints.push([14.2, 1.12, -2.0]);
+      rawPoints.push([14.2, 1.12, 1.5]);
+      rawPoints.push([5.5, 1.12, 2.0]);
+      rawPoints.push([0.0, 1.12, 1.8]);
+    } else if (gx > 4.8) {
+      // Exiting Home Office (skills) -> Foyer
+      if (gz < 0.0) {
+        rawPoints.push([14.2, 1.12, gz]);
+        rawPoints.push([14.2, 1.12, 1.5]);
+      }
+      rawPoints.push([5.5, 1.12, 2.0]);
+      rawPoints.push([0.0, 1.12, 1.8]);
+    } else if (gx < -5.2) {
+      // Exiting Project Gallery (projects) -> Foyer (clearing museum bench at x: [-12.65, -9.35], z: [-2.15, -0.85])
+      rawPoints.push([-8.0, 1.12, -3.2]);
+      rawPoints.push([-5.5, 1.12, -2.1]);
+      rawPoints.push([0.0, 1.12, -2.1]);
+      rawPoints.push([0.0, 1.12, 1.5]);
+    } else {
+      // Already in Central Foyer
+      if (Math.abs(gx) > 1.5 || Math.abs(gz - 1.5) > 1.5) {
+        rawPoints.push([0.0, 1.12, 1.5]);
       }
     }
-    points.push([targetX, targetY, targetZ]);
-    return points;
-  }
+  };
 
-  if (startIsUpper && targetIsUpper) {
-    // Upper floor room to room
-    if (startX > 4.5 && targetX <= 4.5) {
-      // East to West
-      points.push([5.5, 6.32, -6.8]);
-      points.push([4.05, 6.32, -6.0]);
-      points.push([2.0, 6.32, -6.5]);
-      if (targetArchX === -5.5) points.push([-5.5, 6.32, -2.7]);
-    } else if (startX <= 4.5 && targetX > 4.5) {
-      // West to East
-      points.push([2.0, 6.32, -6.5]);
-      points.push([4.05, 6.32, -6.0]);
-      points.push([5.5, 6.32, -6.8]);
-      if (targetArchX === 16.0) points.push([16.0, 6.32, -2.7]);
-    } else if (Math.abs(targetArchX) > 0.5) {
-      points.push([targetArchX, 6.32, -2.7]);
-    }
-    points.push([targetX, targetY, targetZ]);
-    return points;
-  }
-
-  // Ground floor movement
-  if (isOutdoor && targetIsOutdoor) {
-    points.push([targetX, targetY, targetZ]);
-  } else if (isOutdoor && !targetIsOutdoor) {
-    if (startZ > 7.0) points.push([0, 1.12, 6.2]);
-    points.push([0, 1.12, 3.8]);
-    points.push([0, 1.12, targetZ]);
-    if (Math.abs(targetArchX) > 0.5) {
-      const enterArchZ = targetArchX === 5.5 ? 2.0 : targetZ;
-      points.push([targetArchX, 1.12, enterArchZ]);
-    }
-    points.push([targetX, targetY, targetZ]);
-  } else if (!isOutdoor && targetIsOutdoor) {
-    if (Math.abs(startX) > 2.0) {
-      const exitArchX = startX < 0 ? -5.5 : 5.5;
-      const archZ = exitArchX === 5.5 ? 2.0 : startZ;
-      points.push([exitArchX, 1.12, archZ]);
-    }
-    points.push([0, 1.12, startZ]);
-    if (targetZ > 4.2) {
-      points.push([0, 1.12, 3.8]);
-      points.push([0, 1.12, 6.2]);
+  // Helper: Route from Central Foyer Hub [0.0, 1.12, 1.5] to a Ground Floor Indoor stop
+  const appendFoyerToGroundIndoorStop = () => {
+    if (stopId === 'garage') {
+      rawPoints.push([5.5, 1.12, 2.0]);
+      rawPoints.push([14.2, 1.12, 1.5]);
+      rawPoints.push([14.2, 1.12, -2.0]);
+      rawPoints.push([16.0, 1.12, -2.0]);
+      rawPoints.push([18.2, 1.12, -2.0]);
+      rawPoints.push([targetX, targetY, targetZ]);
+    } else if (stopId === 'skills') {
+      rawPoints.push([5.5, 1.12, 2.0]);
+      rawPoints.push([targetX, targetY, targetZ]);
+    } else if (stopId === 'projects') {
+      rawPoints.push([0.0, 1.12, -2.1]);
+      rawPoints.push([-5.5, 1.12, -2.1]);
+      rawPoints.push([-8.0, 1.12, -3.2]);
+      rawPoints.push([targetX, targetY, targetZ]);
     } else {
-      points.push([0, 1.12, -18.5]);
+      rawPoints.push([targetX, targetY, targetZ]);
     }
-    points.push([targetX, targetY, targetZ]);
-  } else {
-    // Indoor ground room to room
-    if (Math.abs(startX) > 2.0) {
-      const exitArchX = startX < 0 ? -5.5 : 5.5;
-      const archZ = exitArchX === 5.5 ? 2.0 : startZ;
-      points.push([exitArchX, 1.12, archZ]);
+  };
+
+  // =========================================================================
+  // CASE 1: Both Start and Target are on Upper Floor (Lantai 2)
+  // =========================================================================
+  if (startZone === 'upper' && targetZone === 'upper') {
+    // Fast direct path between Bedroom ('bedroom') and Volunteering ('bathroom') via portal [-5.5, 6.32, -2.0]
+    if (startX < -5.2 && stopId === 'bathroom') {
+      rawPoints.push([-7.5, 6.32, -1.5]);
+      rawPoints.push([-5.5, 6.32, -1.5]);
+      rawPoints.push([-2.8, 6.32, -1.5]);
+      rawPoints.push([targetX, targetY, targetZ]);
+    } else if (startX >= -5.2 && startX <= 4.5 && stopId === 'bedroom') {
+      rawPoints.push([-2.8, 6.32, -1.5]);
+      rawPoints.push([-5.5, 6.32, -1.5]);
+      rawPoints.push([-7.5, 6.32, -1.5]);
+      rawPoints.push([targetX, targetY, targetZ]);
+    } else if (startX > 4.8 && startX <= 15.8 && stopId === 'process') {
+      // Direct Library Nook -> Creative Studio via portal [16.0, 6.32, -2.7]
+      rawPoints.push([10.75, 6.32, -6.2]);
+      rawPoints.push([14.5, 6.32, -6.2]);
+      rawPoints.push([14.5, 6.32, -2.7]);
+      rawPoints.push([16.0, 6.32, -2.7]);
+      rawPoints.push([17.5, 6.32, -1.6]);
+      rawPoints.push([targetX, targetY, targetZ]);
+    } else {
+      appendUpperExitToLanding(startX, startZ);
+      appendUpperLandingToStop();
     }
-    const midZ = (targetArchX === 5.5 || startX > 2.0) ? 2.0 : targetZ;
-    points.push([0, 1.12, midZ]);
-    if (Math.abs(targetArchX) > 0.5) {
-      const enterArchZ = targetArchX === 5.5 ? 2.0 : targetZ;
-      points.push([targetArchX, 1.12, enterArchZ]);
-    }
-    points.push([targetX, targetY, targetZ]);
   }
-  return points;
+  // =========================================================================
+  // CASE 2: Both Start and Target are in Front Yard ('yard' <-> 'about')
+  // =========================================================================
+  else if (startZone === 'front_yard' && targetZone === 'front_yard') {
+    if (stopId === 'about') {
+      if (startZ > 11.5) {
+        rawPoints.push([0.0, 1.12, 10.5]);
+      }
+      rawPoints.push([targetX, targetY, targetZ]);
+    } else if (stopId === 'yard') {
+      if (Math.abs(startX) > 1.5) {
+        rawPoints.push([0.0, 1.12, 10.5]);
+      }
+      rawPoints.push([targetX, targetY, targetZ]);
+    } else {
+      rawPoints.push([targetX, targetY, targetZ]);
+    }
+  }
+  // =========================================================================
+  // CASE 3: General Multi-Zone Traversal (via Central Foyer & Doors/Stairs)
+  // =========================================================================
+  else {
+    // STEP A: Move from Start Zone into Ground Floor Central Foyer (or directly to Staircase foot)
+    if (startZone === 'upper') {
+      appendUpperExitToLanding(startX, startZ);
+      rawPoints.push([4.05, 6.32, -5.85]); // Top of side staircase
+      rawPoints.push([4.05, 1.12, 1.8]);   // Clear bottom of side staircase balustrade (z = 1.1) on Ground Floor
+      // Fast-track if heading directly to Garage or Home Office from bottom of stairs:
+      if (stopId === 'garage' || stopId === 'skills') {
+        appendFoyerToGroundIndoorStop();
+        return deduplicateWaypoints(startX, startZ, rawPoints);
+      }
+      rawPoints.push([0.0, 1.12, 2.0]);
+    } else if (startZone === 'front_yard') {
+      // Align with central walkway at x = 0, z = 10.5 BEFORE climbing front porch steps!
+      // This completely avoids the porch balustrades (x: [-5.5, -2.2], z = 7.4), columns, and flower bed (x = -9.5, z = 5.2).
+      if (Math.abs(startX) > 1.2 || startZ < 9.8) {
+        rawPoints.push([0.0, 1.12, 10.5]);
+      }
+      rawPoints.push([0.0, 1.12, 8.2]);
+      rawPoints.push({ pos: [0.0, 1.12, 5.4], doorOpen: 'front' });
+      rawPoints.push({ pos: [0.0, 1.12, 2.0], doorClose: 'front' });
+    } else if (startZone === 'rear_terrace') {
+      // Exit Rear Terrace around central coffee table (x: [-1.15, 1.15], z: [-12.3, -11.0])
+      if (startZ < -10.8) {
+        rawPoints.push([1.65, 1.12, -13.0]);
+        rawPoints.push([1.65, 1.12, -10.2]);
+      }
+      rawPoints.push({ pos: [0.0, 1.12, -9.8], doorOpen: 'rear' });
+      rawPoints.push({ pos: [0.0, 1.12, -6.2], doorClose: 'rear' });
+      rawPoints.push([0.0, 1.12, 2.0]);
+    } else if (startZone === 'ground_indoor') {
+      // Fast-track if going from Home Office ('skills') directly up the side staircase to Upper Floor!
+      if (targetZone === 'upper' && startX > 4.8 && startX <= 15.8) {
+        rawPoints.push([5.5, 1.12, 2.0]);
+        rawPoints.push([4.05, 1.12, 2.0]);
+        rawPoints.push([4.05, 1.12, 0.85]);
+        rawPoints.push([4.05, 6.32, -6.2]);
+        rawPoints.push([4.05, 6.32, -6.6]);
+        appendUpperLandingToStop();
+        return deduplicateWaypoints(startX, startZ, rawPoints);
+      }
+      appendGroundIndoorExitToFoyer(startX, startZ);
+    }
+
+    // STEP B: Move from Ground Floor Central Foyer to Target Zone
+    if (targetZone === 'upper') {
+      rawPoints.push([4.05, 1.12, 2.0]);   // Align directly south of staircase newel post (x = 3.2, z = 1.1)
+      rawPoints.push([4.05, 1.12, 0.85]);  // Foot of side staircase
+      rawPoints.push([4.05, 6.32, -6.2]);  // Top of side staircase
+      rawPoints.push([4.05, 6.32, -6.6]);  // Upper mezzanine landing
+      appendUpperLandingToStop();
+    } else if (targetZone === 'ground_indoor') {
+      appendFoyerToGroundIndoorStop();
+    } else if (targetZone === 'rear_terrace') {
+      rawPoints.push({ pos: [0.0, 1.12, -6.4], doorOpen: 'rear' });
+      rawPoints.push({ pos: [0.0, 1.12, -9.8], doorClose: 'rear' });
+      if (stopId === 'contact') {
+        // Bypass central marble networking table at [0, 0, -11.65] cleanly along East aisle x = 1.65
+        rawPoints.push([1.65, 1.12, -10.2]);
+        rawPoints.push([1.65, 1.12, -13.0]);
+      }
+      rawPoints.push([targetX, targetY, targetZ]);
+    } else if (targetZone === 'front_yard') {
+      rawPoints.push({ pos: [0.0, 1.12, 2.0], doorOpen: 'front' });
+      rawPoints.push({ pos: [0.0, 1.12, 5.6], doorClose: 'front' });
+      rawPoints.push([0.0, 1.12, 10.5]);
+      rawPoints.push([targetX, targetY, targetZ]);
+    }
+  }
+
+  return deduplicateWaypoints(startX, startZ, rawPoints);
+}
+
+function deduplicateWaypoints(startX, startZ, rawPoints) {
+  const filtered = [];
+  let prevX = startX;
+  let prevZ = startZ;
+
+  for (let i = 0; i < rawPoints.length; i += 1) {
+    const wp = rawPoints[i];
+    const [wx, wy, wz] = getWaypointCoords(wp);
+    const isLast = i === rawPoints.length - 1;
+    const hasDoorAction = !Array.isArray(wp) && (wp.doorOpen || wp.doorClose);
+    const dist = Math.hypot(wx - prevX, wz - prevZ);
+
+    if (dist > 0.25 || hasDoorAction || isLast) {
+      filtered.push(wp);
+      prevX = wx;
+      prevZ = wz;
+    }
+  }
+  return filtered;
 }
 
 function beginTour() {
@@ -1794,6 +1974,10 @@ function startTourLeg(index) {
   tourStopIndex = index;
   tourWaitingAtStop = false;
   tourWaitTimer = 0;
+  tourDoorWaitTimer = 0;
+  tourDoorWaitKey = null;
+  tourDesiredVelX = 0;
+  tourDesiredVelZ = 0;
   const stop = tourStops[tourStopIndex];
   if (!stop) {
     endTour('Tour complete! Enjoy exploring the house.');
@@ -1822,6 +2006,10 @@ function endTour(message = 'Tour stopped. Take a look around.') {
   tourActive = false;
   tourWaitingAtStop = false;
   tourWaitTimer = 0;
+  tourDoorWaitTimer = 0;
+  tourDoorWaitKey = null;
+  tourDesiredVelX = 0;
+  tourDesiredVelZ = 0;
   tourWaypoints = [];
   tourWaypointIndex = 0;
   ui.tourCaption.textContent = message;
@@ -1847,9 +2035,29 @@ function startExperience() {
   else document.querySelector('.room-link')?.focus({ preventScroll: true });
 }
 
+function triggerTourDoorAction(doorKey, targetOpenState) {
+  if (!doorControls || !doorKey) return false;
+  const ctrl = doorControls[doorKey];
+  if (!ctrl) return false;
+  const state = ctrl.getState ? ctrl.getState() : (ctrl.isOpen() ? 'open' : 'closed');
+  if (targetOpenState) {
+    if (state === 'open' || state === 'opening') return false;
+    if (state === 'closing') ctrl.settle();
+    ctrl.toggle();
+    return true;
+  } else {
+    if (state === 'closed' || state === 'closing') return false;
+    if (state === 'opening') ctrl.settle();
+    ctrl.toggle();
+    return true;
+  }
+}
+
 function getInputVector(dt) {
   let x = 0;
   let z = 0;
+  tourDesiredVelX = 0;
+  tourDesiredVelZ = 0;
   if (keys.has('KeyA') || keys.has('ArrowLeft')) x -= 1;
   if (keys.has('KeyD') || keys.has('ArrowRight')) x += 1;
   if (keys.has('KeyW') || keys.has('ArrowUp')) z += 1;
@@ -1883,15 +2091,52 @@ function getInputVector(dt) {
       return { x: 0, z: 0 };
     }
 
+    // If waiting briefly for an interactive door to swing/slide open before walking through:
+    if (tourDoorWaitTimer > 0) {
+      tourDoorWaitTimer -= dt;
+      const ctrl = tourDoorWaitKey && doorControls ? doorControls[tourDoorWaitKey] : null;
+      const doorReady = ctrl && ctrl.isOpen && ctrl.isOpen();
+      if (tourDoorWaitTimer <= 0 || doorReady) {
+        tourDoorWaitTimer = 0;
+        tourDoorWaitKey = null;
+        const stop = tourStops[tourStopIndex];
+        if (stop) {
+          ui.tourCaption.textContent = `Walking towards ${stop.name}…`;
+        }
+      } else {
+        return { x: 0, z: 0 };
+      }
+    }
+
     if (tourWaypoints && tourWaypointIndex < tourWaypoints.length) {
-      const target = tourWaypoints[tourWaypointIndex];
+      const wpObj = tourWaypoints[tourWaypointIndex];
+      const target = getWaypointCoords(wpObj);
       const dx = target[0] - physX;
       const dz = target[2] - physZ;
       const distance = Math.hypot(dx, dz);
       const isFinalWaypoint = tourWaypointIndex === tourWaypoints.length - 1;
-      const threshold = isFinalWaypoint ? 0.32 : 0.45;
+      const threshold = isFinalWaypoint ? 0.28 : 0.36;
 
       if (distance < threshold) {
+        // Execute door actions attached to this waypoint
+        let pausedForDoor = false;
+        if (!Array.isArray(wpObj) && wpObj) {
+          if (wpObj.doorOpen) {
+            const opened = triggerTourDoorAction(wpObj.doorOpen, true);
+            const ctrl = doorControls?.[wpObj.doorOpen];
+            if (opened || (ctrl && !ctrl.isOpen())) {
+              tourDoorWaitTimer = 0.82;
+              tourDoorWaitKey = wpObj.doorOpen;
+              pausedForDoor = true;
+              const doorLabel = wpObj.doorOpen === 'rear' ? 'terrace sliding doors' : 'entrance doors';
+              ui.tourCaption.textContent = `Opening ${doorLabel}…`;
+            }
+          }
+          if (wpObj.doorClose) {
+            triggerTourDoorAction(wpObj.doorClose, false);
+          }
+        }
+
         tourWaypointIndex += 1;
         if (tourWaypointIndex >= tourWaypoints.length) {
           // Arrived at the room beacon stop
@@ -1911,22 +2156,34 @@ function getInputVector(dt) {
           }
           return { x: 0, z: 0 };
         }
+
+        if (pausedForDoor) {
+          return { x: 0, z: 0 };
+        }
       }
 
-      const activeTarget = tourWaypoints[tourWaypointIndex];
-      if (activeTarget) {
+      const activeWp = tourWaypoints[tourWaypointIndex];
+      if (activeWp) {
+        const activeTarget = getWaypointCoords(activeWp);
         const routeX = activeTarget[0] - physX;
         const routeZ = activeTarget[2] - physZ;
         const routeDist = Math.hypot(routeX, routeZ) || 1;
+        const activeIsFinal = tourWaypointIndex === tourWaypoints.length - 1;
 
         // Smoothly steer camera towards navigation path
         const targetYaw = Math.atan2(-routeX, -routeZ);
         let diff = targetYaw - yaw;
         diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-        yaw += diff * Math.min(1.0, dt * 5.0);
+        yaw += diff * Math.min(1.0, dt * 4.8);
+
+        // Compute exact world-space unit vector towards the waypoint so the character
+        // walks on a 100% straight, collision-free line without camera-yaw curve drift!
+        const speedScale = activeIsFinal && routeDist < 0.9 ? Math.max(0.42, routeDist / 0.9) : 1.0;
+        tourDesiredVelX = (routeX / routeDist) * speedScale;
+        tourDesiredVelZ = (routeZ / routeDist) * speedScale;
 
         x = 0;
-        z = isFinalWaypoint && routeDist < 0.9 ? Math.max(0.4, routeDist / 0.9) : 1.0;
+        z = speedScale;
       }
     }
   }
@@ -1966,14 +2223,21 @@ function updatePhysics(dt) {
   const { x, z } = input;
   const hasInput = Math.hypot(x, z) > 0.05;
   const sprint = (keys.has('ShiftLeft') || keys.has('ShiftRight')) && hasInput && !tourActive;
-  const targetSpeed = hasInput ? (sprint ? 5.2 : 3.3) : 0;
+  const targetSpeed = hasInput ? (sprint ? 5.2 : (tourActive ? 3.8 : 3.3)) : 0;
 
-  const forwardX = -Math.sin(yaw);
-  const forwardZ = -Math.cos(yaw);
-  const rightX = Math.cos(yaw);
-  const rightZ = -Math.sin(yaw);
-  const targetMoveX = (rightX * x + forwardX * z) * targetSpeed;
-  const targetMoveZ = (rightZ * x + forwardZ * z) * targetSpeed;
+  let targetMoveX = 0;
+  let targetMoveZ = 0;
+  if (tourActive && hasInput && Math.hypot(tourDesiredVelX, tourDesiredVelZ) > 0.01) {
+    targetMoveX = tourDesiredVelX * targetSpeed;
+    targetMoveZ = tourDesiredVelZ * targetSpeed;
+  } else {
+    const forwardX = -Math.sin(yaw);
+    const forwardZ = -Math.cos(yaw);
+    const rightX = Math.cos(yaw);
+    const rightZ = -Math.sin(yaw);
+    targetMoveX = (rightX * x + forwardX * z) * targetSpeed;
+    targetMoveZ = (rightZ * x + forwardZ * z) * targetSpeed;
+  }
 
   if (hasInput && overviewMode) toggleOverviewMode(false);
 
@@ -2646,6 +2910,41 @@ async function init() {
     window.__zoomOut = (amount) => cameraController?.zoomOut(amount);
     window.__setRoom = setRoom;
     window.__startExperience = startExperience;
+    window.__beginTour = beginTour;
+    window.__advanceTourStop = advanceTourStop;
+    window.__startTourLeg = startTourLeg;
+    window.__getTourState = () => ({
+      tourActive,
+      tourStopIndex,
+      stopId: tourStops[tourStopIndex]?.id || null,
+      tourWaypointIndex,
+      totalWaypoints: tourWaypoints.length,
+      currentWaypoint: tourWaypoints[tourWaypointIndex] || null,
+      tourWaitingAtStop,
+      tourDoorWaitTimer,
+      tourDoorWaitKey,
+      frontDoorState: doorControls?.front?.getState?.() || null,
+      rearDoorState: doorControls?.rear?.getState?.() || null,
+      pos: { x: Number(physX.toFixed(2)), y: Number(physY.toFixed(2)), z: Number(physZ.toFixed(2)) },
+    });
+    window.__stepTourPhysics = (steps = 60, dt = 1 / 60) => {
+      for (let i = 0; i < steps; i += 1) {
+        elapsed += dt;
+        updatePhysics(dt);
+        updateCharacterRig(characterRig, dt, elapsed, moveAmount, grounded);
+        if (doorControls?.update) doorControls.update(dt);
+        if (tourActive && tourWaitingAtStop) {
+          tourWaitTimer -= dt;
+          if (tourWaitTimer <= 0) advanceTourStop();
+        }
+        updateRoomFromPosition(performance.now());
+        updateCamera(dt, performance.now());
+      }
+      if (renderer && scene && camera) {
+        renderer.render(scene, camera);
+      }
+      return window.__getTourState();
+    };
     window.__toggleOverviewMode = toggleOverviewMode;
     window.__dispatchInteraction = dispatchInteraction;
     window.__interactionPoints = interactionPoints;
