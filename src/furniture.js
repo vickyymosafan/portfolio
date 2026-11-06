@@ -3,6 +3,7 @@ import { materials, palette } from './materials.js';
 import { addBox, addSphere, addCylinder, addBranchSegment, BatchCollector } from './geometry.js';
 import { createSignTexture } from './textures.js';
 import { portfolio } from './portfolio.js';
+import { onGitHubStatsUpdated } from './githubSync.js';
 import { buildSportsCar } from './vehicles.js';
 
 function addFurnitureCollider(world, RAPIER, staticBodies, position, halfExtents) {
@@ -38,7 +39,7 @@ export function createRoomInteriors(building, interactionPoints, openDetailsCall
     { id: 'bedroom', x: -11.0, y: 5.2, z: -2.0, title: 'Education', subtitle: '03 · ACADEMIC HONORS', accent: palette.bluePastel, rugMat: materials.carpetPersian },
     { id: 'bathroom', x: 0.0, y: 5.2, z: -2.0, title: 'Volunteering', subtitle: '04 · LEADERSHIP & COMMUNITY', accent: palette.mintSage, rugMat: materials.carpetBauhaus },
     { id: 'experience', x: 10.75, y: 5.2, z: -2.0, title: 'Work Experience', subtitle: '02 · LINKEDIN CAREER', accent: palette.yellowSun, rugMat: materials.carpetPersian },
-    { id: 'process', x: 21.0, y: 5.2, z: -2.0, title: 'GitHub Activity', subtitle: '08 · 1,039 CONTRIBUTIONS', accent: palette.mintSage, rugMat: materials.mint },
+    { id: 'process', x: 21.0, y: 5.2, z: -2.0, title: 'GitHub Activity', subtitle: '08 · 1,046 CONTRIBUTIONS', accent: palette.mintSage, rugMat: materials.mint },
   ];
 
   // Ground Floor Central Hall inside Mansion: Grand Entrance Galleria (100% open walkthrough)
@@ -174,14 +175,27 @@ function createDisplayBoard(parent, room, world, RAPIER, staticBodies) {
 
   // Canvas sign texture
   const signTex = createSignTexture(title, subtitle, accent, 512, 340);
+  const signMat = new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.45, metalness: 0.05 });
   const signMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(boardW - 0.2, boardH - 0.2),
-    new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.45, metalness: 0.05 })
+    signMat
   );
   signMesh.position.set(0, boardY, 0.15);
   signMesh.castShadow = false;
   signMesh.receiveShadow = false;
   display.add(signMesh);
+
+  if (id === 'process') {
+    onGitHubStatsUpdated((snapshot) => {
+      if (!snapshot || typeof snapshot.totalContributions !== 'number') return;
+      const formatted = snapshot.totalContributions.toLocaleString('en-US');
+      const nextSub = `08 · ${formatted} CONTRIBUTIONS`;
+      const oldMap = signMat.map;
+      signMat.map = createSignTexture(title, nextSub, accent, 512, 340);
+      signMat.needsUpdate = true;
+      if (oldMap && oldMap !== signMat.map) oldMap.dispose();
+    });
+  }
 
   // Brass picture lamps over board
   const lampY = boardY + boardH * 0.5 + (isAbout ? 0.10 : 0.14);

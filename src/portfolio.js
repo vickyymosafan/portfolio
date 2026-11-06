@@ -750,19 +750,23 @@ export const portfolio = {
     // 8. GITHUB CONTRIBUTIONS & ENGINEERING PIPELINE
     process: {
       eyebrow: '08 · GitHub Contributions',
-      title: '1,039 Contributions in the Last Year',
+      title: '1,046 Contributions in the Last Year',
       subtitle: 'vickyymosafan (M. Vicky Mosafan) · github.com/vickyymosafan',
       quote: '“Consistent daily engineering across full-stack repositories, RAG systems, and open-source tools.”',
-      lead: 'Verified multi-year GitHub commit activity and automated CI/CD telemetry across 30+ repositories—backed by a disciplined 6-stage AI-Augmented Engineering Pipeline.',
+      lead: 'Verified multi-year GitHub commit activity and automated CI/CD telemetry across 38+ public repositories—backed by a disciplined 6-stage AI-Augmented Engineering Pipeline.',
       githubStats: {
         username: 'vickyymosafan',
         displayName: 'vickyymosafan (M. Vicky Mosafan)',
         url: 'https://github.com/vickyymosafan',
-        totalContributions: '1,039 contributions in the last year',
+        profileUrl: 'https://github.com/vickyymosafan',
+        totalContributions: '1,046 contributions in the last year',
+        totalCount: 1046,
+        publicRepos: 38,
         months: ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+        topRepos: ['fullstack_buildflow-erp', 'mcp_principal-agentic-harness', 'mcp_threejs-visual-qa', 'FE_Beyond-RAG-Artificial-Super-Intelligence'],
         highlights: [
-          '1,039+ verified contributions in the last year across production repositories',
-          '35+ public repositories including Model Context Protocol (MCP) tooling, Next.js 15, TypeScript, NestJS, Laravel, Hono & Python',
+          '1,046+ verified contributions in the last year across production repositories',
+          '38+ public repositories including Model Context Protocol (MCP) tooling, Next.js 15, TypeScript, NestJS, Laravel, Hono & Python',
           'Active author of BUILDFlow ERP, MCP Three.js Visual QA, MCP Principal Agentic Harness, Beyond-RAG ASI & Posyandu Digital',
         ],
       },
@@ -804,7 +808,7 @@ export const portfolio = {
           desc: 'Zero-downtime CI/CD deployment via GitHub Actions to edge infrastructure with active monitoring.',
         },
       ],
-      tags: ['1,039 Contributions', 'github.com/vickyymosafan', 'SOLID Principles', 'Deterministic PRDs', 'GitHub Actions'],
+      tags: ['1,046 Contributions', 'github.com/vickyymosafan', 'SOLID Principles', 'Deterministic PRDs', 'GitHub Actions'],
     },
 
     // 9. CONTACT
@@ -825,7 +829,7 @@ export const portfolio = {
         {
           label: 'GitHub Profile · vickyymosafan (M. Vicky Mosafan)',
           href: 'https://github.com/vickyymosafan',
-          detail: 'github.com/vickyymosafan · 1,039 contributions',
+          detail: 'github.com/vickyymosafan · 1,046 contributions',
           primary: false,
         },
         {

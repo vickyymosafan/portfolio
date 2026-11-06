@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { portfolio } from './portfolio.js';
+import { syncLiveGitHubStats, onGitHubStatsUpdated } from './githubSync.js';
 import { materials, palette } from './materials.js';
 import { addBox, addSphere, addCylinder, optimizeStaticScene } from './geometry.js';
 import {
@@ -115,7 +116,7 @@ const WORLD_MARKERS = [
   { id: 'garage', label: '05 · Licenses & Certs', sub: 'Garasi BMW · 7 Credentials', icon: '📜', pos: [21.0, 3.5, 2.0], targetRoom: 'garage' },
   { id: 'gallery', label: '06 · Projects', sub: 'Project Gallery · 11 Works', icon: '🖼️', pos: [-11.0, 4.4, 2.0], targetRoom: 'projects' },
   { id: 'office', label: '07 · Tech & Tooling', sub: 'Architectural Domain', icon: '💻', pos: [10.75, 4.4, 2.0], targetRoom: 'skills' },
-  { id: 'studio', label: '08 · GitHub Contribs', sub: '1,039 Contributions', icon: '🐙', pos: [21.0, 10.2, 2.0], targetRoom: 'process' },
+  { id: 'studio', label: '08 · GitHub Contribs', sub: '1,046 Contributions', icon: '🐙', pos: [21.0, 10.2, 2.0], targetRoom: 'process' },
   { id: 'zen', label: '09 · Contact', sub: 'Garden Terrace & Links', icon: '🌲', pos: [35.0, 3.5, -8.0], targetRoom: 'zen' },
 ];
 
@@ -798,7 +799,11 @@ function openDetails(id) {
 
   if (content.githubStats) {
     const ghNote = document.createElement('p');
-    ghNote.innerHTML = `<strong>${content.githubStats.totalContributions} contributions in the last year</strong> — <a href="${content.githubStats.profileUrl}" target="_blank" rel="noreferrer">${content.githubStats.displayName} ↗</a>`;
+    const totalText = content.githubStats.totalContributions.includes('contributions')
+      ? content.githubStats.totalContributions
+      : `${content.githubStats.totalContributions} contributions in the last year`;
+    const ghHref = content.githubStats.profileUrl || content.githubStats.url || 'https://github.com/vickyymosafan';
+    ghNote.innerHTML = `<strong>${totalText}</strong> — <a href="${ghHref}" target="_blank" rel="noreferrer">${content.githubStats.displayName} ↗</a>`;
     ui.panelContent.append(ghNote);
   }
 
@@ -1535,7 +1540,7 @@ const tourStops = [
     step: '02 / 10',
     name: '01 · About Me (Garden Pavilion)',
     subtitle: 'AI ENGINEER · FULL-STACK DEVELOPER · SYSTEM ARCHITECT',
-    intro: 'Full-Stack Web Developer & AI Engineer with GPA 3.75/4.00 and 1,039+ GitHub contributions in the last year.',
+    intro: 'Full-Stack Web Developer & AI Engineer with GPA 3.75/4.00 and 1,046+ GitHub contributions in the last year.',
     position: [-7.5, 1.12, 10.5],
     archX: 0,
     facing: -Math.PI * 0.5,
@@ -1618,8 +1623,8 @@ const tourStops = [
     id: 'process',
     step: '09 / 10',
     name: '08 · GitHub Contributions (Creative Studio)',
-    subtitle: '1,039 CONTRIBUTIONS · VICKYYMOSAFAN (M. VICKY MOSAFAN)',
-    intro: '1,039 contributions in the last year on github.com/vickyymosafan powered by a 6-stage deterministic engineering workflow.',
+    subtitle: '1,046 CONTRIBUTIONS · VICKYYMOSAFAN (M. VICKY MOSAFAN)',
+    intro: '1,046 contributions in the last year on github.com/vickyymosafan powered by a 6-stage deterministic engineering workflow.',
     position: [20.5, 6.32, -1.5],
     archX: 16.0,
     facing: -0.25,
@@ -2548,6 +2553,33 @@ async function init() {
     camera.lookAt(0, 2.0, 16.8);
     setRoom('yard');
     initWorldMarkers();
+
+    onGitHubStatsUpdated((snapshot) => {
+      if (!snapshot || typeof snapshot.totalContributions !== 'number') return;
+      const formatted = snapshot.totalContributions.toLocaleString('en-US');
+
+      const studioMarker = WORLD_MARKERS.find((m) => m.id === 'studio');
+      if (studioMarker) studioMarker.sub = `${formatted} Contributions`;
+      const studioEl = markerElements.find((m) => m.id === 'studio')?.el;
+      const subEl = studioEl?.querySelector('.marker-sub');
+      if (subEl) subEl.textContent = `${formatted} Contributions`;
+
+      const aboutStop = tourStops.find((s) => s.id === 'about');
+      if (aboutStop) {
+        aboutStop.intro = `Full-Stack Web Developer & AI Engineer with GPA 3.75/4.00 and ${formatted}+ GitHub contributions in the last year.`;
+      }
+      const processStop = tourStops.find((s) => s.id === 'process');
+      if (processStop) {
+        processStop.subtitle = `${formatted} CONTRIBUTIONS · VICKYYMOSAFAN (M. VICKY MOSAFAN)`;
+        processStop.intro = `${formatted} contributions in the last year on github.com/vickyymosafan powered by a 6-stage deterministic engineering workflow.`;
+      }
+    });
+
+    // Live-sync GitHub contribution calendar & repository telemetry on startup and every 10 minutes
+    syncLiveGitHubStats({ force: false });
+    setInterval(() => {
+      syncLiveGitHubStats({ force: true });
+    }, 10 * 60 * 1000);
 
     motorcycleController = new MotorcycleController({
       scene,

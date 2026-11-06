@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { portfolio } from './portfolio.js';
+import { syncLiveGitHubStats } from './githubSync.js';
 
 export const CinematicState = {
   IDLE: 'IDLE',
@@ -1166,20 +1167,29 @@ export class CinematicDirector {
       const ghHeader = document.createElement('div');
       ghHeader.className = 'gh-contrib-header';
 
+      const ghTitleWrap = document.createElement('div');
+      ghTitleWrap.style.cssText = 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
+
       const ghTitle = document.createElement('div');
       ghTitle.className = 'gh-contrib-title';
-      ghTitle.textContent = gh.totalContributions.includes('contributions')
-        ? gh.totalContributions
-        : `${gh.totalContributions} contributions in the last year`;
+
+      const ghLiveBadge = document.createElement('button');
+      ghLiveBadge.type = 'button';
+      ghLiveBadge.className = 'gh-live-sync-badge';
+      ghLiveBadge.title = 'Click to refresh live GitHub contributions';
+      ghLiveBadge.style.cssText =
+        'display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800;border:1px solid rgba(48,161,78,0.35);background:#dafbe1;color:#1a7f37;cursor:pointer;';
+
+      ghTitleWrap.append(ghTitle, ghLiveBadge);
 
       const ghProfileLink = document.createElement('a');
       ghProfileLink.className = 'gh-profile-pill';
-      ghProfileLink.href = gh.profileUrl;
+      ghProfileLink.href = gh.profileUrl || gh.url || 'https://github.com/vickyymosafan';
       ghProfileLink.target = '_blank';
       ghProfileLink.rel = 'noreferrer';
-      ghProfileLink.textContent = `🐙 ${gh.displayName || gh.handle} ↗`;
+      ghProfileLink.textContent = `🐙 ${gh.displayName || gh.username || gh.handle} ↗`;
 
-      ghHeader.append(ghTitle, ghProfileLink);
+      ghHeader.append(ghTitleWrap, ghProfileLink);
       ghCard.append(ghHeader);
 
       const graphBox = document.createElement('div');
@@ -1187,11 +1197,6 @@ export class CinematicDirector {
 
       const monthsRow = document.createElement('div');
       monthsRow.className = 'gh-months-row';
-      for (const m of gh.months || ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct']) {
-        const mSpan = document.createElement('span');
-        mSpan.textContent = m;
-        monthsRow.append(mSpan);
-      }
       graphBox.append(monthsRow);
 
       const bodyRow = document.createElement('div');
@@ -1208,8 +1213,26 @@ export class CinematicDirector {
       const gridWrap = document.createElement('div');
       gridWrap.className = 'gh-contrib-grid';
 
-      // Deterministic contribution density pattern matching Screenshot 2 (Nov-Oct, active in Nov-Feb & Jul-Oct)
-      const activeWeeks = [
+      bodyRow.append(daysCol, gridWrap);
+      graphBox.append(bodyRow);
+
+      const footerRow = document.createElement('div');
+      footerRow.className = 'gh-graph-footer';
+
+      const learnSpan = document.createElement('span');
+      learnSpan.className = 'gh-learn-text';
+
+      const legendWrap = document.createElement('div');
+      legendWrap.className = 'gh-legend';
+      legendWrap.innerHTML = `<span>Less</span><i class="gh-cell lvl-0"></i><i class="gh-cell lvl-1"></i><i class="gh-cell lvl-2"></i><i class="gh-cell lvl-3"></i><i class="gh-cell lvl-4"></i><span>More</span>`;
+
+      footerRow.append(learnSpan, legendWrap);
+      graphBox.append(footerRow);
+      ghCard.append(graphBox);
+      container.append(ghCard);
+
+      // Fallback deterministic density pattern only used before live API responds if cache is empty
+      const fallbackWeeks = [
         [0, 2, 4, 3, 1, 3, 4], [2, 3, 1, 2, 4, 4, 2], [1, 0, 2, 1, 0, 1, 2], [1, 3, 1, 0, 0, 0, 1],
         [1, 0, 0, 1, 2, 1, 1], [2, 1, 0, 1, 1, 3, 1], [1, 2, 2, 2, 3, 2, 2], [0, 1, 2, 2, 2, 2, 1],
         [2, 1, 1, 2, 1, 1, 3], [2, 2, 2, 2, 2, 1, 2], [2, 2, 2, 2, 1, 1, 2], [2, 2, 2, 2, 2, 1, 2],
@@ -1225,38 +1248,94 @@ export class CinematicDirector {
         [2, 2, 1, 2, 2, 2, 2], [1, 2, 2, 2, 1, 2, 1], [2, 2, 2, 1, 2, 2, 2], [2, 2, 2, 2, 2, 0, 0]
       ];
 
-      for (let w = 0; w < 52; w++) {
-        const col = document.createElement('div');
-        col.className = 'gh-week-col';
-        const weekData = activeWeeks[w] || [1, 1, 0, 1, 0, 1, 1];
-        for (let d = 0; d < 7; d++) {
-          const cell = document.createElement('span');
-          const lvl = weekData[d] || 0;
-          cell.className = `gh-cell lvl-${lvl}`;
-          col.append(cell);
+      const renderCalendarUI = (isSyncing = false) => {
+        const heroTitleEl = this.uiContainer?.querySelector('.cinematic-title');
+        if (heroTitleEl && this.activeSection === 'process') {
+          heroTitleEl.textContent = content.title;
         }
-        gridWrap.append(col);
-      }
+        const heroLeadEl = this.uiContainer?.querySelector('.cinematic-lead');
+        if (heroLeadEl && this.activeSection === 'process' && content.lead) {
+          heroLeadEl.textContent = content.lead;
+        }
 
-      bodyRow.append(daysCol, gridWrap);
-      graphBox.append(bodyRow);
+        ghTitle.textContent = gh.totalContributions.includes('contributions')
+          ? gh.totalContributions
+          : `${gh.totalContributions} contributions in the last year`;
 
-      const footerRow = document.createElement('div');
-      footerRow.className = 'gh-graph-footer';
+        if (isSyncing) {
+          ghLiveBadge.innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:#0969da;display:inline-block;"></span> Syncing Live…`;
+        } else if (gh.isLive) {
+          ghLiveBadge.innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:#1a7f37;display:inline-block;"></span> LIVE SYNC ↻`;
+        } else {
+          ghLiveBadge.innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:#57606a;display:inline-block;"></span> Sync GitHub ↻`;
+        }
 
-      const learnSpan = document.createElement('span');
-      learnSpan.className = 'gh-learn-text';
-      const repoList = gh.topRepos || gh.featuredRepos || [];
-      learnSpan.textContent = repoList.length ? `Active Repositories: ${repoList.join(' · ')}` : 'Learn how we count contributions';
+        monthsRow.innerHTML = '';
+        const monthsList = gh.months || ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+        for (const m of monthsList) {
+          const mSpan = document.createElement('span');
+          mSpan.textContent = m;
+          monthsRow.append(mSpan);
+        }
 
-      const legendWrap = document.createElement('div');
-      legendWrap.className = 'gh-legend';
-      legendWrap.innerHTML = `<span>Less</span><i class="gh-cell lvl-0"></i><i class="gh-cell lvl-1"></i><i class="gh-cell lvl-2"></i><i class="gh-cell lvl-3"></i><i class="gh-cell lvl-4"></i><span>More</span>`;
+        gridWrap.innerHTML = '';
+        const liveWeeks = Array.isArray(gh.weeks) && gh.weeks.length > 0 ? gh.weeks : null;
+        if (liveWeeks) {
+          gridWrap.style.gridTemplateColumns = `repeat(${liveWeeks.length}, 1fr)`;
+          for (let w = 0; w < liveWeeks.length; w += 1) {
+            const col = document.createElement('div');
+            col.className = 'gh-week-col';
+            const weekDays = liveWeeks[w];
+            for (let d = 0; d < 7; d += 1) {
+              const cell = document.createElement('span');
+              const dayObj = weekDays[d];
+              if (!dayObj) {
+                cell.className = 'gh-cell lvl-0';
+                cell.style.opacity = '0.25';
+              } else {
+                const lvl = dayObj.level || 0;
+                cell.className = `gh-cell lvl-${lvl}`;
+                cell.title = `${dayObj.count} contribution${dayObj.count === 1 ? '' : 's'} on ${dayObj.date}`;
+              }
+              col.append(cell);
+            }
+            gridWrap.append(col);
+          }
+        } else {
+          gridWrap.style.gridTemplateColumns = 'repeat(52, 1fr)';
+          for (let w = 0; w < 52; w += 1) {
+            const col = document.createElement('div');
+            col.className = 'gh-week-col';
+            const weekData = fallbackWeeks[w] || [1, 1, 0, 1, 0, 1, 1];
+            for (let d = 0; d < 7; d += 1) {
+              const cell = document.createElement('span');
+              const lvl = weekData[d] || 0;
+              cell.className = `gh-cell lvl-${lvl}`;
+              col.append(cell);
+            }
+            gridWrap.append(col);
+          }
+        }
 
-      footerRow.append(learnSpan, legendWrap);
-      graphBox.append(footerRow);
-      ghCard.append(graphBox);
-      container.append(ghCard);
+        const repoList = gh.topRepos || gh.featuredRepos || [];
+        learnSpan.textContent = repoList.length
+          ? `Recently Pushed: ${repoList.slice(0, 4).join(' · ')}`
+          : 'Live synced from github.com/vickyymosafan';
+      };
+
+      renderCalendarUI(!gh.isLive);
+
+      // Trigger live sync whenever section 08 is opened, or when the user clicks the LIVE SYNC badge
+      syncLiveGitHubStats({ force: false }).then(() => {
+        if (ghCard.isConnected) renderCalendarUI(false);
+      });
+
+      ghLiveBadge.addEventListener('click', () => {
+        renderCalendarUI(true);
+        syncLiveGitHubStats({ force: true }).then(() => {
+          if (ghCard.isConnected) renderCalendarUI(false);
+        });
+      });
     }
 
     if (content.stages) {
