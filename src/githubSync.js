@@ -273,3 +273,4 @@ export function onGitHubStatsUpdated(callback) {
 export function getLatestGitHubSnapshot() {
   return latestSnapshot;
 }
+
