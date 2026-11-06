@@ -469,6 +469,23 @@ export const portfolio = {
       lead: 'Real, high-impact systems translated from architectural PRDs into production with verified GitHub repositories and live deployments.',
       items: [
         {
+          id: 'fullstack-buildflow-erp',
+          title: 'BUILDFlow ERP — Construction Enterprise Management System',
+          category: 'Enterprise Resource Planning (ERP) · Construction & Architecture · Modular Monolith',
+          badge: '12-Module Construction ERP',
+          challenge: 'Designing a modular enterprise resource planning (ERP) platform tailored for medium-scale construction and architecture firms (50–300 employees, 5–30 concurrent projects, multi-branch, and multi-warehouse operations).',
+          engineering: 'Vertical-slice Modular Monolith orchestrated in a pnpm + Turborepo monorepo, pairing a Next.js 15 App Router PWA frontend (Tailwind CSS + shadcn/ui) with a NestJS CQRS backend, PostgreSQL 16+ with strict decimal precision & UUID constraints, Prisma/Drizzle ORM, Redis 7 + BullMQ (Transactional Outbox Pattern), and MinIO/Cloudflare R2/AWS S3 object storage.',
+          stack: ['Next.js 15', 'NestJS', 'TypeScript', 'PostgreSQL 16+', 'Prisma / Drizzle', 'Redis 7 & BullMQ', 'TailwindCSS', 'Turborepo'],
+          features: [
+            '12 integrated domain modules: Core RBAC/Multi-Tenant, CRM, Project WBS/Gantt, RAB/BOQ Cost Control, and 3-Way Matching Procurement',
+            'Immutable Multi-Warehouse Stock Movement Ledger, Double-Entry General Ledger (GL/AR/AP), and Project Profitability Analytics',
+            'PWA Offline Draft Daily Site Reports, CAD/BIM Submittal Versioning, QC/NCR & HSE Safety Records, and Executive BI KPI Dashboard',
+            'Contract-driven architecture governed by strict Security Threat Models, Module Boundaries, ERD specs, and Transactional Outbox events',
+          ],
+          github: 'https://github.com/vickyymosafan/fullstack_buildflow-erp',
+          demo: null,
+        },
+        {
           id: 'mcp-threejs-visual-qa',
           title: 'MCP Three.js Visual QA — Autonomous 3D WebGL Inspection Server',
           category: 'AI Developer Tooling · Model Context Protocol (MCP) · 3D WebGL QA',
@@ -640,6 +657,7 @@ export const portfolio = {
         },
       ],
       tags: [
+        'BUILDFlow ERP',
         'MCP Three.js Visual QA',
         'MCP Agentic Harness',
         'Beyond-RAG ASI',
@@ -744,8 +762,8 @@ export const portfolio = {
         months: ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
         highlights: [
           '1,039+ verified contributions in the last year across production repositories',
-          '35+ public repositories including Model Context Protocol (MCP) tooling, Next.js 15, TypeScript, Laravel, Hono & Python',
-          'Active author of MCP Three.js Visual QA, MCP Principal Agentic Harness, Beyond-RAG ASI & Posyandu Digital',
+          '35+ public repositories including Model Context Protocol (MCP) tooling, Next.js 15, TypeScript, NestJS, Laravel, Hono & Python',
+          'Active author of BUILDFlow ERP, MCP Three.js Visual QA, MCP Principal Agentic Harness, Beyond-RAG ASI & Posyandu Digital',
         ],
       },
       stages: [
